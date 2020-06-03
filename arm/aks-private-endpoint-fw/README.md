@@ -40,12 +40,10 @@ The following resources are deployed as part of this solution
 
 ### Scenario Deployment Validation
 
-To validate that the AKS API service's private IP is accessibile from the Linux VM.
+To validate that the AKS API service's private IP is accessible from the Linux VM. 
+NOTE: kubectl & azure cli tools are automatically installed by cloud-init.
 - SSH to the Azure Firewall public IP returned as output from the ARM deployment
   - `$ ssh localadmin@<Azure Firewall public IP>`
-- Install kubectl & az-cli tools
-  - `$ curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl`
-  - `$ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
 - Get the Kubernetes config file
   - `$ az login`
   - `$ az account set --subscription <your azure subscription id>`
