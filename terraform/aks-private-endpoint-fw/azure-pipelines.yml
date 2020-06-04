@@ -70,7 +70,7 @@ stages:
 
                 # Apply plan
                 Write-Host "############# Terraform apply ############"
-                terraform apply -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -auto-approve tfplan
+                terraform apply -auto-approve tfplan
 
                 # Output apply
                 # Set Terraform output as pipeline environment variables
