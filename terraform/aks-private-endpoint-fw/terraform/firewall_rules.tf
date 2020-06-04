@@ -9,8 +9,10 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
     name = "allow time service"
 
     source_addresses = [
-      azurerm_virtual_network.hub_vnet.address_space[0],
-      azurerm_virtual_network.spoke_vnet.address_space[0],
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -30,8 +32,10 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
     name = "allow dns service"
 
     source_addresses = [
-      azurerm_virtual_network.hub_vnet.address_space[0],
-      azurerm_virtual_network.spoke_vnet.address_space[0],
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -52,8 +56,10 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
     name = "allow tagged services"
 
     source_addresses = [
-      azurerm_virtual_network.hub_vnet.address_space[0],
-      azurerm_virtual_network.spoke_vnet.address_space[0],
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -81,24 +87,106 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
   action              = "Allow"
 
   rule {
-    name = "aks-services"
+    name = "allow aks services"
 
     source_addresses = [
-      azurerm_virtual_network.hub_vnet.address_space[0],
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
     ]
 
     target_fqdns = [
+      "*.azmk8s.io",
+      "*auth.docker.io",
+      "*cloudflare.docker.io",
+      "*cloudflare.docker.com",
+      "*registry-1.docker.io"
+    ]
+
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+  }
+
+  rule {
+    name = "allow oss services"
+
+    source_addresses = [
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
+    ]
+
+    target_fqdns = [
+      "download.opensuse.org",
+      "login.microsoftonline.com",
+      "*.ubuntu.com",
       "dc.services.visualstudio.com",
       "*.opinsights.azure.com",
-      "*.oms.opinsights.azure.com",
-      "*.microsoftonline.com",
+      "github.com",
+      "gcr.io",
+      "*.github.com",
+      "raw.githubusercontent.com",
+      "*.ubuntu.com",
+      "api.snapcraft.io",
+      "download.opensuse.org",
+      "storage.googleapis.com",
+      "security.ubuntu.com",
+      "azure.archive.ubuntu.com",
+      "changelogs.ubuntu.com"
+    ]
+
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+  }
+
+  rule {
+    name = "allow azure services"
+
+    source_addresses = [
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
+    ]
+
+    target_fqdns = [
+      "*azurecr.io",
+      "*blob.core.windows.net",
+      "*.trafficmanager.net",
+      "*.azureedge.net",
+      "*.microsoft.com",
+      "*.core.windows.net",
+      "aka.ms",
+      "*.azure-automation.net",
+      "*.azure.com",
+      "gov-prod-policy-data.trafficmanager.net",
+      concat["*.gk.", azurerm_resource_group.rg.location, ".azmk8s.io"]
       "*.monitoring.azure.com",
-      "management.azure.com",
-      "login.microsoftonline.com",
+      "*.oms.opinsights.azure.com",
+      "*.ods.opinsights.azure.com",
+      "*.microsoftonline.com",
+      "*.data.mcr.microsoft.com",
       "*.cdn.mscr.io",
       "mcr.microsoft.com",
-      "*.data.mcr.microsoft.com",
-      "acs-mirror.azureedge.net"
+      "management.azure.com",
+      "login.microsoftonline.com",
+      "packages.microsoft.com"
     ]
 
     protocol {
@@ -116,8 +204,10 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
     name = "osupdates"
 
     source_addresses = [
-      azurerm_virtual_network.hub_vnet.address_space[0],
-      azurerm_virtual_network.spoke_vnet.address_space[0],
+      azurerm_subnet.hub_subnet_1.address_prefixes[0],
+      azurerm_subnet.hub_subnet_2.address_prefixes[0],
+      azurerm_subnet.hub_subnet_3.address_prefixes[0],
+      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
     ]
 
     target_fqdns = [

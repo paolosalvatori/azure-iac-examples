@@ -33,8 +33,21 @@ variable "bastionVmSku" {
   default = "Standard_B1ms"
 }
 
-variable "sshKey" {
-  type    = string
+variable "ssh_key" {
+  type = string
+}
+
+variable "home_public_ip_address" {
+  type = string
+}
+
+variable "home_private_cidr" {
+  type = string,
+  default = "192.168.88.0/24"
+}
+
+variable "shared_vpn_secret" {
+  type = string
 }
 
 data local_file "cloudinit" {
