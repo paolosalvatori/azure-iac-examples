@@ -1,9 +1,9 @@
 locals {
-  hub_vnet_name   = "${var.prefix}-hub-vnet"
-  spoke_vnet_name = "${var.prefix}-spoke-vnet"
-  hub_to_spoke_peer_name  = "hub-to-spoke"
-  spoke_to_hub_peer_name  = "spoke-to-hub"
-  private_dns_vnet_link   = "hub-vnet-private-dns-link"
+  hub_vnet_name          = "${var.prefix}-hub-vnet"
+  spoke_vnet_name        = "${var.prefix}-spoke-vnet"
+  hub_to_spoke_peer_name = "hub-to-spoke"
+  spoke_to_hub_peer_name = "spoke-to-hub"
+  private_dns_vnet_link  = "hub-vnet-private-dns-link"
 }
 
 # vnets
@@ -44,11 +44,6 @@ resource azurerm_subnet "hub_subnet_3" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
-/* resource azurerm_subnet_route_table_association "hub_subnet_2_route_table" {
-  subnet_id      = azurerm_subnet.hub_subnet_2.id
-  route_table_id = azurerm_route_table.firewall_route_table.id
-} */
-
 resource azurerm_subnet_route_table_association "hub_subnet_3_route_table" {
   subnet_id      = azurerm_subnet.hub_subnet_3.id
   route_table_id = azurerm_route_table.firewall_route_table.id
@@ -74,6 +69,10 @@ resource azurerm_virtual_network_peering "hub_spoke_peer" {
   allow_forwarded_traffic      = true
   allow_virtual_network_access = true
   allow_gateway_transit        = true
+
+  depends_on = [
+    azurerm_virtual_network_gateway.vpngwy,
+  ]
 }
 
 resource azurerm_virtual_network_peering "spoke_hub_peer" {
@@ -84,12 +83,8 @@ resource azurerm_virtual_network_peering "spoke_hub_peer" {
   allow_forwarded_traffic      = true
   allow_virtual_network_access = true
   use_remote_gateways          = true
-}
 
-/* resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_vnet_link" {
-  name                  = local.private_dns_vnet_link
-  resource_group_name   = azurerm_resource_group.rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.example.name
-  virtual_network_id    = azurerm_virtual_network.example.id
+  depends_on = [
+    azurerm_virtual_network_gateway.vpngwy,
+  ]
 }
- */
