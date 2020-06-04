@@ -7,7 +7,7 @@ variables:
   # SSH_KEY # pipeline variable set in GUI
   # SHARED_VPN_SECRET # pipeline variable set in GUI
   # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
-  TF_PATH: ./terraform
+  TF_PATH: ./aks-private-endpoint-fw/terraform
 
 stages:
 - stage: dev
@@ -45,8 +45,7 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               workingDirectory: $(TF_PATH)
-              inlineScript: |
-                
+              inlineScript: |               
                 # Initialize Terraform
                 Write-Host "############# Terraform init ############"
                 terraform init -input=false
