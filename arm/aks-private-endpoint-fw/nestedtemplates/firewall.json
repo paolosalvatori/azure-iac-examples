@@ -19,6 +19,9 @@
         },
         "vmPrivateIp": {
             "type": "string"
+        },
+        "workspaceRef": {
+            "type": "string"
         }
     },
     "variables": {
@@ -249,6 +252,34 @@
                                 }
                             ]
                         }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/azureFirewalls/providers/diagnosticSettings",
+            "name": "[concat(variables('firewallName'),'/microsoft.insights/', 'fwdiagnostics')]",
+            "dependsOn": [
+                "[variables('firewallName')]"
+            ],
+            "apiVersion": "2017-05-01-preview",
+            "properties": {
+                "name": "fwdiagnostics",
+                "workspaceId": "[parameters('workspaceRef')]",
+                "logs": [
+                    {
+                        "category": "AzureFirewallApplicationRule",
+                        "enabled": true
+                    },
+                    {
+                        "category": "AzureFirewallNetworkRule",
+                        "enabled": true
+                    }
+                ],
+                "metrics": [
+                    {
+                        "category": "AllMetrics",
+                        "enabled": true
                     }
                 ]
             }

@@ -305,6 +305,12 @@
             "metadata": {
                 "description": "list of AAD objectID GUIDs"
             }
+        },
+        "workspaceRef": {
+            "type": "string",
+            "metadata": {
+                "description": "Log Analytics workspace resource id"
+            }
         }
     },
     "variables": {
@@ -312,18 +318,6 @@
         "aksClusterName": "[concat('aks' , '-', parameters('suffix'))]"
     },
     "resources": [
-        {
-            "name": "[variables('workspaceName')]",
-            "type": "Microsoft.OperationalInsights/workspaces",
-            "apiVersion": "2020-03-01-preview",
-            "location": "[parameters('location')]",
-            "properties": {
-                "sku": {
-                    "name": "Standalone"
-                },
-                "retentionInDays": 30
-            }
-        },
         {
             "type": "Microsoft.ContainerService/managedClusters",
             "name": "[variables('aksClusterName')]",
@@ -343,7 +337,7 @@
                     "omsagent": {
                         "enabled": true,
                         "config": {
-                            "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+                            "logAnalyticsWorkspaceResourceID": "[parameters('workspaceRef')]"
                         }
                     }
                 },

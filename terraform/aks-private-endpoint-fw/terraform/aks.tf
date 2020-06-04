@@ -59,4 +59,8 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
   }
 
   tags = var.tags
+
+  depends_on = [
+    azurerm_subnet_route_table_association.spoke_subnet_1_route_table,
+  ]
 }
