@@ -14,7 +14,7 @@
         "firewallSubnetRef": {
             "type": "string"
         },
-        "sourceAddressRangePrefix": {
+        "sourceAddressRangePrefixes": {
             "type": "array"
         },
         "vmPrivateIp": {
@@ -23,7 +23,14 @@
     },
     "variables": {
         "publicIpName": "[concat('fw-pip', '-', parameters('suffix'))]",
-        "firewallName": "[concat('fw', '-', parameters('suffix'))]"
+        "firewallName": "[concat('fw', '-', parameters('suffix'))]",
+        "copy": [
+            {
+                "name": "sourceAddresses",
+                "count": "[length(parameters('sourceAddressRangePrefixes'))]",
+                "input": "[parameters('sourceAddressRangePrefixes')[copyIndex('sourceAddresses')].properties.addressPrefix]"
+            }
+        ]
     },
     "resources": [
         {
@@ -102,7 +109,7 @@
                             "rules": [
                                 {
                                     "name": "allow-aks",
-                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "sourceAddresses": "[variables('sourceAddresses')]",
                                     "protocols": [
                                         {
                                             "protocolType": "HTTP",
@@ -134,7 +141,7 @@
                             "rules": [
                                 {
                                     "name": "allow-oss",
-                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "sourceAddresses": "[variables('sourceAddresses')]",
                                     "protocols": [
                                         {
                                             "protocolType": "HTTP",
@@ -177,7 +184,7 @@
                             "rules": [
                                 {
                                     "name": "allow-sites",
-                                    "sourceAddresses": "[parameters('sourceAddressRangePrefix')]",
+                                    "sourceAddresses": "[variables('sourceAddresses')]",
                                     "protocols": [
                                         {
                                             "protocolType": "HTTP",

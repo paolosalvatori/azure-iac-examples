@@ -260,10 +260,8 @@
                     "firewallSubnetRef": {
                         "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
                     },
-                    "sourceAddressRangePrefix": {
-                        "value": [
-                            "10.0.0.0/16"
-                        ]
+                    "sourceAddressRangePrefixes": {
+                        "value": "[union(reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value)]"
                     },
                     "vmPrivateIp": {
                         "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vm').outputs.vmPrivateIp.value]"
