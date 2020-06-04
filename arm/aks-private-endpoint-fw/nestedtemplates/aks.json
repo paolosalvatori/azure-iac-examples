@@ -314,7 +314,6 @@
         }
     },
     "variables": {
-        "workspaceName": "[concat('wks', '-', parameters('suffix'))]",
         "aksClusterName": "[concat('aks' , '-', parameters('suffix'))]"
     },
     "resources": [
@@ -323,9 +322,6 @@
             "name": "[variables('aksClusterName')]",
             "apiVersion": "2020-03-01",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "[variables('workspaceName')]"
-            ],
             "identity": {
                 "type": "SystemAssigned"
             },
