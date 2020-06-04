@@ -1,6 +1,15 @@
+# specific path build
 trigger:
-  - '*'
-  
+  branches:
+    include:
+    - master
+    - releases/*
+  paths:
+    include:
+    - terraform/aks-private-endpoint-fw/*
+    exclude:
+    - terraform/aks-private-endpoint-fw/azure-pipelines.yml
+
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # pipeline variable set in GUI
   # HOME_PUBLIC_IP_ADDRESS #  variable set in GUI

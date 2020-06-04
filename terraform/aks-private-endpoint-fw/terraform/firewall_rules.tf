@@ -176,7 +176,7 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       "*.azure-automation.net",
       "*.azure.com",
       "gov-prod-policy-data.trafficmanager.net",
-      concat["*.gk.", azurerm_resource_group.rg.location, ".azmk8s.io"]
+      "*.gk.${azurerm_resource_group.rg.location}.azmk8s.io"
       "*.monitoring.azure.com",
       "*.oms.opinsights.azure.com",
       "*.ods.opinsights.azure.com",

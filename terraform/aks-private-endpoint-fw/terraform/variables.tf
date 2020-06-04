@@ -42,7 +42,7 @@ variable "home_public_ip_address" {
 }
 
 variable "home_private_cidr" {
-  type = string,
+  type = string
   default = "192.168.88.0/24"
 }
 

@@ -49,5 +49,5 @@ resource "azurerm_virtual_network_gateway_connection" "cxn" {
   virtual_network_gateway_id = azurerm_virtual_network_gateway.vpngwy.id
   local_network_gateway_id   = azurerm_local_network_gateway.home-gwy.id
 
-  shared_key = "M1cr0soft123"
+  shared_key = var.shared_vpn_secret
 }
