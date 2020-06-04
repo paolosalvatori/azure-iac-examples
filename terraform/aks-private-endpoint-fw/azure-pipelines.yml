@@ -53,7 +53,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -out tfplan -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)'
+                terraform plan -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -out tfplan 
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
@@ -62,7 +62,7 @@ stages:
 
                 # Apply plan
                 Write-Host "############# Terraform apply ############"
-                terraform apply -auto-approve tfplan -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)'
+                terraform apply -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -auto-approve tfplan
 
                 # Output apply
                 # Set Terraform output as pipeline environment variables
