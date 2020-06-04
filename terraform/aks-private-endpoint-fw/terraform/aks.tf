@@ -7,7 +7,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
   location                = azurerm_resource_group.rg.location
   resource_group_name     = azurerm_resource_group.rg.name
   dns_prefix              = local.aks_cluster_name
-  kubernetes_version      = var.kubernetesVersion
+  kubernetes_version      = var.kubernetes_version
   private_cluster_enabled = true
 
   addon_profile {

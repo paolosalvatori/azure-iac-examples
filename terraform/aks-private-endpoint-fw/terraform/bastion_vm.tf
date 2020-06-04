@@ -22,7 +22,7 @@ resource azurerm_virtual_machine "bastion_vm" {
   resource_group_name              = azurerm_resource_group.rg.name
   location                         = azurerm_resource_group.rg.location
   network_interface_ids            = [azurerm_network_interface.bastion_vm_nic.id]
-  vm_size                          = var.bastionVmSku
+  vm_size                          = var.bastion_vm_sku
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
@@ -49,7 +49,7 @@ resource azurerm_virtual_machine "bastion_vm" {
   os_profile_linux_config {
     disable_password_authentication = true
     ssh_keys {
-      key_data = var.sshKey
+      key_data = var.ssh_key
       path     = "/home/localadmin/.ssh/authorized_keys"
     }
   }

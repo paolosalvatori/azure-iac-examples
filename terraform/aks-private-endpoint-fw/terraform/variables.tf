@@ -17,18 +17,18 @@ variable "location" {
   default = "australiaeast"
 }
 
-variable "kubernetesVersion" {
+variable "kubernetes_version" {
   type    = string
   default = "1.16.9"
 }
 
-variable "aksNodeSku" {
+variable "aks_node_sku" {
   type    = string
   default = "Standard_D2_v2"
 
 }
 
-variable "bastionVmSku" {
+variable "bastion_vm_sku" {
   type    = string
   default = "Standard_B1ms"
 }
