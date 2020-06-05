@@ -3,7 +3,7 @@ trigger:
   branches:
     include:
     - master
-    - releases/*
+    - develop
   paths:
     include:
     - terraform/aks-private-endpoint-fw/*
@@ -81,15 +81,3 @@ stages:
                 Write-Host "##vso[task.setvariable variable=CLUSTER_RESOURCE_GROUP_NAME]$($tfOutput.'aks-node-rg'.value)"
                 Write-Host "##vso[task.setvariable variable=CLUSTER_ID]$($tfOutput.'aks-cluster-id'.value)"
                 Write-Host "##vso[task.setvariable variable=KUBECONFIG]$($tfOutput.'kube-config'.value)"           
-
-          - task: Kubernetes@1
-            displayName: 'Get AKS nodes'
-            inputs:
-               command: get
-               arguments: nodes
-               connectionType: Azure Resource Manager
-               azureSubscriptionEndpoint: $(ADO_SERVICE_CONNECTION_NAME)
-               azureResourceGroup: $(RESOURCE_GROUP_NAME)
-               kubernetesCluster: $(CLUSTER_NAME)
-               useClusterAdmin: true
-
