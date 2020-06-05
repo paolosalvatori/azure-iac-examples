@@ -12,7 +12,7 @@ trigger:
 
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # pipeline variable set in GUI
-  # HOME_ROUTER_DNS_HOST_NAME #  variable set in GUI
+  # ON_PREMISES_ROUTER_DNS_HOST_NAME #  variable set in GUI
   # SSH_KEY # pipeline variable set in GUI
   # SHARED_VPN_SECRET # pipeline variable set in GUI
   # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
@@ -48,13 +48,13 @@ stages:
                 Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$(az account show | ConvertFrom-Json | Select-Object -expandProperty tenantId)"
                 Write-Host "##vso[task.setvariable variable=ARM_ACCESS_KEY]$((az storage account keys list -n $(TF_STATE_STORAGE_ACCOUNT_NAME) | ConvertFrom-Json)[0].value)"
           - task: PowerShell@2
-            displayName: 'Get Home router public IP'
+            displayName: 'Get on-premises router public IP'
             inputs:
               targetType: inline
               pwsh: true
               script: |
-                $homeRouterIpAddress = $([System.Net.Dns]::GetHostAddresses("$(HOME_ROUTER_DNS_HOST_NAME)")).IPAddressToString
-                Write-Host "##vso[task.setvariable variable=HOME_PUBLIC_IP_ADDRESS]$homeRouterIpAddress"
+                $routerIpAddress = $([System.Net.Dns]::GetHostAddresses("$(ON_PREMISES_ROUTER_DNS_HOST_NAME)")).IPAddressToString
+                Write-Host "##vso[task.setvariable variable=ON_PREMISES_ROUTER_PUBLIC_IP_ADDRESS]$routerIpAddress"
           - task: AzureCLI@2
             displayName: 'Deploy AKS Infrastructure'
             inputs:
@@ -69,7 +69,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'home_public_ip_address=$(HOME_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -out tfplan 
+                terraform plan -var 'ON_PREMISES_ROUTER_PUBLIC_IP_ADDRESS=$(ON_PREMISES_ROUTER_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -out tfplan 
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
