@@ -48,7 +48,7 @@ resource azurerm_subnet_route_table_association "hub_subnet_3_route_table" {
   subnet_id      = azurerm_subnet.hub_subnet_3.id
   route_table_id = azurerm_route_table.firewall_route_table.id
 
-    timeouts {
+  timeouts {
     create = "2h"
     delete = "2h"
   }
