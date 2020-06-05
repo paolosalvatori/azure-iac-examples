@@ -12,7 +12,7 @@ trigger:
 
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # pipeline variable set in GUI
-  # HOME_PUBLIC_IP_ADDRESS #  variable set in GUI
+  # HOME_ROUTER_DNS_HOST_NAME #  variable set in GUI
   # SSH_KEY # pipeline variable set in GUI
   # SHARED_VPN_SECRET # pipeline variable set in GUI
   # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
@@ -47,6 +47,14 @@ stages:
                 Write-Host "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$env:servicePrincipalKey"
                 Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$(az account show | ConvertFrom-Json | Select-Object -expandProperty tenantId)"
                 Write-Host "##vso[task.setvariable variable=ARM_ACCESS_KEY]$((az storage account keys list -n $(TF_STATE_STORAGE_ACCOUNT_NAME) | ConvertFrom-Json)[0].value)"
+          - task: PowerShell@2
+            displayName: 'Get Home route public IP'
+            inputs:
+              targetType: inline
+              pwsh: true
+              script: |
+                $record = Resolve-DnsName -Name $(HOME_ROUTER_DNS_HOST_NAME)
+                Write-Host "##vso[task.setvariable variable=HOME_PUBLIC_IP_ADDRESS]$($record.IPAddress)"
           - task: AzureCLI@2
             displayName: 'Deploy AKS Infrastructure'
             inputs:
@@ -90,11 +98,11 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $privateDns = az network private-dns zone list --resource-group MC_aks-pe-fw-rg_aks-pe-fw-aks_australiaeast | ConvertFrom-Json
+                $privateDns = az network private-dns zone list --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) | ConvertFrom-Json
                 az network private-dns link vnet create `
-                --name hub-vnet-link `
-                --registration-enabled false `
-                --resource-group $(RESOURCE_GROUP_NAME) `
-                --virtual-network $(HUB_VNET_ID) `
-                --zone-name $privateDns.name
+                  --name hub-vnet-link `
+                  --registration-enabled false `
+                  --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) `
+                  --virtual-network $(HUB_VNET_ID) `
+                  --zone-name $privateDns.name
                 
