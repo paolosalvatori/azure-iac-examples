@@ -36,8 +36,8 @@ resource "azurerm_local_network_gateway" "home-gwy" {
   name                = local.local_network_gwy_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  gateway_address     = var.home_public_ip_address
-  address_space       = [var.home_private_cidr]
+  gateway_address     = var.on_premises_router_public_ip_address
+  address_space       = [var.on_premises_router_private_cidr]
 }
 
 resource "azurerm_virtual_network_gateway_connection" "cxn" {
