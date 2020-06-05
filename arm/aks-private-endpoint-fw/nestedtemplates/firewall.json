@@ -157,10 +157,7 @@
                                     ],
                                     "targetFqdns": [
                                         "download.opensuse.org",
-                                        "login.microsoftonline.com",
                                         "*.ubuntu.com",
-                                        "dc.services.visualstudio.com",
-                                        "*.opinsights.azure.com",
                                         "github.com",
                                         "gcr.io",
                                         "*.github.com",
@@ -199,8 +196,11 @@
                                         }
                                     ],
                                     "targetFqdns": [
+                                        "dc.services.visualstudio.com",
+                                        "*.opinsights.azure.com",
+                                        "login.microsoftonline.com",
                                         "*azurecr.io",
-                                        "*blob.core.windows.net",
+                                        "*.blob.core.windows.net",
                                         "*.trafficmanager.net",
                                         "*.azureedge.net",
                                         "*.microsoft.com",
@@ -245,6 +245,22 @@
                                     ],
                                     "destinationPorts": [
                                         "22"
+                                    ],
+                                    "protocols": [
+                                        "Tcp"
+                                    ]
+                                },
+                                {
+                                    "name": "allow-outbound-http-https-internet",
+                                    "sourceAddresses": [
+                                        "*"
+                                    ],
+                                    "destinationAddresses": [
+                                        "*"
+                                    ],
+                                    "destinationPorts": [
+                                        "80",
+                                        "443"
                                     ],
                                     "protocols": [
                                         "Tcp"
