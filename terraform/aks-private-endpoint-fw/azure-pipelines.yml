@@ -80,4 +80,21 @@ stages:
                 Write-Host "##vso[task.setvariable variable=CLUSTER_NAME]$($tfOutput.'aks-cluster-name'.value)"
                 Write-Host "##vso[task.setvariable variable=CLUSTER_RESOURCE_GROUP_NAME]$($tfOutput.'aks-node-rg'.value)"
                 Write-Host "##vso[task.setvariable variable=CLUSTER_ID]$($tfOutput.'aks-cluster-id'.value)"
-                Write-Host "##vso[task.setvariable variable=KUBECONFIG]$($tfOutput.'kube-config'.value)"           
+                Write-Host "##vso[task.setvariable variable=KUBECONFIG]$($tfOutput.'kube-config'.value)"     
+                Write-Host "##vso[task.setvariable variable=HUB_VNET_ID]$($tfOutput.'hub-vnet-id'.value)"     
+                Write-Host "##vso[task.setvariable variable=SPOKE_VNET_ID]$($tfOutput.'spoke-vnet-id'.value)"           
+          - task: AzureCLI@2
+            displayName: 'Link private DNS zone to hub vnet'
+            inputs:
+              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $privateDns = az network private-dns zone list --resource-group MC_aks-pe-fw-rg_aks-pe-fw-aks_australiaeast | ConvertFrom-Json
+                az network private-dns link vnet create `
+                --name hub-vnet-link `
+                --registration-enabled false `
+                --resource-group $(RESOURCE_GROUP_NAME) `
+                --virtual-network $(HUB_VNET_ID) `
+                --zone-name $privateDns.name
+                
