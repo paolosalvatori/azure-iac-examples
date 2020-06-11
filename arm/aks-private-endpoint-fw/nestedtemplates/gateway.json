@@ -1,0 +1,137 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "suffix": {
+            "type": "string",
+            "metadata": {
+                "description": "naming suffix based on resource group name hash"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "location to deploy the storage account"
+            }
+        },
+        "gatewaySubnetRef": {
+            "type": "string"
+        },
+        "gatewaySku": {
+            "type": "string",
+            "defaultValue": "VpnGwy1"
+        },
+        "vpnType": {
+            "type": "string",
+            "defaultValue": "RouteBased"
+        },
+        "gatewaySharedSecret": {
+            "type": "string"
+        },
+        "localGatewayAddressPrefix": {
+            "type": "string"
+        },
+        "localGatewayIpAddress": {
+            "type": "string"
+        },
+        "enableBgp": {
+            "type": "bool",
+            "defaultValue": true
+        }
+    },
+    "variables": {
+        "gatewayPublicIPName": "[concat('gwy-pip-', parameters('suffix'))]",
+        "localGatewayName": "[concat('loc-gwy-', parameters('suffix'))]",
+        "connectionName": "[concat('gwy-cxn-', parameters('suffix'))]",
+        "gatewayName": "[concat('gwy-', parameters('suffix'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-12-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('gatewayPublicIPName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "publicIPAddressVersion": "IPv4"
+            }
+        },
+        {
+            "apiVersion": "2019-12-01",
+            "type": "Microsoft.Network/localNetworkGateways",
+            "name": "[variables('localGatewayName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "localNetworkAddressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('localGatewayAddressPrefix')]"
+                    ]
+                },
+                "gatewayIpAddress": "[parameters('localGatewayIpAddress')]"
+            },
+            "dependsOn": [
+                "[variables('gatewayPublicIPName')]"
+            ]
+        },
+        {
+            "apiVersion": "2019-12-01",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "name": "[variables('gatewayName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('gatewayPublicIPName'))]",
+                "[variables('localGatewayName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('gatewaySubnetRef')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('gatewayPublicIPName'))]"
+                            }
+                        },
+                        "name": "vnetGatewayConfig"
+                    }
+                ],
+                "sku": {
+                    "name": "[parameters('gatewaySku')]",
+                    "tier": "[parameters('gatewaySku')]"
+                },
+                "gatewayType": "Vpn",
+                "vpnType": "[parameters('vpnType')]",
+                "enableBgp": "[parameters('enableBgp')]"
+            }
+        },
+        {
+            "apiVersion": "2019-12-01",
+            "name": "[variables('connectionName')]",
+            "type": "Microsoft.Network/connections",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('gatewayName'))]",
+                "[concat('Microsoft.Network/localNetworkGateways/', variables('localGatewayName'))]"
+            ],
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName'))]"
+                },
+                "localNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/localNetworkGateways', variables('localGatewayName'))]"
+                },
+                "connectionType": "IPsec",
+                "routingWeight": 10,
+                "sharedKey": "[parameters('gatewaySharedSecret')]"
+            }
+        }
+    ],
+    "outputs": {
+        "gatewayName": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworkGateways', variables('gatewayName')))]"
+        }
+    }
+}

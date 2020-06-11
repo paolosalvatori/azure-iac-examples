@@ -88,6 +88,15 @@
         },
         "_artifactsLocationSasToken": {
             "value": null
+        },
+        "vpnGatewaySharedSecret": {
+            "value": null
+        },
+        "routerPrivateAddressSpace": {
+            "value": null
+        },
+        "routerPublicIpAddress": {
+            "value": null
         }
     }
 }

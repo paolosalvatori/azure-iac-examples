@@ -83,6 +83,24 @@
             "metadata": {
                 "description": "admin user name for Linux jump box VM"
             }
+        },
+        "vpnGatewaySharedSecret": {
+            "type": "string",
+            "metadata": {
+                "description": "VPN gateway peering connection shared secret"
+            }
+        },
+        "routerPrivateAddressSpace": {
+            "type": "string",
+            "metadata": {
+                "description": "local router private CIDR"
+            }
+        },
+        "routerPublicIpAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "local router public IP"
+            }
         }
     },
     "variables": {
@@ -96,8 +114,8 @@
         "firewallNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/firewall.json', parameters('_artifactsLocationSasToken')))]",
         "aksNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/aks.json', parameters('_artifactsLocationSasToken')))]",
         "privateDnsLinkNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/private-dns-link.json', parameters('_artifactsLocationSasToken')))]",
+        "gatewayNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/gateway.json', parameters('_artifactsLocationSasToken')))]",
         "workspaceName": "[concat('wks-', variables('suffix'))]"
-
     },
     "resources": [
         {
@@ -173,12 +191,58 @@
             }
         },
         {
-            "comments": "This deployment links to the peering.json nested ARM template",
-            "name": "linkedTemplate-peerings",
+            "comments": "This deployment links to the gateway.json nested ARM template",
+            "name": "linkedTemplate-gateway",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "dependsOn": [
                 "vnetCopy"
+            ],
+            "resourceGroup": "[resourceGroup().name]",
+            "properties": {
+                "mode": "[parameters('deploymentMode')]",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('gatewayNestedTemplateUri')]"
+                },
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "gatewaySubnetRef": {
+                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[0].id]"
+                    },
+                    "gatewaySku": {
+                        "value": "VpnGw1"
+                    },
+                    "vpnType": {
+                        "value": "RouteBased"
+                    },
+                    "gatewaySharedSecret": {
+                        "value": "[parameters('vpnGatewaySharedSecret')]"
+                    },
+                    "localGatewayAddressPrefix": {
+                        "value": "[parameters('routerPrivateAddressSpace')]"
+                    },
+                    "localGatewayIpAddress": {
+                        "value": "[parameters('routerPublicIpAddress')]"
+                    },
+                    "enableBgp": {
+                        "value": true
+                    }
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the peering.json nested ARM template",
+            "name": "linkedTemplate-peering",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'linkedTemplate-gateway')]"
             ],
             "resourceGroup": "[resourceGroup().name]",
             "properties": {
@@ -206,7 +270,7 @@
             "apiVersion": "2019-10-01",
             "name": "linkedTemplate-vm",
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/', 'linkedTemplate-peerings')]"
+                "[concat('Microsoft.Resources/deployments/', 'linkedTemplate-peering')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -249,12 +313,49 @@
             }
         },
         {
+            "comments": "This deployment links to the firewall.json nested ARM template",
+            "name": "linkedTemplate-firewall",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', 'linkedTemplate-vm')]"
+            ],
+            "resourceGroup": "[resourceGroup().name]",
+            "properties": {
+                "mode": "[parameters('deploymentMode')]",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('firewallNestedTemplateUri')]"
+                },
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "firewallSubnetRef": {
+                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
+                    },
+                    "sourceAddressRangePrefixes": {
+                        "value": "[union(reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value)]"
+                    },
+                    "vmPrivateIp": {
+                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vm').outputs.vmPrivateIp.value]"
+                    },
+                    "workspaceRef": {
+                        "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+                    }
+                }
+            }
+        },
+        {
             "comments": "This deployment links to the aks.json nested ARM template",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "name": "linkedTemplate-aks",
             "dependsOn": [
-                "linkedTemplate-peerings"
+                "[concat('Microsoft.Resources/deployments/', 'linkedTemplate-firewall')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -314,43 +415,6 @@
                     },
                     "vnetResourceGroupName": {
                         "value": "[resourceGroup().name]"
-                    }
-                }
-            }
-        },
-        {
-            "comments": "This deployment links to the firewall.json nested ARM template",
-            "name": "linkedTemplate-firewall",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "dependsOn": [
-                "linkedTemplate-privateDnsLink"
-            ],
-            "resourceGroup": "[resourceGroup().name]",
-            "properties": {
-                "mode": "[parameters('deploymentMode')]",
-                "templateLink": {
-                    "contentVersion": "1.0.0.0",
-                    "uri": "[variables('firewallNestedTemplateUri')]"
-                },
-                "parameters": {
-                    "suffix": {
-                        "value": "[variables('suffix')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "firewallSubnetRef": {
-                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
-                    },
-                    "sourceAddressRangePrefixes": {
-                        "value": "[union(reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value)]"
-                    },
-                    "vmPrivateIp": {
-                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vm').outputs.vmPrivateIp.value]"
-                    },
-                    "workspaceRef": {
-                        "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
                     }
                 }
             }
