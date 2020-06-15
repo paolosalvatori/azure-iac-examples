@@ -8,6 +8,10 @@
 
 This solution deploys an AKS cluster with a private IP for the API server endpoint using Private Link.
 
+### Architecture diagram
+
+![aks-secure-architecture](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-aks-private-endpoint-firewall%2Fimages/secure-aks-architecture.png "AKS Secure Architecture")
+
 The following resources are deployed as part of this solution
 
 - Hub Virtual Network (10.0.0.0/16)
