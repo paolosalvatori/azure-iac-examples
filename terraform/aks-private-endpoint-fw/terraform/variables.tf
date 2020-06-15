@@ -37,11 +37,11 @@ variable "ssh_key" {
   type = string
 }
 
-variable "home_public_ip_address" {
+variable "on_premises_router_public_ip_address" {
   type = string
 }
 
-variable "home_private_cidr" {
+variable "on_premises_router_private_cidr" {
   type = string
   default = "192.168.88.0/24"
 }

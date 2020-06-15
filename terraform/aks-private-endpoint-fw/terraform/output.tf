@@ -21,3 +21,11 @@ output "kube-config" {
 output "resource-group-name" {
   value = azurerm_resource_group.rg.name
 }
+
+output "hub-vnet-id" {
+  value = azurerm_virtual_network.hub_vnet.id
+}
+
+output "spoke-vnet-id" {
+  value = azurerm_virtual_network.spoke_vnet.id
+}
