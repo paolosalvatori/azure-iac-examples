@@ -19,6 +19,10 @@
             "metadata": {
                 "description": "array of JSON virtual network objects"
             }
+        },
+        "isGatewayDeployed": {
+            "type": "bool",
+            "defaultValue": false
         }
     },
     "resources": [
@@ -34,7 +38,7 @@
             "properties": {
                 "allowVirtualNetworkAccess": true,
                 "allowForwardedTraffic": true,
-                "allowGatewayTransit": true,
+                "allowGatewayTransit": "[parameters('isGatewayDeployed')]",
                 "useRemoteGateways": false,
                 "remoteVirtualNetwork": {
                     "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('vNets')[copyIndex(1)].name, '-', parameters('suffix')))]"
@@ -54,7 +58,7 @@
                 "allowVirtualNetworkAccess": true,
                 "allowForwardedTraffic": true,
                 "allowGatewayTransit": false,
-                "useRemoteGateways": true,
+                "useRemoteGateways": "[parameters('isGatewayDeployed')]",
                 "remoteVirtualNetwork": {
                     "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('vNets')[0].name, '-', parameters('suffix')))]"
                 }

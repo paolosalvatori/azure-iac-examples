@@ -287,7 +287,7 @@
                 "description": "The version of Kubernetes."
             }
         },
-        "aksSubnetId": {
+        "aksSubnetRef": {
             "type": "string"
         },
         "suffix": {
@@ -311,6 +311,12 @@
             "metadata": {
                 "description": "Log Analytics workspace resource id"
             }
+        },
+        "appGwySubnetPrefix": {
+            "type": "string"
+        },
+        "appGwySku": {
+            "type": "string"
         }
     },
     "variables": {
@@ -336,6 +342,13 @@
                             "logAnalyticsWorkspaceResourceID": "[parameters('workspaceRef')]"
                         }
                     }
+                    /* "appgwingress": {
+                        "enabled": true,
+                        "config": {
+                            "appgw-subnet": "[parameters('appGwySubnetPrefix')]",
+                            "appgw-sku": "[parameters('appGwySku')]"
+                        }
+                    } */
                 },
                 "apiServerAccessProfile": {
                     "enablePrivateCluster": true
@@ -355,7 +368,7 @@
                         "osType": "Linux",
                         "type": "VirtualMachineScaleSets",
                         "storageProfile": "ManagedDisks",
-                        "vnetSubnetID": "[parameters('aksSubnetId')]",
+                        "vnetSubnetID": "[parameters('aksSubnetRef')]",
                         "enableAutoscaling": "[parameters('enableAutoScaling')]",
                         "mode": "System"
                     }

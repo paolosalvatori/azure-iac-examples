@@ -101,6 +101,14 @@
             "metadata": {
                 "description": "local router public IP"
             }
+        },
+        "deployGateway": {
+            "type": "bool",
+            "defaultValue": false
+        },
+        "appGwySku": {
+            "type": "string",
+            "defaultValue": "Standard_v2"
         }
     },
     "variables": {
@@ -115,6 +123,7 @@
         "aksNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/aks.json', parameters('_artifactsLocationSasToken')))]",
         "privateDnsLinkNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/private-dns-link.json', parameters('_artifactsLocationSasToken')))]",
         "gatewayNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/gateway.json', parameters('_artifactsLocationSasToken')))]",
+        "appGwyNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/appgwy.json', parameters('_artifactsLocationSasToken')))]",
         "workspaceName": "[concat('wks-', variables('suffix'))]"
     },
     "resources": [
@@ -194,6 +203,7 @@
             "comments": "This deployment links to the gateway.json nested ARM template",
             "name": "linkedTemplate-gateway",
             "type": "Microsoft.Resources/deployments",
+            "condition": "[parameters('deployGateway')]",
             "apiVersion": "2019-10-01",
             "dependsOn": [
                 "vnetCopy"
@@ -260,6 +270,9 @@
                     },
                     "vNets": {
                         "value": "[parameters('vNets')]"
+                    },
+                    "isGatewayDeployed": {
+                        "value": "[parameters('deployGateway')]"
                     }
                 }
             }
@@ -373,8 +386,14 @@
                     "aksVersion": {
                         "value": "[parameters('aksVersion')]"
                     },
-                    "aksSubnetId": {
+                    "aksSubnetRef": {
                         "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value[0].id]"
+                    },
+                    "appGwySubnetPrefix": {
+                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[3].properties.addressPrefix]"
+                    },
+                    "appGwySku": {
+                        "value": "[parameters('appGwySku')]"
                     },
                     "aksNodeVmSize": {
                         "value": "[parameters('aksNodeVmSize')]"
@@ -415,6 +434,43 @@
                     },
                     "vnetResourceGroupName": {
                         "value": "[resourceGroup().name]"
+                    }
+                }
+            }
+        },
+        {
+            "comments": "This deployment links to the appgwy.json nested ARM template",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "linkedTemplate-appgwy",
+            "condition": false,
+            "dependsOn": [
+                "vnetCopy"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "contentVersion": "1.0.0.0",
+                    "uri": "[variables('appGwyNestedTemplateUri')]"
+                },
+                "parameters": {
+                    "suffix": {
+                        "value": "[variables('suffix')]"
+                    },
+                    "sku": {
+                        "value": {
+                            "name": "[parameters('appGwySku')]",
+                            "tier": "[parameters('appGwySku')]"
+                        }
+                    },
+                    "subnetRef": {
+                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[3].id]"
+                    },
+                    "appGatewayAutoScaleMinCapacity": {
+                        "value": 0
+                    },
+                    "appGatewayAutoScaleMaxCapacity": {
+                        "value": 5
                     }
                 }
             }
