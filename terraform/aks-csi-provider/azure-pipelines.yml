@@ -68,7 +68,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'kv_user_object_id=$(KV_USER_OBJECT_ID)' -var 'object_id=$(OBJECT_ID)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
+                terraform plan -var 'ssh_key=$(SSH_KEY)' -var 'kv_user_object_id=$(KV_USER_OBJECT_ID)' -var 'object_id=$(OBJECT_ID)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
