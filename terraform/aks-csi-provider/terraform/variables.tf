@@ -27,7 +27,7 @@ variable "kubernetesVersion" {
 
 variable "aksNodeSku" {
   type    = string
-  default = "Standard_D2_v2"
+  default = "Standard_F2s_v2"
 }
 
 variable "object_id" {
