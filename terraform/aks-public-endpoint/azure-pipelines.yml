@@ -16,7 +16,9 @@ variables:
   # SSH_KEY # pipeline variable set in GUI
   # SHARED_VPN_SECRET # pipeline variable set in GUI
   # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
-  TF_PATH: ./terraform/aks-public-endpoint/terraform
+  - group: aks_terraform_vars
+  - name: TF_PATH
+    value: ./terraform/aks-public-endpoint/terraform
 
 stages:
 - stage: dev

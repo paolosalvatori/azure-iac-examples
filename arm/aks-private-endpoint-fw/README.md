@@ -28,12 +28,19 @@ The following resources are deployed as part of this solution
 - Azure Monitor workspace for AKS container insights data
 
 ### Prerequisites
-- Create an AAD group to use for RBAC admin access to the AKS cluster
-  - obtain the objectId of the group & use it as the ARM template deployment's 'aadAdminGroupObjectIds' parameter value
-  - add your AAD identity as a member of this group
+- Register Application Gateway Ingress Controller (AGIC) provider feature
+`PS C:\> Register-AzProviderFeature -ProviderNamespace Microsoft.ContainerService -FeatureName AKS-IngressApplicationGatewayAddon`
+
+### Script deployment
+- Create an AAD group to use for RBAC admin access to the AKS and save the objectId of the group.
+`PS C:\> $aadGroupObjectId = New-AzAdGroup -DisplayName '<AKS admin group name>' -PassThru | Select -ExpandProperty id`
+- Add your AAD identity as a member of this group
+`PS C:\> $aadUserObjectId = Get-AzAdUser -DisplayName '<your account name>' | Select -ExpandProperty id`
+`PS C:\> Add-AzADGroupMember -MemberObjectId $aadUserObjectId -TargetGroupObject $aadGroupObjectId`
+`PS C:\> ssh-keygen.exe # skip this step when using an existing key`  
+`PS C:\> .\scripts\deploy.ps1 -aadAdminGroupObjectIds @($aadGroupObjectId) -sshPublicKey '<your ssh public key text>'`
 
 ### Scenario Deployment Validation
-
 To validate that the AKS API service's private IP is accessible from the Linux VM. 
 NOTE: kubectl & azure cli tools are automatically installed by cloud-init.
 - SSH to the Azure Firewall public IP returned as output from the ARM deployment

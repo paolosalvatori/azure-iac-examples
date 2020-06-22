@@ -97,7 +97,9 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
     ]
 
     target_fqdns = [
+      "quay.io",
       "*.azmk8s.io",
+      "k8s.gcr.io",
       "*auth.docker.io",
       "*cloudflare.docker.io",
       "*cloudflare.docker.com",
