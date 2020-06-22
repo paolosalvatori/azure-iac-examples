@@ -11,9 +11,9 @@ trigger:
     - terraform/aks-public-endpoint/azure-pipelines.yml
 
 variables:
-  # ADO_SERVICE_CONNECTION_NAME: # pipeline variable set in GUI
-  # SSH_KEY # pipeline variable set in GUI
-  # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
+  # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars'
+  # SSH_KEY # variable set in variable group 'aks_terraform_vars'
+  # TF_STATE_STORAGE_ACCOUNT_NAME # variable set in variable group 'aks_terraform_vars'
   - group: aks_terraform_vars
   - name: TF_PATH
     value: ./terraform/aks-public-endpoint/terraform
