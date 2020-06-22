@@ -4,7 +4,7 @@ trigger:
 variables:
   #ADO_SERVICE_CONNECTION_NAME: $(ADO_SERVICE_CONNECTION_NAME) # pipeline variable set in GUI
   TF_STATE_STORAGE: $(TF_STATE_STORAGE_ACCOUNT_NAME) # pipeline variable set in GUI
-  TF_PATH: ./terraform
+  TF_PATH: ./terraform/aks-csi-provider/terraform
   UMID_NAME: 'aad-pod-identity-key-vault-user'
 
 stages:
