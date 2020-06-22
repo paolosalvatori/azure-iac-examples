@@ -31,9 +31,11 @@ variable "aksNodeSku" {
 }
 
 variable "object_id" {
+  type    = string
 }
 
 variable "kv_user_object_id" {
+  type    = string
 }
 
 variable "secret_name" {

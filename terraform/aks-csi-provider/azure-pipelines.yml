@@ -21,6 +21,8 @@ variables:
       value: ./terraform/aks-csi-provider/terraform
     - name: UMID_NAME
       value: 'aad-pod-identity-key-vault-user'
+    - name: KV_USER_OBJECT_ID
+      value: 57963f10-818b-406d-a2f6-6e758d86e259
 
 stages:
 - stage: dev
@@ -66,7 +68,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -out tfplan
+                terraform plan -var 'kv_user_object_id=$(KV_USER_OBJECT_ID)' -out tfplan
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
