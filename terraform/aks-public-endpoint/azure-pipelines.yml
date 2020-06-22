@@ -83,28 +83,4 @@ stages:
                 Write-Host "##vso[task.setvariable variable=KUBECONFIG]$($tfOutput.'kube-config'.value)"     
                 Write-Host "##vso[task.setvariable variable=HUB_VNET_ID]$($tfOutput.'hub-vnet-id'.value)"     
                 Write-Host "##vso[task.setvariable variable=SPOKE_VNET_ID]$($tfOutput.'spoke-vnet-id'.value)"           
-          - task: AzureCLI@2
-            displayName: 'Link private DNS zone to hub vnet'
-            inputs:
-              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
-              scriptType: pscore
-              scriptLocation: inlineScript
-              inlineScript: |
-                $privateDns = az network private-dns zone list `
-                --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) | ConvertFrom-Json
-
-                $privateDnsLinks = az network private-dns link vnet list `
-                --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) `
-                --zone-name $privateDns.name | ConvertFrom-Json
-
-                if ($privateDnsLinks.name -notcontains 'hub-vnet-link') {
-                  az network private-dns link vnet create `
-                    --name hub-vnet-link `
-                    --registration-enabled false `
-                    --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) `
-                    --virtual-network $(HUB_VNET_ID) `
-                    --zone-name $privateDns.name
-                } else {
-                  Write-Host "Private Dns zone: $($privateDns.name) is already linked to vnet: $(HUB_VNET_ID)"
-                }
-                
+ 
