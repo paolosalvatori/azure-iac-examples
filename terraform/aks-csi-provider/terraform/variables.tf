@@ -45,4 +45,5 @@ variable "secret_value" {
 }
 
 variable "sshKey" {
-  type    = string}
+  type    = string
+  }
