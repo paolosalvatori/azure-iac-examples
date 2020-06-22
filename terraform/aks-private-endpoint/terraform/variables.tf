@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-pe-fw"
+  default = "aks-private"
 }
 
 variable "resource_group_name" {
-  default = "aks-pe-fw-rg"
+  default = "aks-private-rg"
 }
 
 variable "location" {
@@ -30,7 +30,7 @@ variable "aks_node_sku" {
 
 variable "bastion_vm_sku" {
   type    = string
-  default = "Standard_B1ms"
+  default = "Standard_F2s_v2"
 }
 
 variable "ssh_key" {
