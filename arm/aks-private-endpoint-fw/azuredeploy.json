@@ -112,7 +112,7 @@
         }
     },
     "variables": {
-        "suffix": "[substring(replace(guid(resourceGroup().id), '-', ''), 0, 4)]",
+        "suffix": "[substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)]",
         "separatedAddressprefix": "[split(parameters('vNets')[0].subnets[1].addressPrefix,'.')]",
         "firewallPrivateIpAddress": "[concat(variables('separatedAddressprefix')[0], '.', variables('separatedAddressprefix')[1],'.',variables('separatedAddressprefix')[2], '.4')]",
         "udrNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/udr.json', parameters('_artifactsLocationSasToken')))]",
@@ -390,10 +390,7 @@
                         "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value[0].id]"
                     },
                     "appGwySubnetPrefix": {
-                        "value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[3].properties.addressPrefix]"
-                    },
-                    "appGwySku": {
-                        "value": "[parameters('appGwySku')]"
+                        "value": "10.1.1.0/24"
                     },
                     "aksNodeVmSize": {
                         "value": "[parameters('aksNodeVmSize')]"

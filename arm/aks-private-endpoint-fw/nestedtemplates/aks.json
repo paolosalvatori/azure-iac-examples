@@ -314,13 +314,11 @@
         },
         "appGwySubnetPrefix": {
             "type": "string"
-        },
-        "appGwySku": {
-            "type": "string"
         }
     },
     "variables": {
-        "aksClusterName": "[concat('aks' , '-', parameters('suffix'))]"
+        "aksClusterName": "[concat('aks' , '-', parameters('suffix'))]",
+        "appGwyName": "[concat('appgwy' , '-', parameters('suffix'))]"
     },
     "resources": [
         {
@@ -341,14 +339,14 @@
                         "config": {
                             "logAnalyticsWorkspaceResourceID": "[parameters('workspaceRef')]"
                         }
-                    }
-                    /* "appgwingress": {
+                    },
+                    "IngressApplicationGateway": {
                         "enabled": true,
                         "config": {
-                            "appgw-subnet": "[parameters('appGwySubnetPrefix')]",
-                            "appgw-sku": "[parameters('appGwySku')]"
+                            "applicationGatewayName": "[variables('appGwyName')]",
+                            "subnetPrefix": "[parameters('appGwySubnetPrefix')]"
                         }
-                    } */
+                    }
                 },
                 "apiServerAccessProfile": {
                     "enablePrivateCluster": true
