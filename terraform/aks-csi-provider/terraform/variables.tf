@@ -51,6 +51,6 @@ variable "secret_value" {
   default = "daddies"
 }
 
-variable "sshKey" {
+variable "ssh_key" {
   type    = string
   }

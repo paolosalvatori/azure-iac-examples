@@ -23,7 +23,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
   linux_profile {
     admin_username = "localadmin"
     ssh_key {
-      key_data = var.sshKey
+      key_data = var.ssh_key
     }
   }
 
