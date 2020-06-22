@@ -25,7 +25,6 @@ variable "kubernetes_version" {
 variable "aks_node_sku" {
   type    = string
   default = "Standard_D2_v2"
-
 }
 
 variable "ssh_key" {
