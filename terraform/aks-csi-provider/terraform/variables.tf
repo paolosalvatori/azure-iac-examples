@@ -34,8 +34,13 @@ variable "object_id" {
   type    = string
 }
 
-variable "kv_user_object_id" {
+variable "csi_provider_demo_key_vault_user_password" {
   type    = string
+}
+
+variable "csi_provider_demo_key_vault_user_name" {
+  type = string
+  default = "csi-provider-demo-key-vault-user"
 }
 
 variable "secret_name" {

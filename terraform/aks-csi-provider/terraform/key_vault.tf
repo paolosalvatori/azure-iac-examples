@@ -32,7 +32,7 @@ resource azurerm_key_vault "kv" {
 
     access_policy {
     tenant_id = var.tenant_id
-    object_id = var.kv_user_object_id
+    object_id = azuread_user.csi-provider-demo-key-vault-user.id
 
     key_permissions = [
       "get",
