@@ -12,9 +12,7 @@ trigger:
 
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # pipeline variable set in GUI
-  # ON_PREMISES_ROUTER_DNS_HOST_NAME #  variable set in GUI
   # SSH_KEY # pipeline variable set in GUI
-  # SHARED_VPN_SECRET # pipeline variable set in GUI
   # TF_STATE_STORAGE_ACCOUNT_NAME # pipeline variable set in GUI
   - group: aks_terraform_vars
   - name: TF_PATH
