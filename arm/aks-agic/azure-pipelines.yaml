@@ -2,8 +2,17 @@
 
 name: deployAzureResources
 
+# specific path build
 trigger:
-- master
+  branches:
+    include:
+    - master
+    - develop
+  paths:
+    include:
+    - arm/aks-agic/*
+    exclude:
+    - arm/aks-agic/azure-pipelines.yml
 
 variables:
   # ADO_SERVICE_CONECTION_NAME: # set in variable group
