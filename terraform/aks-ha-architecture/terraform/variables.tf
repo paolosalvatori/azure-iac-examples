@@ -6,7 +6,7 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "ha-aks"
+  default = "aks-ha"
 }
 
 variable "region1" {
@@ -30,7 +30,7 @@ variable "region1" {
     })
   })
   default = {
-    resourceGroupName = "ha-aks-aue-rg"
+    resourceGroupName = "aks-ha-aue-rg"
     location          = "australiaeast"
     locationShortName = "aue"
     hubVnet = {
@@ -87,7 +87,7 @@ variable "region2" {
     })
   })
   default = {
-    resourceGroupName = "ha-aks-aus-rg"
+    resourceGroupName = "aks-ha-aus-rg"
     location          = "australiasoutheast"
     locationShortName = "aus"
     hubVnet = {
@@ -125,22 +125,20 @@ variable "region2" {
 
 variable "kubernetesVersion" {
   type    = string
-  default = "1.16.7"
+  default = "1.16.9"
 }
 
 variable "aksNodeSku" {
   type    = string
-  default = "Standard_D2_v2"
+  default = "Standard_F2s_v2"
 
 }
 
 variable "bastionVmSku" {
   type    = string
-  default = "Standard_DS1_v2"
+  default = "Standard_F2s_v2"
 }
 
 variable "sshKey" {
   type    = string
 }
-
-

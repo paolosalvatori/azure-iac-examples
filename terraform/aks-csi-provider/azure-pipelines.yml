@@ -1,11 +1,27 @@
+# specific path build
 trigger:
-  - '*'
+  branches:
+    include:
+    - master
+    - develop
+  paths:
+    include:
+    - terraform/aks-csi-provider/terraform/*
+    exclude:
+    - terraform/aks-csi-provider/azure-pipelines.yml
   
 variables:
-  #ADO_SERVICE_CONNECTION_NAME: $(ADO_SERVICE_CONNECTION_NAME) # pipeline variable set in GUI
-  TF_STATE_STORAGE: $(TF_STATE_STORAGE_ACCOUNT_NAME) # pipeline variable set in GUI
-  TF_PATH: ./terraform/aks-csi-provider/terraform
-  UMID_NAME: 'aad-pod-identity-key-vault-user'
+  # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars'
+  # ON_PREMISES_ROUTER_DNS_HOST_NAME # variable set in variable group 'aks_terraform_vars'
+  # SSH_KEY # variable set in variable group 'aks_terraform_vars'
+  # SHARED_VPN_SECRET # variable set in variable group 'aks_terraform_vars'
+  # TF_STATE_STORAGE_ACCOUNT_NAME # variable set in variable group 'aks_terraform_vars'
+  TF_PATH: 
+    - group: aks_terraform_vars
+    - name: TF_PATH
+      value: ./terraform/aks-private-endpoint-fw/terraform
+    - name: UMID_NAME
+      value: 'aad-pod-identity-key-vault-user'
 
 stages:
 - stage: dev

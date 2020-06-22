@@ -6,7 +6,7 @@ trigger:
     - develop
   paths:
     include:
-    - terraform/aks-public-endpoint/*
+    - terraform/aks-public-endpoint/terraform/*
     exclude:
     - terraform/aks-public-endpoint/azure-pipelines.yml
 
