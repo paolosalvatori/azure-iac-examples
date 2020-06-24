@@ -22,7 +22,7 @@ variables:
   - name: acrResourceGroupName
     value: acr-aks-slb-rg
   - name: containerName
-    value: 'templates'
+    value: nestedtemplates
   - name: timeStamp
     value: $[format('{0:yyyy}-{0:MM}-{0:dd}-{0:HHmmss}', pipeline.startTime)]
   - name: aksVersion
