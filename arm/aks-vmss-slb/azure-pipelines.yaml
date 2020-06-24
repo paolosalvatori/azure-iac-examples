@@ -87,7 +87,6 @@ stages:
   displayName: 'dev environment release'
   variables:
     environmentName: dev
-    resourceGroupName: $(resourceGroupName)
     tags: '{"costCentre":"478132","project":"test-project"}'
   jobs:
     - deployment: 
