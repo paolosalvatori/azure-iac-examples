@@ -156,18 +156,12 @@ stages:
               deploymentMode: Incremental
               deploymentName: "resourceDeployment-$(timeStamp)"
               overrideParameters: 
-                -aksMinNodeCount $(aksMinNodeCount)
-                -aksMaxNodeCount $(aksMaxNodeCount)
                 -storageUri $(storageContainerUri)
                 -sasToken $(storageAccountSasToken)
                 -aksVersion $(aksVersion)
                 -aksNodeCount $(aksNodeCount)
                 -aksNodeVMSize $(aksNodeVMSize)
                 -maxPods $(maxPods)
-                -aksServicePrincipalObjectId $(aksServicePrincipalObjectId)
-                -aksServicePrincipalAppId $(aksServicePrincipalAppId)
-                -aksServicePrincipalSecret $(aksServicePrincipalSecret)
-                -applicationGatewaySku $(applicationGatewaySku)
           - task: ARM Outputs@5
             name: 'GetResourceDeploymentOutput'
             displayName: 'Get ARM Resource Deployment Output'
