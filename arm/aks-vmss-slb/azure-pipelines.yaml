@@ -139,7 +139,7 @@ stages:
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptLocation: 'inlineScript'
-              inlineScript: 'az storage blob upload-batch -d $(containerName) -s ./nestedtemplates/ --pattern *.json --account-name $(storageAccountName)'
+              inlineScript: 'az storage blob upload-batch -d $(containerName) -s ./arm/aks-vmss-slb/nestedtemplates/ --pattern *.json --account-name $(storageAccountName)'
       
           - task: AzureResourceGroupDeployment@2
             name: 'deployResources'
