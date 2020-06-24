@@ -87,9 +87,8 @@ stages:
   displayName: 'dev environment release'
   variables:
     environmentName: dev
-    projectName: "$(environmentName)-aks-slb"
-    resourceGroupName: "$(projectName)-rg"
-    tags: '{"costCentre":"478132","project":"$(projectName)"}'
+    resourceGroupName: $(resourceGroupName)
+    tags: '{"costCentre":"478132","project":"test-project"}'
   jobs:
     - deployment: 
       pool:
