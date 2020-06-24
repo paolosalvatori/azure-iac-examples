@@ -115,7 +115,7 @@ stages:
               action: Create Or Update Resource Group
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               resourceGroupName: $(resourceGroupName)
-              csmFile: ./arm/aks-vmss-slb/templates/nested/storage.json
+              csmFile: ./arm/aks-vmss-slb/templates/nestedtemplates/storage.json
               location: $(location)
               templateLocation: Linked artifact
               deploymentMode: Incremental
