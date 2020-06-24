@@ -19,6 +19,8 @@ variables:
   - group: aks_arm_vars
   - name: location
     value: australiaeast
+  - name: resourceGroupName
+    value: 'aks-vmss-slb-rg'
   - name: containerName
     value: nestedtemplates
   - name: timeStamp
