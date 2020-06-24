@@ -139,7 +139,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $outputs = $(storageDeploymentOutput) | ConvertFrom-Json
+                $outputs = '$(storageDeploymentOutput)' | ConvertFrom-Json
                 foreach ($output in $outputs.PSObject.Properties) {
                   Write-Host "$($output.Name) - $($output.Value.value)"
                   Write-Host "##vso[task.setvariable variable=$($output.Name);]$($output.Value.value)" 
