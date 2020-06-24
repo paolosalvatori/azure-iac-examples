@@ -19,8 +19,6 @@ variables:
   - group: aks_arm_vars
   - name: location
     value: australiaeast
-  - name: acrResourceGroupName
-    value: acr-aks-slb-rg
   - name: containerName
     value: nestedtemplates
   - name: timeStamp
@@ -56,7 +54,7 @@ stages:
           inputs:
             action: Create Or Update Resource Group
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
-            resourceGroupName: $(acrResourceGroupName)
+            resourceGroupName: $(resourceGroupName)
             csmFile: ./arm/aks-vmss-slb/nestedtemplates/acr.json
             location: $(location)
             templateLocation: Linked artifact
@@ -71,7 +69,7 @@ stages:
           inputs:
             ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
             ConnectedServiceNameARM: $(ADO_SERVICE_CONNECTION_NAME)
-            resourceGroupName: $(acrResourceGroupName)
+            resourceGroupName: $(resourceGroupName)
             whenLastDeploymentIsFailed: 'fail'
             deploymentNameFilter: "acrDeployment-$(timeStamp)"
 
