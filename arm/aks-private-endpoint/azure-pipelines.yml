@@ -85,14 +85,15 @@ stages:
             action: Create Or Update Resource Group
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
             resourceGroupName: $(resourceGroupName)
-            csmFile: ./arm/aks-private-endpoint/nestedtemplates/azuredeploy.json
-            csmParametersFile: ./arm/aks-private-endpoint/nestedtemplates/azuredeploy.parameters.json
+            csmFile: ./arm/aks-private-endpoint/azuredeploy.json
+            csmParametersFile: ./arm/aks-private-endpoint/azuredeploy.parameters.json
             location: $(LOCATION)
             templateLocation: Linked artifact
             deploymentMode: Incremental
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
-            overrideParameters: -certificatePassword $(certPassword) `
+            overrideParameters: 
+              -certificatePassword $(certPassword) `
               -storageUri $(storageContainerUri) `
               -keyVaultName $(keyVaultName) `
               -keyVaultUri $(keyVaultUri) `
