@@ -93,15 +93,9 @@ stages:
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
             overrideParameters: 
-              -certificatePassword $(certPassword) `
               -storageUri $(storageContainerUri) `
-              -keyVaultName $(keyVaultName) `
-              -keyVaultUri $(keyVaultUri) `
-              -keyVaultId $(keyVaultId) `
               -sasToken $(storageAccountSasToken) `
-              -apiHostName api `
-              -portalHostName portal `
-              -domainName $(domainName)
+              -sskPublciKey $(SSH_KEY)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
