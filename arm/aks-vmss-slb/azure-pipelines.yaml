@@ -119,6 +119,7 @@ stages:
               location: $(location)
               templateLocation: Linked artifact
               deploymentMode: Incremental
+              deploymentOutputs: storageDeploymentOutput
               deploymentName: "storageDeployment-$(timeStamp)"
               overrideParameters: -sasTokenExpiry $(sasTokenExpiry) -storageSku Standard_LRS -storageKind StorageV2 -tags $(tags) -containerName $(containerName)
 
@@ -138,7 +139,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $outputs = "storageDeployment-$(timeStamp)" | ConvertFrom-Json
+                $outputs = $(storageDeploymentOutput) | ConvertFrom-Json
                 foreach ($output in $outputs.PSObject.Properties) {
                   Write-Host "$($output.Name) - $($output.Value.value)"
                   Write-Host "##vso[task.setvariable variable=$($output.Name);]$($output.Value.value)" 
