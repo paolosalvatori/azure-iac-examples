@@ -125,13 +125,24 @@ stages:
           - task: ARM Outputs@5
             name: 'GetStorageDeploymentOutput'
             displayName: 'Get ARM Storage Deployment Output'
-            enabled: true
+            enabled: false
             inputs:
               ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
               ConnectedServiceNameARM: $(ADO_SERVICE_CONNECTION_NAME)
               resourceGroupName: $(resourceGroupName)
               whenLastDeploymentIsFailed: 'fail'
               deploymentNameFilter: "storageDeployment-$(timeStamp)"
+
+          - task: PowerShell@2
+            displayName: 'Get Storage Deployment Outputs'
+            inputs:
+              targetType: 'inline'
+              script: |
+                $outputs = "storageDeployment-$(timeStamp)" | ConvertFrom-Json
+                foreach ($output in $outputs.PSObject.Properties) {
+                  Write-Host "$($output.Name) - $($output.Value.value)"
+                  Write-Host "##vso[task.setvariable variable=$($output.Name);]$($output.Value.value)" 
+                }
 
           - task: AzureCLI@1
             displayName: 'Copy ARM template files to Azure blob storage'
