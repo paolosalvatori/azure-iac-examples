@@ -10,9 +10,6 @@
             "type": "string",
             "defaultValue": "StorageV2"
         },
-        "tags": {
-            "type": "object"
-        },
         "containerName": {
             "type": "string"
         },
@@ -43,7 +40,6 @@
             },
             "kind": "[parameters('storageKind')]",
             "location": "[resourceGroup().location]",
-            "tags": "[parameters('tags')]",
             "scale": null,
             "properties": {
                 "networkAcls": {
