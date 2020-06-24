@@ -57,7 +57,7 @@ stages:
             action: Create Or Update Resource Group
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
             resourceGroupName: $(acrResourceGroupName)
-            csmFile: ./nestedtemplates/acr.json
+            csmFile: ./arm/aks-vmss-slb/nestedtemplates/acr.json
             location: $(location)
             templateLocation: Linked artifact
             deploymentMode: Incremental
@@ -115,7 +115,7 @@ stages:
               action: Create Or Update Resource Group
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               resourceGroupName: $(resourceGroupName)
-              csmFile: ./templates/nested/storage.json
+              csmFile: ./arm/aks-vmss-slb/templates/nested/storage.json
               location: $(location)
               templateLocation: Linked artifact
               deploymentMode: Incremental
@@ -149,8 +149,8 @@ stages:
               action: Create Or Update Resource Group
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               resourceGroupName: $(resourceGroupName)
-              csmFile: ./azuredeploy.json
-              csmParametersFile: ./azuredeploy.parameters.json
+              csmFile: ./arm/aks-vmss-slb/azuredeploy.json
+              csmParametersFile: ./arm/aks-vmss-slb/azuredeploy.parameters.json
               location: $(location)
               templateLocation: Linked artifact
               deploymentMode: Incremental
@@ -178,21 +178,4 @@ stages:
               resourceGroupName: $(resourceGroupName)
               whenLastDeploymentIsFailed: 'fail'
               deploymentNameFilter: "resourceDeployment-$(timeStamp)"
-          - task: HelmInstaller@1
-            displayName: 'Install Helm'
-            enabled: false
-          - task: AzureCLI@1
-            displayName: 'Install Istio'
-            enabled: false
-            inputs:
-              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
-              scriptLocation: scriptPath
-              scriptPath: ./scripts/install-istio.sh
-              arguments: -r $(resourceGroupName) -n $(aksName)
-          - task: AzureCLI@1
-            displayName: 'Install Voting App'
-            enabled: false
-            inputs:
-              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
-              scriptLocation: scriptPath
-              scriptPath: ./scripts/install-apps.sh
+
