@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-public"
+  default = "aks-public-demo"
 }
 
 variable "resource_group_name" {
-  default = "aks-public-rg"
+  default = "aks-public-demo-rg"
 }
 
 variable "location" {
@@ -24,7 +24,7 @@ variable "kubernetes_version" {
 
 variable "aks_node_sku" {
   type    = string
-  default = "Standard_F2s_v2"
+  default = "Standard_F8s_v2"
 }
 
 variable "ssh_key" {
