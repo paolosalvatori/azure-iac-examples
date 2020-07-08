@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-public-demo"
+  default = "aks-public"
 }
 
 variable "resource_group_name" {
-  default = "aks-public-demo-rg"
+  default = "aks-public-rg"
 }
 
 variable "location" {
@@ -19,7 +19,7 @@ variable "location" {
 
 variable "kubernetes_version" {
   type    = string
-  default = "1.16.9"
+  default = "1.16.10"
 }
 
 variable "aks_node_sku" {
