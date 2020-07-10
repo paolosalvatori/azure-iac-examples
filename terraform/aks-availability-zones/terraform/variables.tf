@@ -19,7 +19,7 @@ variable "location" {
 
 variable "kubernetes_version" {
   type    = string
-  default = "1.16.10"
+  default = "1.17.7"
 }
 
 variable "aks_node_sku" {
