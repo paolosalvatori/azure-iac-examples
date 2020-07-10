@@ -6,15 +6,15 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-az"
+  default = "aks-az-sea"
 }
 
 variable "resource_group_name" {
-  default = "aks-az-rg"
+  default = "aks-az-sea-rg"
 }
 
 variable "location" {
-  default = "australiaeast"
+  default = "southeastasia"
 }
 
 variable "kubernetes_version" {
