@@ -23,13 +23,12 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
   dns_prefix              = local.aks_cluster_name
   kubernetes_version      = var.kubernetes_version
 
-  /* addon_profile {
+  addon_profile {
      oms_agent {
       enabled                    = true
       log_analytics_workspace_id = azurerm_log_analytics_workspace.workspace.id
     }
   }
-  */
 
   linux_profile {
     admin_username = "localadmin"
