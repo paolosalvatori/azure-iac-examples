@@ -53,6 +53,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
     enable_auto_scaling = true
     name                = "default"
     type                = "VirtualMachineScaleSets"
+    availability_zones  = ["1","2","3"]
     max_count           = 5
     min_count           = 1
     node_count          = 1
