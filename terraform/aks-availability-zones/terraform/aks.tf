@@ -3,7 +3,7 @@ locals {
 }
 
 resource azurerm_kubernetes_cluster_node_pool "aks_cluster_node_pool_2" {
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
   name                = "pool1"
   vnet_subnet_id      = azurerm_subnet.spoke_subnet_2.id
   enable_auto_scaling = true
