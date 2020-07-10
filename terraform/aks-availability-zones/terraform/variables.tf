@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-az-sea"
+  default = "aks-az"
 }
 
 variable "resource_group_name" {
-  default = "aks-az-sea-rg"
+  default = "aks-az-rg"
 }
 
 variable "location" {
@@ -29,7 +29,7 @@ variable "aks_node_sku" {
 
 variable "max_pods" {
   type = number
-  default = 100
+  default = 50
 }
 
 variable "os_disk_size_gb" {
