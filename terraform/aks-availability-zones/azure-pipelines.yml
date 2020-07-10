@@ -8,7 +8,7 @@ trigger:
     include:
     - terraform/aks-availability-zones/terraform/*
     exclude:
-    - terraform/aks-public-endpointaks-availability-zones/azure-pipelines.yml
+    - terraform/aks-availability-zones/azure-pipelines.yml
 
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars'

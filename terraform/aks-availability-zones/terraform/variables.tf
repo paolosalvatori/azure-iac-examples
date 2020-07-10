@@ -28,12 +28,12 @@ variable "aks_node_sku" {
 }
 
 variable "max_pods" {
-  type = integer
+  type = number
   default = 100
 }
 
 variable "os_disk_size_gb" {
-  type = integer
+  type = number
   default = 250
 }
 
