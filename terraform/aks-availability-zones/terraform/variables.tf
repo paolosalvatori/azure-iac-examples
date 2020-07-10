@@ -24,7 +24,7 @@ variable "kubernetes_version" {
 
 variable "aks_node_sku" {
   type    = string
-  default = "Standard_F8s_v2"
+  default = "Standard_F2s_v2"
 }
 
 variable "max_pods" {

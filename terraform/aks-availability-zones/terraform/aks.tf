@@ -12,7 +12,7 @@ resource azurerm_kubernetes_cluster_node_pool "aks_cluster_node_pool_2" {
   max_pods            = var.max_pods
   max_count           = 5
   min_count           = 1
-  node_count          = 1
+  node_count          = 3
   os_disk_size_gb     = var.os_disk_size_gb
 }
 
@@ -56,7 +56,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
     availability_zones  = ["1","2","3"]
     max_count           = 5
     min_count           = 1
-    node_count          = 1
+    node_count          = 2
     vm_size             = var.aks_node_sku
     max_pods            = var.max_pods
     os_disk_size_gb     = var.os_disk_size_gb
