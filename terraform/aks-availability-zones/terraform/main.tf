@@ -11,3 +11,7 @@ terraform {
 provider "azurerm" {
   features {}
 }
+
+resource "random_id" "unique_name" {
+  byte_length = 8
+}
