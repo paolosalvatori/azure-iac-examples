@@ -13,5 +13,5 @@ provider "azurerm" {
 }
 
 resource "random_id" "unique_name" {
-  byte_length = 8
+  byte_length = 4
 }

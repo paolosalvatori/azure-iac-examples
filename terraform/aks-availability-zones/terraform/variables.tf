@@ -9,10 +9,6 @@ variable "prefix" {
   default = "aks-az"
 }
 
-variable "resource_group_name" {
-  default = "aks-az-rg"
-}
-
 variable "location" {
   default = "southeastasia"
 }
