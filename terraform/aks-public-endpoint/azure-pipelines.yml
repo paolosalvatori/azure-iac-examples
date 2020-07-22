@@ -93,7 +93,7 @@ stages:
                 Write-Host "##vso[task.setvariable variable=SPOKE_VNET_ID]$($tfOutput.'spoke-vnet-id'.value)"       
                 Write-Host "##vso[task.setvariable variable=ACR_NAME]$($tfOutput.'acr-name'.value)"           
           - task: AzureCLI@2
-            displayName: deploy Flux controller
+            displayName: Deploy Flux controller
             enabled: true
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)

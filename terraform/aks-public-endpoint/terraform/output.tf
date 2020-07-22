@@ -12,6 +12,7 @@ output "aks-cluster-id" {
 
 output "kube-config" {
   value = azurerm_kubernetes_cluster.aks_cluster.kube_config_raw
+}
 
 output "acr-name" {
   value = azurerm_container_registry.acr.name
