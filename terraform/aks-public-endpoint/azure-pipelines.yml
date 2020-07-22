@@ -105,6 +105,8 @@ stages:
                 CLUSTER_MANAGED_IDENTITY_OBJECT_ID=$(az aks show -g $(RESOURCE_GROUP_NAME) --name $(CLUSTER_NAME) --query '[identityProfile.[kubeletidentity.objectId]]' -o tsv)
                 CLUSTER_MANAGED_IDENTITY_APP_ID=$(az aks show -g $(RESOURCE_GROUP_NAME) --name $(CLUSTER_NAME) --query '[identityProfile.[kubeletidentity.clientId]]' -o tsv)
                 
+                az aks get-credentials -g $(RESOURCE_GROUP_NAME) -n $(CLUSTER_NAME) --admin
+
                 echo "integrating AKS cluster: '$CLUSTER_NAME' with Azure Container Registry: '$ACR_NAME'"
                 az aks update -n $CLUSTER_NAME -g $RESOURCE_GROUP_NAME --attach-acr $ACR_NAME
                 
