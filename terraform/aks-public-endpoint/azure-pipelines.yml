@@ -108,7 +108,9 @@ stages:
                 echo "getting aks kubeconfig file"
                 az aks get-credentials -g $(RESOURCE_GROUP_NAME) -n $(CLUSTER_NAME)
                 KUBECONFIG=/home/vsts/.kube/config
-                kubectl get all -A
+
+                echo "installing fluxctl"
+                snap install fluxctl
 
                 echo "integrating AKS cluster: '$CLUSTER_NAME' with Azure Container Registry: '$ACR_NAME'"
                 az aks update -n $CLUSTER_NAME -g $RESOURCE_GROUP_NAME --attach-acr $ACR_NAME
