@@ -86,13 +86,12 @@ stages:
 - stage: 'dev'
   displayName: 'dev environment release'
   variables:
-    environmentName: dev
     tags: '{"costCentre":"478132","project":"test-project"}'
   jobs:
     - deployment: 
       pool:
         vmImage: 'ubuntu-latest'
-      environment: $(environmentName)
+      environment: aks-arm-public-dev
       strategy:
        runOnce:
         deploy:

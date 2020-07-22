@@ -33,8 +33,8 @@ stages:
   - deployment: deploy_aks_infra
     displayName: deploy AKS infrastructure
     pool:
-      vmImage: 'ubuntu-latest'
-    environment: aks-private-fw
+      vmImage: ubuntu-latest
+    environment: aks-public-endpoint-tf
     strategy:
       runOnce:
         deploy:
