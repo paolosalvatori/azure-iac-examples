@@ -110,7 +110,7 @@ stages:
                 KUBECONFIG=/home/vsts/.kube/config
 
                 echo "installing fluxctl"
-                sudo snap install fluxctl
+                sudo snap install fluxctl --classic
 
                 echo "integrating AKS cluster: '$CLUSTER_NAME' with Azure Container Registry: '$ACR_NAME'"
                 az aks update -n $CLUSTER_NAME -g $RESOURCE_GROUP_NAME --attach-acr $ACR_NAME
