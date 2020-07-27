@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-public"
+  default = "azure-aks"
 }
 
 variable "resource_group_name" {
-  default = "aks-public-rg"
+  default = "azure-aks-rg"
 }
 
 variable "location" {
