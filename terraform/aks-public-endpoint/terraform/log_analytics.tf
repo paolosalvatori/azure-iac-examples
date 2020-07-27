@@ -1,5 +1,5 @@
 locals {
-  ws_name = "${var.prefix}-ws"
+  ws_name = "${var.prefix}-${random_id.id.hex}-ws"
 }
 
 resource azurerm_log_analytics_workspace "workspace" {

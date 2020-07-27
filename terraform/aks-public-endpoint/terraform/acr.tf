@@ -1,5 +1,5 @@
 locals {
-  acr_name = replace("${var.prefix}-acr", "-", "")
+  acr_name = replace("${var.prefix}-${random_id.id.hex}-acr", "-", "")
 }
 
 resource "azurerm_container_registry" "acr" {
