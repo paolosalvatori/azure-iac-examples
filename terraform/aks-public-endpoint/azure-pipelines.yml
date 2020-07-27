@@ -17,6 +17,8 @@ variables:
   - group: aks_terraform_vars
   - name: TF_PATH
     value: ./terraform/aks-public-endpoint/terraform
+  - name: LOCATION
+    value: eastus
   - name: NAMESPACE
     value: dev
   - name: FLUX_NAMESPACE
@@ -69,7 +71,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'ssh_key=$(SSH_KEY)' -out tfplan 
+                terraform plan -var 'ssh_key=$(SSH_KEY)' -var 'location=$(LOCATION)' -out tfplan 
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
@@ -94,7 +96,7 @@ stages:
                 Write-Host "##vso[task.setvariable variable=ACR_NAME]$($tfOutput.'acr-name'.value)"           
           - task: AzureCLI@2
             displayName: Deploy Flux controller
-            enabled: true
+            enabled: false
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptLocation: inlineScript
