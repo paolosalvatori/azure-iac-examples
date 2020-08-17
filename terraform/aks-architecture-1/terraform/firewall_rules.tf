@@ -1,3 +1,34 @@
+resource "azurerm_firewall_nat_rule_collection" "nat_rules" {
+  name                = "nat-rules"
+  azure_firewall_name = azurerm_firewall.az_firewall.name
+  resource_group_name = azurerm_resource_group.vnet_rg.name
+  priority            = 1000
+  action              = "Dnat"
+
+  rule {
+    name = "ssh-rule"
+
+    source_addresses = [
+      "0.0.0.0/0"
+    ]
+
+    destination_ports = [
+      "22",
+    ]
+
+    destination_addresses = [
+      azurerm_public_ip.az_firewall_pip.ip_address
+    ]
+
+    translated_port = 22
+    translated_address = azurerm_network_interface.bastion_vm_nic.ip_address
+
+    protocols = [
+      "TCP"
+    ]
+  }
+}
+
 resource azurerm_firewall_network_rule_collection "az_network_rules" {
   name                = "network-rules"
   azure_firewall_name = azurerm_firewall.az_firewall.name
