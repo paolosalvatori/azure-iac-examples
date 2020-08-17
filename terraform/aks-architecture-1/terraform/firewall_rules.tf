@@ -17,7 +17,7 @@ resource "azurerm_firewall_nat_rule_collection" "nat_rules" {
     ]
 
     destination_addresses = [
-      azurerm_public_ip.az_firewall_pip.private_ip_address
+      azurerm_public_ip.az_firewall_pip.ip_address
     ]
 
     translated_port = 22
