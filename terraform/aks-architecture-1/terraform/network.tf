@@ -85,7 +85,7 @@ resource azurerm_subnet "prod_spoke_subnet_2" {
   address_prefixes     = ["10.1.1.0/24"]
 }
 
-resource azurerm_subnet "prod_vsubnet_3" {
+resource azurerm_subnet "prod_spoke_subnet_3" {
   name                 = "prod-sql-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.prod_spoke_vnet.name
@@ -173,11 +173,25 @@ resource azurerm_subnet_route_table_association "nonprod_spoke_subnet_3_route_ta
   }
 }
 
-resource azurerm_virtual_network_peering "hub_spoke_peer" {
-  name                         = local.hub_to_spoke_peer_name
+resource azurerm_virtual_network_peering "hub_prod_spoke_peer" {
+  name                         = local.hub_to_prod_spoke_peer_name
   resource_group_name          = azurerm_resource_group.vnet_rg.name
   virtual_network_name         = azurerm_virtual_network.hub_vnet.name
-  remote_virtual_network_id    = azurerm_virtual_network.spoke_vnet.id
+  remote_virtual_network_id    = azurerm_virtual_network.prod_spoke_vnet.id
+  allow_forwarded_traffic      = true
+  allow_virtual_network_access = true
+  allow_gateway_transit        = true
+
+  depends_on = [
+    azurerm_virtual_network_gateway.vpngwy,
+  ]
+}
+
+resource azurerm_virtual_network_peering "hub_nonprod_spoke_peer" {
+  name                         = local.hub_to_nonprod_spoke_peer_name
+  resource_group_name          = azurerm_resource_group.vnet_rg.name
+  virtual_network_name         = azurerm_virtual_network.hub_vnet.name
+  remote_virtual_network_id    = azurerm_virtual_network.nonprod_spoke_vnet.id
   allow_forwarded_traffic      = true
   allow_virtual_network_access = true
   allow_gateway_transit        = true
@@ -190,7 +204,7 @@ resource azurerm_virtual_network_peering "hub_spoke_peer" {
 resource azurerm_virtual_network_peering "prod_spoke_hub_peer" {
   name                         = local.prod_spoke_to_hub_peer_name
   resource_group_name          = azurerm_resource_group.vnet_rg.name
-  virtual_network_name         = azurerm_virtual_network.prod_vnet.name
+  virtual_network_name         = azurerm_virtual_network.prod_spoke_vnet.name
   remote_virtual_network_id    = azurerm_virtual_network.hub_vnet.id
   allow_forwarded_traffic      = true
   allow_virtual_network_access = true
@@ -204,7 +218,7 @@ resource azurerm_virtual_network_peering "prod_spoke_hub_peer" {
 resource azurerm_virtual_network_peering "nonprod_spoke_hub_peer" {
   name                         = local.nonprod_spoke_to_hub_peer_name
   resource_group_name          = azurerm_resource_group.vnet_rg.name
-  virtual_network_name         = azurerm_virtual_network.nonprod_vnet.name
+  virtual_network_name         = azurerm_virtual_network.nonprod_spoke_vnet.name
   remote_virtual_network_id    = azurerm_virtual_network.hub_vnet.id
   allow_forwarded_traffic      = true
   allow_virtual_network_access = true
