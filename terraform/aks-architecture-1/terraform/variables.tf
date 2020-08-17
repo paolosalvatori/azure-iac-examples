@@ -5,6 +5,10 @@ variable "tags" {
   }
 }
 
+resource "random_id" "laws" {
+  byte_length = 4
+}
+
 variable "prefix" {
   default = "test"
 }

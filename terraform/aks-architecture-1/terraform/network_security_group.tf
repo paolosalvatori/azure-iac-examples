@@ -4,8 +4,8 @@ locals {
 
 resource azurerm_network_security_group "bastion_subnet_nsg" {
   name                = local.bastion_rule_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.mgmt_rg.location
+  resource_group_name = azurerm_resource_group.mgmt_rg.name
 
   security_rule {
     name                       = "deny-bastion-subnet-internet-inbound-ssh"

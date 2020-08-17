@@ -1,7 +1,7 @@
 resource azurerm_firewall_network_rule_collection "az_network_rules" {
   name                = "network-rules"
   azure_firewall_name = azurerm_firewall.az_firewall.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = azurerm_resource_group.vnet_rg.name
   priority            = 1000
   action              = "Allow"
 
@@ -97,7 +97,7 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
 resource azurerm_firewall_application_rule_collection "az_application_rules" {
   name                = "application-rules"
   azure_firewall_name = azurerm_firewall.az_firewall.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = azurerm_resource_group.vnet_rg.name
   priority            = 1000
   action              = "Allow"
 
@@ -208,7 +208,7 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       "*.azure-automation.net",
       "*.azure.com",
       "gov-prod-policy-data.trafficmanager.net",
-      "*.gk.${azurerm_resource_group.rg.location}.azmk8s.io",
+      "*.gk.${azurerm_resource_group.vnet_rg.location}.azmk8s.io",
       "*.monitoring.azure.com",
       "*.oms.opinsights.azure.com",
       "*.ods.opinsights.azure.com",

@@ -6,8 +6,8 @@ locals {
 
 resource azurerm_public_ip "az_firewall_pip" {
   name                = local.fw_pip_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.vnet_rg.location
+  resource_group_name = azurerm_resource_group.vnet_rg.name
   allocation_method   = "Static"
   sku                 = "Standard"
   tags                = var.tags
@@ -15,8 +15,8 @@ resource azurerm_public_ip "az_firewall_pip" {
 
 resource azurerm_firewall "az_firewall" {
   name                = local.fw_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.vnet_rg.location
+  resource_group_name = azurerm_resource_group.vnet_rg.name
 
   ip_configuration {
     name                 = "configuration"
