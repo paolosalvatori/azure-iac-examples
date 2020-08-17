@@ -1,45 +1,42 @@
-/* output "aks-node-rg" {
-  value = azurerm_kubernetes_cluster.aks_cluster.node_resource_group
+output "prod-aks-node-rg" {
+  value = azurerm_kubernetes_cluster.prod_aks_cluster.node_resource_group
 }
 
-output "aks-cluster-name" {
-  value = azurerm_kubernetes_cluster.aks_cluster.name
+output "prod-aks-cluster-name" {
+  value = azurerm_kubernetes_cluster.prod_aks_cluster.name
 }
 
-output "aks-cluster-id" {
-  value = azurerm_kubernetes_cluster.aks_cluster.id
+output "prod-aks-cluster-id" {
+  value = azurerm_kubernetes_cluster.Pprod_aks_cluster.id
 }
 
-output "aks-cluster-private-fqdn" {
-  value = azurerm_kubernetes_cluster.aks_cluster.private_fqdn
+output "prod-aks-cluster-private-fqdn" {
+  value = azurerm_kubernetes_cluster.prod_aks_cluster.private_fqdn
 }
 
-output "kube-config" {
-  value = azurerm_kubernetes_cluster.aks_cluster.kube_config_raw
+output "prod-kube-config" {
+  value = azurerm_kubernetes_cluster.prod_aks_cluster.kube_config_raw
 }
 
-##########
-
-output "aks-node-rg" {
-  value = azurerm_kubernetes_cluster.aks_cluster.node_resource_group
+output "nonprod-aks-node-rg" {
+  value = azurerm_kubernetes_cluster.nonprod_aks_cluster.node_resource_group
 }
 
-output "aks-cluster-name" {
-  value = azurerm_kubernetes_cluster.aks_cluster.name
+output "nonprod-aks-cluster-name" {
+  value = azurerm_kubernetes_cluster.nonprod_aks_cluster.name
 }
 
-output "aks-cluster-id" {
-  value = azurerm_kubernetes_cluster.aks_cluster.id
+output "nonprod-aks-cluster-id" {
+  value = azurerm_kubernetes_cluster.nonprod_aks_cluster.id
 }
 
-output "aks-cluster-private-fqdn" {
-  value = azurerm_kubernetes_cluster.aks_cluster.private_fqdn
+output "nonprod-aks-cluster-private-fqdn" {
+  value = azurerm_kubernetes_cluster.nonprod_aks_cluster.private_fqdn
 }
 
-output "kube-config" {
-  value = azurerm_kubernetes_cluster.aks_cluster.kube_config_raw
-} */
-
+output "nonprod-kube-config" {
+  value = azurerm_kubernetes_cluster.nonprod_aks_cluster.kube_config_raw
+}
 
 output "vnet-resource-group-name" {
   value = azurerm_resource_group.vnet_rg.name

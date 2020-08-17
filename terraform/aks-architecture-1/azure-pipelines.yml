@@ -86,35 +86,62 @@ stages:
                 # Set Terraform output as pipeline environment variables
                 Write-Host "############# Terraform output ############"
                 $tfOutput = terraform output -json | ConvertFrom-Json
-                Write-Host "##vso[task.setvariable variable=RESOURCE_GROUP_NAME]$($tfOutput.'resource-group-name'.value)"
-                Write-Host "##vso[task.setvariable variable=CLUSTER_NAME]$($tfOutput.'aks-cluster-name'.value)"
-                Write-Host "##vso[task.setvariable variable=CLUSTER_RESOURCE_GROUP_NAME]$($tfOutput.'aks-node-rg'.value)"
-                Write-Host "##vso[task.setvariable variable=CLUSTER_ID]$($tfOutput.'aks-cluster-id'.value)"
+                Write-Host "##vso[task.setvariable variable=PROD_CLUSTER_NAME]$($tfOutput.'prod-aks-cluster-name'.value)"
+                Write-Host "##vso[task.setvariable variable=NON_PROD_CLUSTER_NAME]$($tfOutput.'nonprod-aks-cluster-name'.value)"
+                Write-Host "##vso[task.setvariable variable=PROD_CLUSTER_RESOURCE_GROUP_NAME]$($tfOutput.'prod-aks-node-rg'.value)"
+                Write-Host "##vso[task.setvariable variable=NON_PROD_CLUSTER_RESOURCE_GROUP_NAME]$($tfOutput.'nonprod-aks-node-rg'.value)"
+                Write-Host "##vso[task.setvariable variable=PROD_CLUSTER_ID]$($tfOutput.'prod-aks-cluster-id'.value)"
+                Write-Host "##vso[task.setvariable variable=NON_PROD_CLUSTER_ID]$($tfOutput.'nonprod-aks-cluster-id'.value)"
                 Write-Host "##vso[task.setvariable variable=KUBECONFIG]$($tfOutput.'kube-config'.value)"     
                 Write-Host "##vso[task.setvariable variable=HUB_VNET_ID]$($tfOutput.'hub-vnet-id'.value)"     
-                Write-Host "##vso[task.setvariable variable=SPOKE_VNET_ID]$($tfOutput.'spoke-vnet-id'.value)"           
+                Write-Host "##vso[task.setvariable variable=PROD_SPOKE_VNET_ID]$($tfOutput.'prod-spoke-vnet-id'.value)"  
+                Write-Host "##vso[task.setvariable variable=NON_PROD_SPOKE_VNET_ID]$($tfOutput.'nonprod-spoke-vnet-id'.value)"  
           - task: AzureCLI@2
-            displayName: 'Link private DNS zone to hub vnet'
+            displayName: 'Link prod private DNS zone to hub vnet'
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
                 $privateDns = az network private-dns zone list `
-                --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) | ConvertFrom-Json
+                --resource-group $(PROD_CLUSTER_RESOURCE_GROUP_NAME) | ConvertFrom-Json
 
                 $privateDnsLinks = az network private-dns link vnet list `
-                --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) `
+                --resource-group $(PROD_CLUSTER_RESOURCE_GROUP_NAME) `
                 --zone-name $privateDns.name | ConvertFrom-Json
 
                 if ($privateDnsLinks.name -notcontains 'hub-vnet-link') {
                   az network private-dns link vnet create `
                     --name hub-vnet-link `
                     --registration-enabled false `
-                    --resource-group $(CLUSTER_RESOURCE_GROUP_NAME) `
+                    --resource-group $(PROD_CLUSTER_RESOURCE_GROUP_NAME) `
                     --virtual-network $(HUB_VNET_ID) `
                     --zone-name $privateDns.name
                 } else {
                   Write-Host "Private Dns zone: $($privateDns.name) is already linked to vnet: $(HUB_VNET_ID)"
                 }
-                
+          - task: AzureCLI@2
+            displayName: 'Link non prod private DNS zone to hub vnet'
+            inputs:
+              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $privateDns = az network private-dns zone list `
+                --resource-group $(NON_PROD_CLUSTER_RESOURCE_GROUP_NAME) | ConvertFrom-Json
+
+                $privateDnsLinks = az network private-dns link vnet list `
+                --resource-group $(NON_PROD_CLUSTER_RESOURCE_GROUP_NAME) `
+                --zone-name $privateDns.name | ConvertFrom-Json
+
+                if ($privateDnsLinks.name -notcontains 'hub-vnet-link') {
+                  az network private-dns link vnet create `
+                    --name hub-vnet-link `
+                    --registration-enabled false `
+                    --resource-group $(NON_PROD_CLUSTER_RESOURCE_GROUP_NAME) `
+                    --virtual-network $(HUB_VNET_ID) `
+                    --zone-name $privateDns.name
+                } else {
+                  Write-Host "Private Dns zone: $($privateDns.name) is already linked to vnet: $(HUB_VNET_ID)"
+                }
+                  
