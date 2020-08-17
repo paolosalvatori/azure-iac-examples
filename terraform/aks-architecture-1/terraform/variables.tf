@@ -17,6 +17,18 @@ variable "vnet_resource_group_name" {
   default = "network-rg"
 }
 
+variable "mgmt_resource_group_name" {
+  default = "mgmt-rg"
+}
+
+variable "prod_aks_resource_group_name" {
+  default = "prod-aks-rg"
+}
+
+variable "nonprod_aks_resource_group_name" {
+  default = "nonprod-aks-rg"
+}
+
 variable "location" {
   default = "australiaeast"
 }

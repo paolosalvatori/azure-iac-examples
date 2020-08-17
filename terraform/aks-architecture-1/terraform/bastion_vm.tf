@@ -7,8 +7,8 @@ locals {
 
 resource azurerm_network_interface "bastion_vm_nic" {
   name                = local.bas_vm_nic_name
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.mgmt_rg.name
+  location            = azurerm_resource_group.mgmt_rg.location
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -19,8 +19,8 @@ resource azurerm_network_interface "bastion_vm_nic" {
 
 resource azurerm_virtual_machine "bastion_vm" {
   name                             = local.bas_vm_name
-  resource_group_name              = azurerm_resource_group.rg.name
-  location                         = azurerm_resource_group.rg.location
+  resource_group_name              = azurerm_resource_group.mgmt_rg.name
+  location                         = azurerm_resource_group.mgmt_rg.location
   network_interface_ids            = [azurerm_network_interface.bastion_vm_nic.id]
   vm_size                          = var.bastion_vm_sku
   delete_os_disk_on_termination    = true
