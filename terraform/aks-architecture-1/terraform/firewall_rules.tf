@@ -9,7 +9,7 @@ resource "azurerm_firewall_nat_rule_collection" "nat_rules" {
     name = "ssh-rule"
 
     source_addresses = [
-      "0.0.0.0/0"
+      "*"
     ]
 
     destination_ports = [
@@ -17,11 +17,11 @@ resource "azurerm_firewall_nat_rule_collection" "nat_rules" {
     ]
 
     destination_addresses = [
-      azurerm_public_ip.az_firewall_pip.ip_address
+      azurerm_public_ip.az_firewall_pip.private_ip_address
     ]
 
     translated_port = 22
-    translated_address = azurerm_network_interface.bastion_vm_nic.ip_address
+    translated_address = azurerm_network_interface.bastion_vm_nic.private_ip_address
 
     protocols = [
       "TCP"
