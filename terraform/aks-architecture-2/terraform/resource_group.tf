@@ -1,7 +1,7 @@
 resource azurerm_resource_group "rg" {
     for_each = var.resource_groups
 
-    name = var.prefix-each.value.name
+    name = "${var.prefix}-${each.value.name}"
     location = var.location
     tags = var.tags
 }
