@@ -12,7 +12,12 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
       azurerm_subnet.hub_subnet_1.address_prefixes[0],
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
-      azurerm_subnet.spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -36,6 +41,11 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -60,6 +70,11 @@ resource azurerm_firewall_network_rule_collection "az_network_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     destination_ports = [
@@ -94,6 +109,11 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     target_fqdns = [
@@ -125,6 +145,11 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     target_fqdns = [
@@ -165,6 +190,11 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     target_fqdns = [
@@ -210,6 +240,11 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_subnet.hub_subnet_2.address_prefixes[0],
       azurerm_subnet.hub_subnet_3.address_prefixes[0],
       azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
+      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
+      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0],
     ]
 
     target_fqdns = [
