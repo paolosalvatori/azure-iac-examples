@@ -71,50 +71,50 @@ resource azurerm_subnet_route_table_association "hub_subnet_3_route_table" {
   }
 }
 
-resource azurerm_subnet "prod_subnet_1" {
+resource azurerm_subnet "prod_spoke_subnet_1" {
   name                 = "prod-aks-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.prod_spoke_vnet.name
   address_prefixes     = ["10.1.0.0/24"]
 }
 
-resource azurerm_subnet "prod_subnet_2" {
+resource azurerm_subnet "prod_spoke_subnet_2" {
   name                 = "prod-web-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.prod_spoke_vnet.name
   address_prefixes     = ["10.1.1.0/24"]
 }
 
-resource azurerm_subnet "prod_subnet_3" {
+resource azurerm_subnet "prod_vsubnet_3" {
   name                 = "prod-sql-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.prod_spoke_vnet.name
   address_prefixes     = ["10.1.2.0/24"]
 }
 
-resource azurerm_subnet "nonprod_subnet_1" {
+resource azurerm_subnet "nonprod_spoke_subnet_1" {
   name                 = "nonprod-aks-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.nonprod_spoke_vnet.name
   address_prefixes     = ["10.2.0.0/24"]
 }
 
-resource azurerm_subnet "nonprod_subnet_2" {
+resource azurerm_subnet "nonprod_spoke_subnet_2" {
   name                 = "nonprod-web-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.nonprod_spoke_vnet.name
   address_prefixes     = ["10.2.1.0/24"]
 }
 
-resource azurerm_subnet "nonprod_subnet_3" {
+resource azurerm_subnet "nonprod_spoke_subnet_3" {
   name                 = "nonprod-sql-subnet"
   resource_group_name  = azurerm_resource_group.vnet_rg.name
   virtual_network_name = azurerm_virtual_network.nonprod_spoke_vnet.name
   address_prefixes     = ["10.2.2.0/24"]
 }
 
-resource azurerm_subnet_route_table_association "spoke_prod_subnet_1_route_table_assoc" {
-  subnet_id      = azurerm_subnet.prod_subnet_1.id
+resource azurerm_subnet_route_table_association "prod_spoke_subnet_1_route_table_assoc" {
+  subnet_id      = azurerm_subnet.prod_spoke_subnet_1.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
@@ -123,8 +123,8 @@ resource azurerm_subnet_route_table_association "spoke_prod_subnet_1_route_table
   }
 }
 
-resource azurerm_subnet_route_table_association "spoke_prod_subnet_2_route_table_assoc" {
-  subnet_id      = azurerm_subnet.prod_subnet_2.id
+resource azurerm_subnet_route_table_association "prod_spoke_subnet_2_route_table_assoc" {
+  subnet_id      = azurerm_subnet.prod_spoke_subnet_2.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
@@ -133,8 +133,8 @@ resource azurerm_subnet_route_table_association "spoke_prod_subnet_2_route_table
   }
 }
 
-resource azurerm_subnet_route_table_association "spoke_prod_subnet_3_route_table_assoc" {
-  subnet_id      = azurerm_subnet.prod_subnet_3.id
+resource azurerm_subnet_route_table_association "prod_spoke_subnet_3_route_table_assoc" {
+  subnet_id      = azurerm_subnet.prod_spoke_subnet_3.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
@@ -143,8 +143,8 @@ resource azurerm_subnet_route_table_association "spoke_prod_subnet_3_route_table
   }
 }
 
-resource azurerm_subnet_route_table_association "spoke_nonprod_subnet_1_route_table_assoc" {
-  subnet_id      = azurerm_subnet.nonprod_subnet_1.id
+resource azurerm_subnet_route_table_association "nonprod_spoke_subnet_1_route_table_assoc" {
+  subnet_id      = azurerm_subnet.nonprod_spoke_subnet_1.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
@@ -153,8 +153,8 @@ resource azurerm_subnet_route_table_association "spoke_nonprod_subnet_1_route_ta
   }
 }
 
-resource azurerm_subnet_route_table_association "spoke_nonprod_subnet_2_route_table_assoc" {
-  subnet_id      = azurerm_subnet.nonprod_subnet_2.id
+resource azurerm_subnet_route_table_association "nonprod_spoke_subnet_2_route_table_assoc" {
+  subnet_id      = azurerm_subnet.nonprod_spoke_subnet_2.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
@@ -163,8 +163,8 @@ resource azurerm_subnet_route_table_association "spoke_nonprod_subnet_2_route_ta
   }
 }
 
-resource azurerm_subnet_route_table_association "spoke_nonprod_subnet_3_route_table_assoc" {
-  subnet_id      = azurerm_subnet.nonprod_subnet_3.id
+resource azurerm_subnet_route_table_association "nonprod_spoke_subnet_3_route_table_assoc" {
+  subnet_id      = azurerm_subnet.nonprod_spoke_subnet_3.id
   route_table_id = azurerm_route_table.aks_firewall_route_table.id
 
   timeouts {
