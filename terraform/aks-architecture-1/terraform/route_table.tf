@@ -5,7 +5,7 @@ locals {
 
 resource azurerm_route_table "firewall_route_table" {
   name                          = local.rt_name
-  location                      = azurerm_resource_group.cvnet_rg.location
+  location                      = azurerm_resource_group.vnet_rg.location
   resource_group_name           = azurerm_resource_group.vnet_rg.name
   disable_bgp_route_propagation = false
 

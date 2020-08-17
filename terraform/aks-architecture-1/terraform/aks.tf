@@ -62,7 +62,7 @@ resource azurerm_kubernetes_cluster "prod_aks_cluster" {
   tags = var.tags
 
   depends_on = [
-    azurerm_subnet_route_table_association.prod_spoke_subnet_1_route_table,
+    azurerm_subnet_route_table_association.prod_spoke_subnet_1_route_table_assoc,
   ]
 }
 
@@ -125,6 +125,6 @@ resource azurerm_kubernetes_cluster "nonprod_aks_cluster" {
   tags = var.tags
 
   depends_on = [
-    azurerm_subnet_route_table_association.nonprod_spoke_subnet_1_route_table,
+    azurerm_subnet_route_table_association.nonprod_spoke_subnet_1_route_table_assoc,
   ]
 }
