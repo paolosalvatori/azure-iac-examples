@@ -19,18 +19,10 @@ variable "resource_group_name" {
 
 variable "resource_groups" {
   default = [
-    {
-      name = "network-rg"
-    },
-    {
-      name = "mgmt-rg"
-    },
-    {
-      name = "prod-aks-rg"
-    },
-    {
-      name = "nonprod-aks-rg"
-    }
+    "network-rg",
+    "mgmt-rg",
+    "prod-aks-rg",
+    "nonprod-aks-rg"
   ]
 }
 
