@@ -7,7 +7,7 @@ output "prod-aks-cluster-name" {
 }
 
 output "prod-aks-cluster-id" {
-  value = azurerm_kubernetes_cluster.Pprod_aks_cluster.id
+  value = azurerm_kubernetes_cluster.prod_aks_cluster.id
 }
 
 output "prod-aks-cluster-private-fqdn" {
