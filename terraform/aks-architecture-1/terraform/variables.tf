@@ -6,7 +6,7 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-private"
+  default = "test"
 }
 
 variable "resource_group_name" {
@@ -64,6 +64,11 @@ variable "on_premises_router_private_cidr" {
 
 variable "shared_vpn_secret" {
   type = string
+}
+
+variable "admin_user_name" {
+  type = string
+  default = "localadmin"
 }
 
 data local_file "cloudinit" {
