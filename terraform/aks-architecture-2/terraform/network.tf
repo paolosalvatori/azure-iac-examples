@@ -20,7 +20,7 @@ resource azurerm_virtual_network "vnet" {
   tags                = var.tags
 
   dynamic subnet {
-    for_each = { for subnet in vnet.subnets : subnet.name => subnet }
+    for_each = { for subnet in var.vnets.subnets : subnet.name => subnet }
       content {
         name           = each.value.name
         address_prefix = each.value.address_prefix
