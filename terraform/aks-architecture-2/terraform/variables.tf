@@ -49,6 +49,14 @@ variable "location" {
 }
 
 variable "vnets" {
+  type = map(object({
+    name = string
+    address_space = array
+    subnets = map(object({ 
+      name = string
+      address_prefix = string
+     }))
+  }))
   default = [
     {
       name = "hub-vnet"
