@@ -60,6 +60,46 @@ variable "vnets" {
   default = {
       name = "hub-vnet"
       address_space = ["10.0.0.0/16"]
+      subnets = {
+          {
+            name           = "GatewaySubnet"
+            address_prefix = "10.0.0.0/24"
+          },
+          {
+            name           = "AzureFirewallSubnet"
+            address_prefix = "10.0.1.0/24"
+          },
+          {
+            name           = "BastionSubnet"
+            address_prefix = "10.0.2.0/24"
+          },
+          {
+            name           = "AppGatewaySubnet"
+            address_prefix = "10.0.3.0/24"
+          }
+      }
+    },
+    {
+      name = "prod-spoke-vnet"
+      address_space = ["10.1.0.0/16"]
+      subnets = [
+          {
+        name             = "prod-aks-subnet"
+        address_prefixes = ["10.1.0.0/24"]
+      },
+      {
+      name             = "prod-web-subnet"
+      address_prefixes = ["10.1.1.0/24"]
+      },
+      {
+      name             = "prod-sql-subnet"
+      address_prefixes = ["10.1.2.0/24"]
+      }
+      ]
+    },
+    {
+      name = "nonprod-spoke-vnet"
+      address_space = ["10.2.0.0/16"]
       subnets = [
           {
             name           = "GatewaySubnet"
@@ -77,15 +117,7 @@ variable "vnets" {
             name           = "AppGatewaySubnet"
             address_prefix = "10.0.3.0/24"
           }
-        ]
-    },
-    {
-      name = "prod-spoke-vnet"
-      address_space = ["10.1.0.0/16"]
-    },
-    {
-      name = "nonprod-spoke-vnet"
-      address_space = ["10.2.0.0/16"]
+      ]
     }
 }
 
