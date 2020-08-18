@@ -57,8 +57,7 @@ variable "vnets" {
       address_prefix = string
      }))
   }))
-  default = [
-    {
+  default = {
       name = "hub-vnet"
       address_space = ["10.0.0.0/16"]
       subnets = [
@@ -88,7 +87,6 @@ variable "vnets" {
       name = "nonprod-spoke-vnet"
       address_space = ["10.2.0.0/16"]
     }
-  ]
 }
 
 
