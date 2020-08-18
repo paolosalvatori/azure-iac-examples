@@ -51,7 +51,7 @@ variable "location" {
 variable "vnets" {
   type = map(object({
     name = string
-    address_space = array
+    address_space = list(string)
     subnets = map(object({ 
       name = string
       address_prefix = string
