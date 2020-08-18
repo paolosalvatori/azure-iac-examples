@@ -10,8 +10,8 @@ locals {
 
   vnet_subnets = flatten([
     for vnet_key, vnet in var.vnets : [
-      for subnet in vnet.subnets : {
-        network_key       = vnet_key
+      for subnet_key, subnet in vnet.subnets : {
+        vnet_key    = vnet_key
         name           = subnet.name
         address_prefix = vnet.address_prefix
       }
