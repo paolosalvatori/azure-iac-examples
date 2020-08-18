@@ -56,19 +56,19 @@ variable "vnets" {
       subnets = [
           {
             name           = "GatewaySubnet"
-            address_prefix = ["10.0.0.0/24"]
+            address_prefix = "10.0.0.0/24"
           },
           {
             name           = "AzureFirewallSubnet"
-            address_prefix = ["10.0.1.0/24"]
+            address_prefix = "10.0.1.0/24"
           },
           {
             name           = "BastionSubnet"
-            address_prefix = ["10.0.2.0/24"]
+            address_prefix = "10.0.2.0/24"
           },
           {
             name           = "AppGatewaySubnet"
-            address_prefix = ["10.0.3.0/24"]
+            address_prefix = "10.0.3.0/24"
           }
         ]
     },
