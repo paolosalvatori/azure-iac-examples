@@ -18,6 +18,14 @@ resource azurerm_virtual_network "vnet" {
   address_space       = each.value.address_space
   location            = var.location
   tags                = var.tags
+
+  dynamic subnet {
+    for_each = { for subnet in var.vnet.subnets : subnet.name => subnet }
+      content {
+        name           = each.value.name
+        address_prefix = each.value.address_prefix
+      }
+  }
 }
 
 

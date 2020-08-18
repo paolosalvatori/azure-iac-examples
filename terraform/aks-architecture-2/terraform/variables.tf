@@ -53,6 +53,24 @@ variable "vnets" {
     {
       name = "hub-vnet"
       address_space = ["10.0.0.0/16"]
+      subnets = [
+          {
+            name           = "GatewaySubnet"
+            address_prefix = ["10.0.0.0/24"]
+          },
+          {
+            name           = "AzureFirewallSubnet"
+            address_prefix = ["10.0.1.0/24"]
+          },
+          {
+            name           = "BastionSubnet"
+            address_prefix = ["10.0.2.0/24"]
+          },
+          {
+            name           = "AppGatewaySubnet"
+            address_prefix = ["10.0.3.0/24"]
+          }
+        ]
     },
     {
       name = "prod-spoke-vnet"
