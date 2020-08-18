@@ -7,6 +7,16 @@ locals {
   prod_spoke_to_hub_peer_name  = "prod-spoke-to-hub"
   nonprod_spoke_to_hub_peer_name  = "nonprod-spoke-to-hub"
   private_dns_vnet_link   = "hub-vnet-private-dns-link"
+
+  vnet_subnets = flatten([
+    for vnet_key, vnet in var.vnets : [
+      for subnet in vnet.subnets : {
+        network_key       = vnet_key
+        name           = subnet.name
+        address_prefix = vnet.address_prefix
+      }
+    ]
+  ])
 }
 
 # vnets
@@ -20,10 +30,12 @@ resource azurerm_virtual_network "vnet" {
   tags                = var.tags
 
   dynamic subnet {
-    for_each = { for subnet in var.vnets.subnets : subnet.name => subnet }
+    for_each = {
+      for subnet in local.vnet_subnets : "${subnet.vnet_key}.${subnet.subnet_key}" => subnet
+  }
       content {
-        name           = each.value[0]
-        address_prefix = each.value[1]
+        name           = each.value.name
+        address_prefix = each.value.address_prefix
       }
   }
 }
