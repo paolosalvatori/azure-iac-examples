@@ -11,7 +11,7 @@ locals {
 
 # vnets
 resource azurerm_virtual_network "hub_vnet" {
-  for_each = var.vnets
+  for_each = toset(var.vnets)
 
   resource_group_name = azurerm_resource_group.rg["vnet-rg"].name
   name                = each.value.name
