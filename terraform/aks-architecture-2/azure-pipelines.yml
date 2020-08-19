@@ -98,6 +98,7 @@ stages:
                 Write-Host "##vso[task.setvariable variable=NON_PROD_SPOKE_VNET_ID]$($tfOutput.'nonprod-spoke-vnet-id'.value)"  
           - task: AzureCLI@2
             displayName: 'Link prod private DNS zone to hub vnet'
+            enabled: false
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
@@ -122,6 +123,7 @@ stages:
                 }
           - task: AzureCLI@2
             displayName: 'Link non prod private DNS zone to hub vnet'
+            enabled: false
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
