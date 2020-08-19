@@ -22,157 +22,90 @@ variable "resource_groups" {
     "network-rg",
     "mgmt-rg",
     "prod-aks-rg",
-    "nonprod-aks-rg"
+    "nonprod-aks-rg",
   ]
 }
-
-/* 
-variable "vnet_resource_group_name" {
-  default = "network-rg"
-}
-
-variable "mgmt_resource_group_name" {
-  default = "mgmt-rg"
-}
-
-variable "prod_aks_resource_group_name" {
-  default = "prod-aks-rg"
-}
-
-variable "nonprod_aks_resource_group_name" {
-  default = "nonprod-aks-rg"
-}
- */
 
 variable "location" {
   default = "australiaeast"
 }
 
 variable "vnets" {
-  type = map(object({
-    name = string
-    address_space = list(string)
+  type = list(object({
+    name = string,
+    address_space = list(string),
     subnets = map(object({ 
-      name = string
-      address_prefix = string
+      subnet_increment = number
      }))
   }))
-  default = {
-      name = "hub-vnet"
+  default = [
+    {
+      name = "hub-vnet",
       address_space = ["10.0.0.0/16"]
       subnets = {
-          {
-            name           = "GatewaySubnet"
-            address_prefix = "10.0.0.0/24"
+          "GatewaySubnet" = {
+            subnet_increment = 0
           },
-          {
-            name           = "AzureFirewallSubnet"
-            address_prefix = "10.0.1.0/24"
+            "AzureFirewallSubnet" = {
+            subnet_increment = 1
           },
-          {
-            name           = "BastionSubnet"
-            address_prefix = "10.0.2.0/24"
+          "BastionSubnet" = {
+            subnet_increment = 2
           },
-          {
-            name           = "AppGatewaySubnet"
-            address_prefix = "10.0.3.0/24"
+          "AppGatewaySubnet" = {
+            subnet_increment = 3
           }
-      }
+       }
     },
     {
       name = "prod-spoke-vnet"
       address_space = ["10.1.0.0/16"]
-      subnets = [
-          {
-        name             = "prod-aks-subnet"
-        address_prefixes = ["10.1.0.0/24"]
-      },
-      {
-      name             = "prod-web-subnet"
-      address_prefixes = ["10.1.1.0/24"]
-      },
-      {
-      name             = "prod-sql-subnet"
-      address_prefixes = ["10.1.2.0/24"]
-      }
-      ]
+      subnets = {
+          "prod-aks-subnet" = {
+            subnet_increment = 0
+          },
+          "prod-web-subnet" = {
+            subnet_increment = 1
+          },
+          "prod-sql-subnet" = {
+            subnet_increment = 2
+          }
+       }
     },
     {
       name = "nonprod-spoke-vnet"
       address_space = ["10.2.0.0/16"]
-      subnets = [
-          {
-            name           = "GatewaySubnet"
-            address_prefix = "10.0.0.0/24"
+      subnets = {
+          "nonprod-aks-subnet" = {
+            subnet_increment = 0
           },
-          {
-            name           = "AzureFirewallSubnet"
-            address_prefix = "10.0.1.0/24"
+          "nonprod-web-subnet" = {
+            subnet_increment = 1
           },
-          {
-            name           = "BastionSubnet"
-            address_prefix = "10.0.2.0/24"
-          },
-          {
-            name           = "AppGatewaySubnet"
-            address_prefix = "10.0.3.0/24"
+          "nonprod-sql-subnet" = {
+            subnet_increment = 2
           }
-      ]
-    }
-}
-
-
-variable "hub_subnets" {
-  default = [
-    {
-      name             = "GatewaySubnet"
-      address_prefixes = ["10.0.0.0/24"]
+       }
     },
-    {
-      name             = "AzureFirewallSubnet"
-      address_prefixes = ["10.0.1.0/24"]
-    },
-    {
-      name             = "BastionSubnet"
-      address_prefixes = ["10.0.2.0/24"]
-    },
-    {
-      name             = "AppGatewaySubnet"
-      address_prefixes = ["10.0.3.0/24"]
-    }
   ]
 }
 
-variable "spoke_subnets" {
+variable "aks_clusters" {
+  type = list(object({
+    name = string
+    resource_group_name = string
+    vnet_name = string
+  }))
   default = [
     {
-      name             = "prod-aks-subnet"
-      address_prefixes = ["10.1.0.0/24"]
+      "name" = "prod-aks-cluster"
+      "resource_group_name" = "prod-aks-rg"
+      "vnet_name" = "prod-spoke-vnet"
     },
     {
-      name             = "prod-web-subnet"
-      address_prefixes = ["10.1.1.0/24"]
-    },
-    {
-      name             = "prod-sql-subnet"
-      address_prefixes = ["10.1.2.0/24"]
-    }
-  ]
-}
-
-variable "nonprod_spoke_subnets" {
-  default = [
-    {
-      name             = "nonprod-aks-subnet"
-      address_prefixes = ["10.1.0.0/24"]
-    },
-    {
-      name             = "nonprod-web-subnet"
-      address_prefixes = ["10.1.1.0/24"]
-    },
-    {
-      name             = "nonprod-sql-subnet"
-      address_prefixes = ["10.1.2.0/24"]
+      "name" = "nonprod-aks-cluster"
+      "resource_group_name" = "nonprod-aks-rg"
+      "vnet_name" = "nonprod-spoke-vnet"
     }
   ]
 }
@@ -185,7 +118,33 @@ variable "kubernetes_version" {
 variable "aks_node_sku" {
   type    = string
   default = "Standard_D2_v2"
+}
 
+variable "aks_max_pods" {
+  type = number
+  default = 200
+}
+
+variable "aks_node_count" {
+  type = number
+  default = 1
+}
+
+variable "aks_max_node_count" {
+  type = number
+  default = 5
+}
+
+variable "aks_admin_group_object_ids" {
+  type = list(string)
+  default = [
+    "f6a900e2-df11-43e7-ba3e-22be99d3cede" # displayName": "aks-admin-group"
+  ]
+}
+
+variable "aks_min_node_count" {
+  type = number
+  default = 1
 }
 
 variable "bastion_vm_sku" {
@@ -195,10 +154,12 @@ variable "bastion_vm_sku" {
 
 variable "ssh_key" {
   type = string
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCKEnblRrHUsUf2zEhDC4YrXVDTf6Vj3eZhfIT22og0zo2hdpfUizcDZ+i0J4Bieh9zkcsGMZtMkBseMVVa5tLSNi7sAg79a8Bap5RmxMDgx53ZCrJtTC3Li4e/3xwoCjnl5ulvHs6u863G84o8zgFqLgedKHBmJxsdPw5ykLSmQ4K6Qk7VVll6YdSab7R6NIwW5dX7aP2paD8KRUqcZ1xlArNhHiUT3bWaFNRRUOsFLCxk2xyoXeu+kC9HM2lAztIbUkBQ+xFYIPts8yPJggb4WF6Iz0uENJ25lUGen4svy39ZkqcK0ZfgsKZpaJf/+0wUbjqW2tlAMczbTRsKr8r cbellee@CB-SBOOK-1809"
 }
 
 variable "on_premises_router_public_ip_address" {
   type = string
+  default = "110.150.196.195"
 }
 
 variable "on_premises_router_private_cidr" {
@@ -208,6 +169,7 @@ variable "on_premises_router_private_cidr" {
 
 variable "shared_vpn_secret" {
   type = string
+  default = "M1cr0soft123"
 }
 
 variable "admin_user_name" {
