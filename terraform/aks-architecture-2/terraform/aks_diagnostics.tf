@@ -13,18 +13,17 @@ resource "azurerm_monitor_diagnostic_setting" "prod_aks_diagnostics" {
           enabled = log.value[2]
           days    = log.value[3]
         }
-      }
-    }
+     }
+  }
 
-    dynamic "metric" {
-      for_each = var.diagnostics_logs_map.metric
-      content {
-        category = metric.value[0]
-        enabled  = metric.value[1]
-        retention_policy {
-          enabled = metric.value[2]
-          days    = metric.value[3]
-        }
+  dynamic "metric" {
+    for_each = var.diagnostics_logs_map.metric
+    content {
+      category = metric.value[0]
+      enabled  = metric.value[1]
+      retention_policy {
+        enabled = metric.value[2]
+        days    = metric.value[3]
       }
     }
   }
@@ -47,15 +46,14 @@ resource "azurerm_monitor_diagnostic_setting" "nonprod_aks_diagnostics" {
       }
     }
 
-    dynamic "metric" {
-      for_each = var.diagnostics_logs_map.metric
-      content {
-        category = metric.value[0]
-        enabled  = metric.value[1]
-        retention_policy {
-          enabled = metric.value[2]
-          days    = metric.value[3]
-        }
+  dynamic "metric" {
+    for_each = var.diagnostics_logs_map.metric
+    content {
+      category = metric.value[0]
+      enabled  = metric.value[1]
+      retention_policy {
+        enabled = metric.value[2]
+        days    = metric.value[3]
       }
     }
   }
