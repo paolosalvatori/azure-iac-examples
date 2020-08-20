@@ -17,7 +17,7 @@ resource "azurerm_monitor_diagnostic_setting" "prod_aks_diagnostics" {
   }
 
   dynamic "metric" {
-    for_each = var.diagnostics_logs_map.metric
+    for_each = var.aks_diagnostics_logs_map.metric
     content {
       category = metric.value[0]
       enabled  = metric.value[1]
@@ -47,7 +47,7 @@ resource "azurerm_monitor_diagnostic_setting" "nonprod_aks_diagnostics" {
     }
 
   dynamic "metric" {
-    for_each = var.diagnostics_logs_map.metric
+    for_each = var.aks_diagnostics_logs_map.metric
     content {
       category = metric.value[0]
       enabled  = metric.value[1]
