@@ -190,15 +190,6 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_virtual_network.vnet["hub-vnet"].address_space[0],
       azurerm_virtual_network.vnet["prod-spoke-vnet"].address_space[0],
       azurerm_virtual_network.vnet["nonprod-spoke-vnet"].address_space[0],
-/*       azurerm_subnet.hub_subnet_1.address_prefixes[0],
-      azurerm_subnet.hub_subnet_2.address_prefixes[0],
-      azurerm_subnet.hub_subnet_3.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0], */
     ]
 
     target_fqdns = [
@@ -243,15 +234,6 @@ resource azurerm_firewall_application_rule_collection "az_application_rules" {
       azurerm_virtual_network.vnet["hub-vnet"].address_space[0],
       azurerm_virtual_network.vnet["prod-spoke-vnet"].address_space[0],
       azurerm_virtual_network.vnet["nonprod-spoke-vnet"].address_space[0],
-/*       azurerm_subnet.hub_subnet_1.address_prefixes[0],
-      azurerm_subnet.hub_subnet_2.address_prefixes[0],
-      azurerm_subnet.hub_subnet_3.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_1.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_1.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_2.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_2.address_prefixes[0],
-      azurerm_subnet.prod_spoke_subnet_3.address_prefixes[0],
-      azurerm_subnet.nonprod_spoke_subnet_3.address_prefixes[0], */
     ]
 
     target_fqdns = [
