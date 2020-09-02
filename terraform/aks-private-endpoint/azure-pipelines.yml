@@ -11,7 +11,7 @@ trigger:
     - terraform/aks-private-endpoint/azure-pipelines.yml
 
 variables:
-  # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars'
+  # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars' d
   # ON_PREMISES_ROUTER_DNS_HOST_NAME # variable set in variable group 'aks_terraform_vars'
   # SSH_KEY # variable set in variable group 'aks_terraform_vars'
   # SHARED_VPN_SECRET # variable set in variable group 'aks_terraform_vars'
