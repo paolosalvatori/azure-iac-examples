@@ -18,7 +18,7 @@ variables:
   # TF_STATE_STORAGE_ACCOUNT_NAME # variable set in variable group 'aks_terraform_vars'
   - group: aks_terraform_vars
   - name: TF_PATH
-    value: ./terraform/aks-private-endpoint-fw/terraform
+    value: ./terraform/aks-private-endpoint/terraform
 
 stages:
 - stage: dev
