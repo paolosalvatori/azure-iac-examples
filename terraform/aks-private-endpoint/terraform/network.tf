@@ -98,3 +98,10 @@ resource azurerm_virtual_network_peering "spoke_hub_peer" {
     azurerm_virtual_network_gateway.vpngwy,
   ]
 }
+
+resource "azurerm_private_dns_zone_virtual_network_link" "aks_private_dns_zone" {
+  name                  = "hub-vnet-link"
+  resource_group_name   = azurerm_kubernetes_cluster.aks_cluster.node_resource_group
+  private_dns_zone_name = azurerm_kubernetes_cluster.aks_cluster.private_fqdn
+  virtual_network_id    = azurerm_virtual_network.hub_vnet.id
+}

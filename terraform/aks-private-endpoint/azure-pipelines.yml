@@ -62,6 +62,8 @@ stages:
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
+              failOnStandardError: true
+              powerShellErrorActionPreference: stop
               scriptLocation: inlineScript
               workingDirectory: $(TF_PATH)
               inlineScript: |               
@@ -95,6 +97,7 @@ stages:
                 Write-Host "##vso[task.setvariable variable=SPOKE_VNET_ID]$($tfOutput.'spoke-vnet-id'.value)"           
           - task: AzureCLI@2
             displayName: 'Link private DNS zone to hub vnet'
+            enabled: false
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore

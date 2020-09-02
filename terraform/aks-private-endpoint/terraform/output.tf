@@ -29,3 +29,7 @@ output "hub-vnet-id" {
 output "spoke-vnet-id" {
   value = azurerm_virtual_network.spoke_vnet.id
 }
+
+output "vpn_shared_secret" {
+  value = random_string.random.result
+}
