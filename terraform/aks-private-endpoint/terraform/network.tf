@@ -102,6 +102,6 @@ resource azurerm_virtual_network_peering "spoke_hub_peer" {
 resource "azurerm_private_dns_zone_virtual_network_link" "aks_private_dns_zone" {
   name                  = "hub-vnet-link"
   resource_group_name   = azurerm_kubernetes_cluster.aks_cluster.node_resource_group
-  private_dns_zone_name = azurerm_kubernetes_cluster.aks_cluster.private_fqdn
+  private_dns_zone_name = join(".", element(split(".", azurerm_kubernetes_cluster.aks_cluster.private_fqdn), 1), element(split(".", azurerm_kubernetes_cluster.aks_cluster.private_fqdn), 2), element(split(".", azurerm_kubernetes_cluster.aks_cluster.private_fqdn), 3), element(split(".", azurerm_kubernetes_cluster.aks_cluster.private_fqdn), 4), element(split(".", azurerm_kubernetes_cluster.aks_cluster.private_fqdn), 5))
   virtual_network_id    = azurerm_virtual_network.hub_vnet.id
 }

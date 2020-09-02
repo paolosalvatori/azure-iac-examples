@@ -45,7 +45,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
     min_count           = 1
     node_count          = 1
     vm_size             = var.aks_node_sku
-    max_pods            = 200
+    max_pods            = var.max_pods
     os_disk_size_gb     = 250
     tags                = var.tags
   }

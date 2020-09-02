@@ -25,7 +25,11 @@ variable "kubernetes_version" {
 variable "aks_node_sku" {
   type    = string
   default = "Standard_D2_v2"
+}
 
+variable "max_pods" {
+  type = string
+  default = 30
 }
 
 variable "bastion_vm_sku" {
