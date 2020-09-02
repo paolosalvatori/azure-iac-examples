@@ -1,7 +1,7 @@
 variable "tags" {
   default = {
     "environment" = "test"
-    "costcentre"  = "12345"
+    "costcentre"  = "123456"
   }
 }
 
