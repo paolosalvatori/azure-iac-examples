@@ -73,7 +73,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'on_premises_router_public_ip_address=$(ON_PREMISES_ROUTER_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -var 'shared_vpn_secret=$(SHARED_VPN_SECRET)' -out tfplan 
+                terraform plan -var 'on_premises_router_public_ip_address=$(ON_PREMISES_ROUTER_PUBLIC_IP_ADDRESS)' -var 'ssh_key=$(SSH_KEY)' -out tfplan 
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
