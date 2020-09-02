@@ -62,5 +62,6 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
 
   depends_on = [
     azurerm_subnet_route_table_association.spoke_subnet_1_route_table,
+    azurerm_virtual_network_gateway_connection.cxn,
   ]
 }

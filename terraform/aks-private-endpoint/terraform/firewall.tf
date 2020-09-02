@@ -1,7 +1,7 @@
 locals {
   fw_pip_name         = "${var.prefix}-fw-pip"
   fw_name             = "${var.prefix}-fw"
-  fw_diagnostics_name = "${var.prefix}-fw-diagnostics"
+  fw_diagnostics_name = "${var.prefix}-fw-diag-${random_string.random.result}"
 }
 
 resource azurerm_public_ip "az_firewall_pip" {
