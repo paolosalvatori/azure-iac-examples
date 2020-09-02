@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "aks-private"
+  default = "aks-public"
 }
 
 variable "resource_group_name" {
-  default = "aks-private-rg"
+  default = "aks-public-rg"
 }
 
 variable "location" {
