@@ -6,11 +6,11 @@ variable "tags" {
 }
 
 variable "prefix" {
-  default = "azure-aks"
+  default = "aks-private"
 }
 
 variable "resource_group_name" {
-  default = "azure-aks-rg"
+  default = "aks-private-rg"
 }
 
 variable "location" {
@@ -19,7 +19,7 @@ variable "location" {
 
 variable "kubernetes_version" {
   type    = string
-  default = "1.16.10"
+  default = "1.17.9"
 }
 
 variable "aks_node_sku" {

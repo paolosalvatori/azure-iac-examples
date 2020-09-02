@@ -1,5 +1,5 @@
 locals {
-  aks_cluster_name = "${var.prefix}-aks"
+  aks_cluster_name = "${var.prefix}-cluster"
 }
 
 resource azurerm_kubernetes_cluster "aks_cluster" {
