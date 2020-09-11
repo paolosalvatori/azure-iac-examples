@@ -98,7 +98,7 @@ stages:
               -aksVnetName 'aks-vnet-1' `
               -aksSubnetName 'aks-subnet-1' `
               -firewallSubnetName 'firewall-subnet' `
-              -aadAdminGroupObjectIds "$(AAD_ADMIN_GROUP_ID)"
+              -aadAdminGroupObjectId "$(AAD_ADMIN_GROUP_ID)"
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
