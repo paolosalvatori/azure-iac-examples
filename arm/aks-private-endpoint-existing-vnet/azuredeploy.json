@@ -52,12 +52,6 @@
                 "description": "azure firewall subnet name"
             }
         },
-        "firewallSubnetAddressPrefix": {
-            "type": "string",
-            "metadata": {
-                "description": "azure firewall subnet address prefix"
-            }
-        },
         "aksVersion": {
             "type": "string",
             "metadata": {
