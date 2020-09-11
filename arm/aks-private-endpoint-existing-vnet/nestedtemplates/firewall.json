@@ -65,11 +65,7 @@
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
             ],
-            "zones": [
-                "1",
-                "2",
-                "3"
-            ],
+            "zones": "[parameters('availabilityZones')]",
             "properties": {
                 "ipConfigurations": [
                     {

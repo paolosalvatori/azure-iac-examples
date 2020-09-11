@@ -97,7 +97,8 @@ stages:
               -sshPublicKey $(SSH_KEY) `
               -aksVnetName 'aks-vnet-1' `
               -aksSubnetName 'aks-subnet-1' `
-              -firewallSubnetName 'firewall-subnet'
+              -firewallSubnetName 'firewall-subnet' `
+              -aadAdminGroupObjectIds $(AAD_ADMIN_GROUP_ADMIN_ID)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
