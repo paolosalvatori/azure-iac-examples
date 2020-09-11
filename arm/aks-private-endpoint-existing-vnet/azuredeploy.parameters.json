@@ -23,6 +23,9 @@
         "aksNodeCount": {
             "value": 1
         },
+        "aksMaxPodCount": {
+            "value": 30
+        },
         "tags": {
             "value": {
                 "environment": "dev",
@@ -38,22 +41,10 @@
                 null
             ]
         },
-        "adminUsername": {
-            "value": "localadmin"
-        },
-        "_artifactsLocation": {
+        "storageUri": {
             "value": null
         },
-        "_artifactsLocationSasToken": {
-            "value": null
-        },
-        "vpnGatewaySharedSecret": {
-            "value": null
-        },
-        "routerPrivateAddressSpace": {
-            "value": null
-        },
-        "routerPublicIpAddress": {
+        "sasToken": {
             "value": null
         }
     }

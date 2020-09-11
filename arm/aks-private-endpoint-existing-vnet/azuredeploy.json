@@ -2,14 +2,14 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "_artifactsLocation": {
+        "storageUri": {
             "type": "string",
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located including a trailing '/'"
             },
             "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-aks-private-endpoint-firewall/"
         },
-        "_artifactsLocationSasToken": {
+        "sasToken": {
             "type": "secureString",
             "metadata": {
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
@@ -87,10 +87,9 @@
     },
     "variables": {
         "suffix": "[substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)]",
-        "udrNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/udr.json', parameters('_artifactsLocationSasToken')))]",
-        "firewallNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/firewall.json', parameters('_artifactsLocationSasToken')))]",
-        "aksNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/aks.json', parameters('_artifactsLocationSasToken')))]",
-        //"privateDnsLinkNestedTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/private-dns-link.json', parameters('_artifactsLocationSasToken')))]",
+        "udrNestedTemplateUri": "[uri(parameters('storageUri'), concat('nestedtemplates/udr.json', parameters('sasToken')))]",
+        "firewallNestedTemplateUri": "[uri(parameters('storageUri'), concat('nestedtemplates/firewall.json', parameters('sasToken')))]",
+        "aksNestedTemplateUri": "[uri(parameters('storageUri'), concat('nestedtemplates/aks.json', parameters('sasToken')))]",
         "workspaceName": "[concat('wks-', variables('suffix'))]"
     },
     "resources": [
