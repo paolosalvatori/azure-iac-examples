@@ -92,13 +92,13 @@ stages:
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
             overrideParameters: 
-              -storageUri $(storageContainerUri) `
-              -sasToken $(storageAccountSasToken) `
-              -sshPublicKey $(SSH_KEY) `
+              -storageUri "$(storageContainerUri)" `
+              -sasToken "$(storageAccountSasToken)" `
+              -sshPublicKey "$(SSH_KEY)" `
               -aksVnetName 'aks-vnet-1' `
               -aksSubnetName 'aks-subnet-1' `
               -firewallSubnetName 'firewall-subnet' `
-              -aadAdminGroupObjectIds $(AAD_ADMIN_GROUP_ID)
+              -aadAdminGroupObjectIds "$(AAD_ADMIN_GROUP_ID)"
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
