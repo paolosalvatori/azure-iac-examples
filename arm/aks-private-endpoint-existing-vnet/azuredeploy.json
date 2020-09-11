@@ -78,8 +78,8 @@
                 "description": "AKS nodes SSH Key"
             }
         },
-        "aadAdminGroupObjectIds": {
-            "type": "array",
+        "aadAdminGroupObjectId": {
+            "type": "string",
             "metadata": {
                 "description": "Array of AAD principal ObjectIds"
             }
@@ -204,7 +204,9 @@
                         "value": 30
                     },
                     "aadAdminGroupObjectIdList": {
-                        "value": "[parameters('aadAdminGroupObjectIds')]"
+                        "value": [
+                            "[parameters('aadAdminGroupObjectId')]"
+                        ]
                     },
                     "sshPublicKey": {
                         "value": "[parameters('sshPublicKey')]"

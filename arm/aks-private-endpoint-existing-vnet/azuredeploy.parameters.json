@@ -36,10 +36,8 @@
         "sshPublicKey": {
             "value": null
         },
-        "aadAdminGroupObjectIds": {
-            "value": [
-                null
-            ]
+        "aadAdminGroupObjectId": {
+            "value": null
         },
         "storageUri": {
             "value": null
