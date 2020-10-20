@@ -41,10 +41,10 @@ resource "azurerm_private_endpoint" "azpgres_plink" {
   }
 }
 
-/* resource "azurerm_private_dns_zone" "azpgres_plink_dns_private_zone" {
-  name                = "privatelink.database.windows.net"
+resource "azurerm_private_dns_zone" "azpgres_plink_dns_private_zone" {
+  name                = "postgres.database.azure.com"
   resource_group_name = azurerm_resource_group.rg.name
-} */
+}
 
 /* data "azurerm_private_endpoint_connection" "azpgres_plinkconnection" {
   name                = azurerm_private_endpoint.azpgres_plink.name

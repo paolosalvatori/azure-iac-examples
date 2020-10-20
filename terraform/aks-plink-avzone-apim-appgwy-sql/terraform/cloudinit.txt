@@ -5,3 +5,5 @@ runcmd:
   - 'chmod +x ./kubectl'
   - 'mv ./kubectl /usr/local/bin/kubectl'
   - 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
+  - 'alias cls=clear'
+  - 'alias k=kubectl'
