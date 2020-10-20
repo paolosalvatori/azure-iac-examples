@@ -74,7 +74,7 @@ stages:
 
                 # Apply plan
                 Write-Host "############# Terraform apply ############"
-                terraform apply -var-file dev.tfvars -auto-approve tfplan 
+                terraform apply -auto-approve tfplan 
 
                 # Output apply
                 # Set Terraform output as pipeline environment variables
