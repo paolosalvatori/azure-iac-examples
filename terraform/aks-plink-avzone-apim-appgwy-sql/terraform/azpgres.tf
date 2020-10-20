@@ -28,7 +28,7 @@ resource "azurerm_postgresql_database" "pgres_db_1" {
 }
 
 resource "azurerm_private_endpoint" "azpgres_plink" {
-  name                = "postgres-endpoint"
+  name                = "${var.prefix}-postgres-endpoint"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   subnet_id           = azurerm_subnet.subnet_4.id
@@ -41,10 +41,10 @@ resource "azurerm_private_endpoint" "azpgres_plink" {
   }
 }
 
-resource "azurerm_private_dns_zone" "azpgres_plink_dns_private_zone" {
+/* resource "azurerm_private_dns_zone" "azpgres_plink_dns_private_zone" {
   name                = "privatelink.database.windows.net"
   resource_group_name = azurerm_resource_group.rg.name
-}
+} */
 
 /* data "azurerm_private_endpoint_connection" "azpgres_plinkconnection" {
   name                = azurerm_private_endpoint.azpgres_plink.name

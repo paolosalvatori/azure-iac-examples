@@ -105,10 +105,10 @@ resource azurerm_network_security_group "db_subnet_nsg" {
   tags = var.tags
 }
 
-resource azurerm_subnet_network_security_group_association "db_subnet_nsg_assoc" {
+/* resource azurerm_subnet_network_security_group_association "db_subnet_nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet_4.id
   network_security_group_id = azurerm_network_security_group.db_subnet_nsg.id
-}
+} */
 
 resource azurerm_network_security_group "mgmt_subnet_nsg" {
   name                = "${var.prefix}-mgmt-nsg"

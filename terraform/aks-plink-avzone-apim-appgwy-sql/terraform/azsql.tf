@@ -26,7 +26,7 @@ resource "azurerm_storage_account" "azsql_stor" {
 }
 
 resource "azurerm_private_endpoint" "azsql_plink" {
-  name                = "sql_endpoint"
+  name                = "${var.prefix}-sql-endpoint"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   subnet_id           = azurerm_subnet.subnet_4.id
@@ -39,10 +39,10 @@ resource "azurerm_private_endpoint" "azsql_plink" {
   }
 }
 
-resource "azurerm_private_dns_zone" "azsql_plink_dns_private_zone" {
+/* resource "azurerm_private_dns_zone" "azsql_plink_dns_private_zone" {
   name                = "privatelink.database.windows.net"
   resource_group_name = azurerm_resource_group.rg.name
-}
+} */
 
 /* data "azurerm_private_endpoint_connection" "azsql_plinkconnection" {
   name                = azurerm_private_endpoint.azsql_plink.name
