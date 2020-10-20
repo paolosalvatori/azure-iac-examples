@@ -65,7 +65,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var-file=dev.tfvars -out tfplan 
+                terraform plan -var-file=dev.tfvars -out=tfplan 
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
