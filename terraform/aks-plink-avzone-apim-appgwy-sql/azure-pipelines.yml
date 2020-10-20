@@ -24,8 +24,8 @@ stages:
 - stage: dev
   displayName: 'Deploy infrastructure to the dev environment'
   jobs:
-  - deployment: deploy_aks_infra
-    displayName: deploy AKS infrastructure
+  - deployment: deploy_infra
+    displayName: deploy infrastructure
     pool:
       vmImage: 'ubuntu-latest'
     environment: aks-plink-avzone-apim-appgwy-sql
