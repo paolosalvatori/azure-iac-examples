@@ -25,7 +25,7 @@ resource "azurerm_private_dns_zone" "apim_dns_private_zone" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "apim_zone_to_vnet_link" {
-  name                  = "apim-vnet-plink"
+  name                  = "apim-vnet-link"
   resource_group_name   = azurerm_resource_group.rg.name
   private_dns_zone_name = azurerm_private_dns_zone.apim_dns_private_zone.name
   virtual_network_id    = azurerm_virtual_network.vnet.id
