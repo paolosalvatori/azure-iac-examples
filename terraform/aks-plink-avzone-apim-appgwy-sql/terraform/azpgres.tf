@@ -51,7 +51,7 @@ resource "azurerm_private_dns_a_record" "azpgres_private_endpoint_a_record" {
   zone_name           = azurerm_private_dns_zone.azpgres_plink_dns_private_zone.name
   resource_group_name = azurerm_resource_group.rg.name
   ttl                 = 300
-  records             = [azurerm_private_endpoint.azpgres_plink.private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.azpgres_plink.private_service_connection[0].private_ip_address[0]]
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azpgres_zone_to_vnet_link" {
