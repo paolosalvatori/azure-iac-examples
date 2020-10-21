@@ -39,7 +39,7 @@ resource "azurerm_private_endpoint" "azsql_plink" {
   }
 }
 
-resource "azurerm_private_dns_zone" "azsql_plink_dns_private_zone" {
+data "azurerm_private_dns_zone" "azsql_plink_dns_private_zone" {
   name                = "privatelink.database.windows.net"
   resource_group_name = azurerm_resource_group.rg.name
 }
@@ -60,7 +60,7 @@ resource "azurerm_private_dns_a_record" "azsql_private_endpoint_a_record" {
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azsql_zone_to_vnet_link" {
   name                  = "azsql-vnet-plink"
-  resource_group_name   = azurerm_private_endpoint.azsql_plink.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.azsql_plink_dns_private_zone.name
+  resource_group_name   = azurerm_resource_group.rg.name
+  private_dns_zone_name = data.azurerm_private_dns_zone.azsql_plink_dns_private_zone.name
   virtual_network_id    = azurerm_virtual_network.vnet.id
 } 
