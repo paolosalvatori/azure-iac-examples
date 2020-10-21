@@ -44,12 +44,6 @@ data "azurerm_private_dns_zone" "azsql_plink_dns_private_zone" {
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-/* data "azurerm_private_endpoint_connection" "azsql_plinkconnection" {
-  name                = azurerm_private_endpoint.azsql_plink.name
-  resource_group_name = azurerm_resource_group.rg.name
-}
-*/
-
 resource "azurerm_private_dns_a_record" "azsql_private_endpoint_a_record" {
   name                = azurerm_sql_server.azsql.name
   zone_name           = data.azurerm_private_dns_zone.azsql_plink_dns_private_zone.name
