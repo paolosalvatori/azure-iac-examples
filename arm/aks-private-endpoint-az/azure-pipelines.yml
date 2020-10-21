@@ -102,11 +102,11 @@ stages:
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
             overrideParameters: 
-              -_artifactsLocation "$(storageContainerUri)"" `
-              -_artifactsLocationSasToken "$(storageAccountSasToken)"" `
-              -sshPublicKey "$(SSH_KEY)"" `
-              -vpnGatewaySharedSecret "$(VPN_SECRET)"" `
-              -routerPrivateAddressSpace "$(VPN_PRIVATE_ADDRESS_SPACE)"" `
+              -_artifactsLocation "$(storageContainerUri)" `
+              -_artifactsLocationSasToken "$(storageAccountSasToken)" `
+              -sshPublicKey "$(SSH_KEY)" `
+              -vpnGatewaySharedSecret "$(VPN_SECRET)" `
+              -routerPrivateAddressSpace "$(VPN_PRIVATE_ADDRESS_SPACE)" `
               -routerPublicIpAddress "$routerIp"
 
         - task: ARM Outputs@5
