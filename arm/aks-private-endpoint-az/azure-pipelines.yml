@@ -78,7 +78,7 @@ stages:
 
         - task: PowerShell@2
           enabled: true
-          displayName: 'get router public IP'
+          displayName: 'Get router public IP'
           inputs:
             pwsh: true
             targetType: inline
@@ -102,12 +102,12 @@ stages:
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
             overrideParameters: 
-              -_artifactsLocation "$(storageContainerUri)" `
+              -_artifactsLocation $(storageContainerUri) `
               -_artifactsLocationSasToken "$(storageAccountSasToken)" `
               -sshPublicKey "$(SSH_KEY)" `
-              -vpnGatewaySharedSecret "$(VPN_SECRET)" `
-              -routerPrivateAddressSpace "$(VPN_PRIVATE_ADDRESS_SPACE)" `
-              -routerPublicIpAddress "$routerIp"
+              -vpnGatewaySharedSecret $(VPN_SECRET) `
+              -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE) `
+              -routerPublicIpAddress $routerIp
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
