@@ -106,10 +106,10 @@
 		"adminUsername": {
 			"value": "localadmin"
 		},
-		"_artifactsLocation": {
+		"artifactsLocation": {
 			"value": null
 		},
-		"_artifactsLocationSasToken": {
+		"artifactsLocationSasToken": {
 			"value": null
 		},
 		"vpnGatewaySharedSecret": {
