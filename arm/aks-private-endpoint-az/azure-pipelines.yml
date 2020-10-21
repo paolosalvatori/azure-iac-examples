@@ -92,7 +92,7 @@ stages:
             overrideParameters: 
               -storageUri $(storageContainerUri) `
               -sasToken $(storageAccountSasToken) `
-              -sskPublciKey $(SSH_KEY)
+              -sshPublicKey $(SSH_KEY)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
