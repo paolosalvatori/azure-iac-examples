@@ -94,7 +94,8 @@ stages:
             overrideParameters: 
               -_artifactsLocation $(storageContainerUri) `
               -_artifactsLocationSasToken $(storageAccountSasToken) `
-              -sshPublicKey $(SSH_KEY)
+              -sshPublicKey $(SSH_KEY) `
+              -vpnGatewaySharedSecret $(VPN_SECRET)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
