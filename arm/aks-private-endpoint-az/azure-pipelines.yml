@@ -56,7 +56,9 @@ stages:
             deploymentMode: Incremental
             deploymentName: "storageDeployment-$(timeStamp)"
             outputVariable: storageTemplateOutput
-            overrideParameters: -containerName $(containerName) -sasTokenExpiry $(sasTokenExpiry)
+            overrideParameters: 
+              -containerName $(containerName) 
+              -sasTokenExpiry $(sasTokenExpiry)
 
         - task: ARM Outputs@5
           name: 'GetStorageDeploymentOutput1'
@@ -89,7 +91,7 @@ stages:
               Write-Host "sasToken: $(storageAccountSasToken)"
               Write-Host "sshkey: $(SSH_KEY)"
               Write-Host "vpn secret: $(VPN_SECRET)"
-              Write-Host "VPN IP: $(VPN_PRIVATE_ADDRESS_SPACE)"
+              Write-Host "vpn IP: $(VPN_PRIVATE_ADDRESS_SPACE)"
 
         - task: AzureResourceGroupDeployment@2
           name: 'deployResources'

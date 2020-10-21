@@ -3,7 +3,7 @@ param(
     $location = 'australiaeast',
 
     [string]
-    $prefix = 'dev-aks-pe-demo',
+    $prefix = 'aks-private-endpoint-az',
 
     [string]
     $deploymentName = $('{0}-{1}-{2}' -f $prefix, 'deployment', (Get-Date).ToFileTime()),
@@ -12,7 +12,7 @@ param(
     $containerName = 'nestedtemplates',
 
     [string]
-    $aksVersion = '1.16.9',
+    $aksVersion = '1.18.8',
 
     [int]
     $aksNodeCount = 1,
@@ -24,22 +24,25 @@ param(
     $aksNodeVMSize = 'Standard_D2s_v3',
 
     [string]
-    $sshPublicKey,
+    $sshPublicKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCKEnblRrHUsUf2zEhDC4YrXVDTf6Vj3eZhfIT22og0zo2hdpfUizcDZ+i0J4Bieh9zkcsGMZtMkBseMVVa5tLSNi7sAg79a8Bap5RmxMDgx53ZCrJtTC3Li4e/3xwoCjnl5ulvHs6u863G84o8zgFqLgedKHBmJxsdPw5ykLSmQ4K6Qk7VVll6YdSab7R6NIwW5dX7aP2paD8KRUqcZ1xlArNhHiUT3bWaFNRRUOsFLCxk2xyoXeu+kC9HM2lAztIbUkBQ+xFYIPts8yPJggb4WF6Iz0uENJ25lUGen4svy39ZkqcK0ZfgsKZpaJf/+0wUbjqW2tlAMczbTRsKr8r cbellee@CB-SBOOK-1809",
 
     [bool]
     $deployGateway = $false,
 
     [string]
-    $vpnGatewaySharedSecret,
+    $vpnGatewaySharedSecret = "M1cr0soft123",
 
     [string]
-    $routerPublicIpAddress,
+    $routerPublicIpAddress = "110.150.38.95",
 
     [string]
-    $routerPrivateAddressSpace,
+    $routerPrivateAddressSpace = "192.168.88.0/24",
 
     [string[]]
-    $aadAdminGroupObjectIds,
+	$aadAdminGroupObjectIds = @("f6a900e2-df11-43e7-ba3e-22be99d3cede"),
+	
+	[string]
+	$dbPassword = "M1cr0soft123",
 
     [object]
     $tags = @{
@@ -65,8 +68,7 @@ $storageDeployment = New-AzResourceGroupDeployment `
     -Mode Incremental `
     -TemplateFile $PSScriptRoot\..\nestedtemplates\storage.json `
     -ContainerName $containerName `
-    -SasTokenExpiry $sasTokenExpiry `
-    -Tags $tags
+    -SasTokenExpiry $sasTokenExpiry
 
 # upload ARM template files to blob storage account
 $sa = Get-AzStorageAccount -ResourceGroupName $rgName -Name $storageDeployment.Outputs.storageAccountName.Value
@@ -90,12 +92,13 @@ New-AzResourceGroupDeployment -Name $deploymentName `
     -AksNodeVMSize $aksNodeVMSize `
     -AksVersion $aksVersion `
     -_artifactsLocation $storageDeployment.Outputs.storageContainerUri.value `
-    -_artifactsLocationSasToken $($storageDeployment.Outputs.storageAccountSasToken.value | ConvertTo-SecureString -AsplainText -Force) `
+    -_artifactsLocationSasToken $storageDeployment.Outputs.storageAccountSasToken.value `
     -VpnGatewaySharedSecret $vpnGatewaySharedSecret `
     -RouterPublicIpAddress $routerPublicIpAddress `
     -RouterPrivateAddressSpace $routerPrivateAddressSpace `
     -DeployGateway $false `
     -aadAdminGroupObjectIds $aadAdminGroupObjectIds `
     -sshPublicKey $sshPublicKey `
-    -Tags $tags `
+	-tags $tags `
+	-dbAdminPassword $dbPassword `
     -Verbose

@@ -57,6 +57,14 @@
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Enabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
+						},
+						{
+							"name": "DBSubnet",
+							"addressPrefix": "10.1.1.0/24",
+							"udrName": "default-firewall",
+							"nsgName": null,
+							"privateEndpointNetworkPolicies": "Disabled",
+							"privateLinkServiceNetworkPolicies": "Enabled"
 						}
 					]
 				}
@@ -85,6 +93,9 @@
 			}
 		},
 		"sshPublicKey": {
+			"value": null
+		},
+		"dbAdminPassword": {
 			"value": null
 		},
 		"aadAdminGroupObjectIds": {
