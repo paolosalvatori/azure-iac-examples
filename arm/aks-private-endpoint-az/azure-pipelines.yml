@@ -10,8 +10,9 @@ trigger:
     exclude:
     - arm/aks-private-endpoint-az/azure-pipelines.yml
 variables:
-  # ADO_SERVICE_CONNECTION_NAME: # set in variable  group
+  # ADO_SERVICE_CONNECTION_NAME: # set in variable group
   # LOCATION: # set in variable group
+  # DB_ADMIN_PASSWORD: # set in variable group
   - group: aks_arm_vars
   - name: projectName
     value: aks-private-endpoint-az
@@ -114,7 +115,8 @@ stages:
               -sshPublicKey "$(SSH_KEY)" `
               -vpnGatewaySharedSecret $(VPN_SECRET) `
               -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE) `
-              -routerPublicIpAddress $routerIp
+              -routerPublicIpAddress $routerIp `
+              -dbAdminPassword $(DB_ADMIN_PASSWORD)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
