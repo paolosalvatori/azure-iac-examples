@@ -29,7 +29,7 @@ resource azurerm_private_dns_a_record "apim_private_endpoint_a_record" {
   zone_name           = azurerm_private_dns_zone.apim_dns_private_zone.name
   resource_group_name = azurerm_resource_group.rg.name
   ttl                 = 300
-  records             = [azurerm_api_management.apim.private_ip_address]
+  records             = [azurerm_api_management.apim.private_ip_addresses]
 }
 
 resource azurerm_private_dns_zone_virtual_network_link "apim_zone_to_vnet_link" {
