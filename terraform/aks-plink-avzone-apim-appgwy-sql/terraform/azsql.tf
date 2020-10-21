@@ -56,10 +56,11 @@ resource "azurerm_private_dns_a_record" "azsql_private_endpoint_a_record" {
   ttl                 = 300
   records             = [data.azurerm_private_endpoint_connection.azsql_plinkconnection.private_service_connection.0.private_ip_address]
 }
+*/
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azsql_zone_to_vnet_link" {
   name                  = "azsql-vnet-plink"
   resource_group_name   = azurerm_private_endpoint.azsql_plink.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.azsql_plink_dns_private_zone.name
   virtual_network_id    = azurerm_virtual_network.vnet.id
-} */
+} 

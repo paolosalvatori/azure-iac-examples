@@ -58,6 +58,7 @@ resource "azurerm_private_dns_a_record" "azpgres_private_endpoint_a_record" {
   ttl                 = 300
   records             = [data.azurerm_private_endpoint_connection.azpgres_plinkconnection.private_service_connection.0.private_ip_address]
 }
+*/
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azpgres_zone_to_vnet_link" {
   name                  = "azpgres-vnet-plink"
@@ -65,4 +66,3 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azpgres_zone_to_vnet_l
   private_dns_zone_name = azurerm_private_dns_zone.azpgres_plink_dns_private_zone.name
   virtual_network_id    = azurerm_virtual_network.vnet.id
 }
- */
