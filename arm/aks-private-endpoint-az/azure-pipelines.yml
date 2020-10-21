@@ -92,8 +92,8 @@ stages:
             deploymentName: "resourceDeployment-$(timeStamp)"
             outputVariable: resourceTemplateOutput
             overrideParameters: 
-              -storageUri $(storageContainerUri) `
-              -sasToken $(storageAccountSasToken) `
+              -_artifactsLocation $(storageContainerUri) `
+              -_artifactsLocationSasToken $(storageAccountSasToken) `
               -sshPublicKey $(SSH_KEY)
 
         - task: ARM Outputs@5
