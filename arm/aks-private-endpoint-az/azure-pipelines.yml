@@ -23,6 +23,8 @@ variables:
     value: '{"costCentre":"478132","project":"$(projectName)"}'
   - name: containerName
     value: templates
+  - name: folderPath
+    value: aks-private-endpoint-az
 
 stages:
 - stage: 'release'
@@ -48,7 +50,7 @@ stages:
             action: Create Or Update Resource Group
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
             resourceGroupName: $(resourceGroupName)
-            csmFile: ./arm/aks-private-endpoint/nestedtemplates/storage.json
+            csmFile: ./arm/$(folderPath)/nestedtemplates/storage.json
             location: $(LOCATION)
             templateLocation: Linked artifact
             deploymentMode: Incremental
@@ -72,7 +74,7 @@ stages:
           inputs:
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
             scriptLocation: 'inlineScript'
-            inlineScript: 'az storage blob upload-batch -d $(containerName) -s ./arm/aks-private-endpoint/nestedtemplates/ --pattern *.json --account-name $(storageAccountName)'
+            inlineScript: 'az storage blob upload-batch -d $(containerName) -s ./arm/$(folderPath)/nestedtemplates/ --pattern *.json --account-name $(storageAccountName)'
 
         - task: AzureResourceGroupDeployment@2
           name: 'deployResources'
@@ -82,8 +84,8 @@ stages:
             action: Create Or Update Resource Group
             azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
             resourceGroupName: $(resourceGroupName)
-            csmFile: ./arm/aks-private-endpoint/azuredeploy.json
-            csmParametersFile: ./arm/aks-private-endpoint/azuredeploy.parameters.json
+            csmFile: ./arm/$(folderPath)/azuredeploy.json
+            csmParametersFile: ./arm/$(folderPath)/azuredeploy.parameters.json
             location: $(LOCATION)
             templateLocation: Linked artifact
             deploymentMode: Incremental
