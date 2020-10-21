@@ -1,9 +1,5 @@
-locals {
-  aks_cluster_name = "${var.prefix}-aks-cluster"
-}
-
 resource azurerm_kubernetes_cluster "aks_cluster" {
-  name                    = local.aks_cluster_name
+  name                    = "${var.prefix}-aks-cluster"
   location                = azurerm_resource_group.rg.location
   resource_group_name     = azurerm_resource_group.rg.name
   dns_prefix              = local.aks_cluster_name
