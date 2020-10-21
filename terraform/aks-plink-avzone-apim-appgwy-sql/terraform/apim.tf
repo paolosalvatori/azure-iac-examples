@@ -1,4 +1,4 @@
-resource "azurerm_api_management" "apim" {
+resource azurerm_api_management "apim" {
   name                = lower("${var.prefix}-apim-${random_string.random.result}")
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -19,12 +19,20 @@ resource "azurerm_api_management" "apim" {
   tags = var.tags
 }
 
-resource "azurerm_private_dns_zone" "apim_dns_private_zone" {
+resource azurerm_private_dns_zone "apim_dns_private_zone" {
   name                = "azure-api.net"
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "apim_zone_to_vnet_link" {
+resource azurerm_private_dns_a_record "apim_private_endpoint_a_record" {
+  name                = azurerm_api_management.apim.name
+  zone_name           = data.azurerm_private_dns_zone.apim_dns_private_zone.name
+  resource_group_name = azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_api_management.apim.private_ip_address]
+}
+
+resource azurerm_private_dns_zone_virtual_network_link "apim_zone_to_vnet_link" {
   name                  = "apim-vnet-link"
   resource_group_name   = azurerm_resource_group.rg.name
   private_dns_zone_name = azurerm_private_dns_zone.apim_dns_private_zone.name
