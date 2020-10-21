@@ -53,14 +53,14 @@ param(
 
 $ProgressPreference = 'SilentlyContinue'
 
-# create resource group
 $rgName = "$prefix-rg"
 
+# create resource group
 if (!($rg = Get-AzResourceGroup -Name $rgName -Location $location -ErrorAction SilentlyContinue)) {
     $rg = New-AzResourceGroup -Name $rgName -Location $location
 }
 
-# start storage account template deployment
+# deploy storage account to hold child ARM templates
 $sasTokenExpiry = (Get-Date).AddHours(2).ToString('u') -replace ' ', 'T'
 $storageDeployment = New-AzResourceGroupDeployment `
     -Name $deploymentName `
@@ -91,8 +91,8 @@ New-AzResourceGroupDeployment -Name $deploymentName `
     -AksNodeCount $aksNodeCount `
     -AksNodeVMSize $aksNodeVMSize `
     -AksVersion $aksVersion `
-    -_artifactsLocation $storageDeployment.Outputs.storageContainerUri.value `
-    -_artifactsLocationSasToken $storageDeployment.Outputs.storageAccountSasToken.value `
+    -artifactsLocation $storageDeployment.Outputs.storageContainerUri.value `
+    -artifactsLocationSasToken $storageDeployment.Outputs.storageAccountSasToken.value `
     -VpnGatewaySharedSecret $vpnGatewaySharedSecret `
     -RouterPublicIpAddress $routerPublicIpAddress `
     -RouterPrivateAddressSpace $routerPrivateAddressSpace `
