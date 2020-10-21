@@ -95,7 +95,8 @@ stages:
               -_artifactsLocation $(storageContainerUri) `
               -_artifactsLocationSasToken $(storageAccountSasToken) `
               -sshPublicKey $(SSH_KEY) `
-              -vpnGatewaySharedSecret $(VPN_SECRET)
+              -vpnGatewaySharedSecret $(VPN_SECRET) `
+              -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE)
 
         - task: ARM Outputs@5
           name: 'GetResourceDeploymentOutput1'
