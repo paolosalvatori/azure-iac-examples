@@ -26,7 +26,7 @@ resource azurerm_private_dns_zone "apim_dns_private_zone" {
 
 resource azurerm_private_dns_a_record "apim_private_endpoint_a_record" {
   name                = azurerm_api_management.apim.name
-  zone_name           = data.azurerm_private_dns_zone.apim_dns_private_zone.name
+  zone_name           = azurerm_private_dns_zone.apim_dns_private_zone.name
   resource_group_name = azurerm_resource_group.rg.name
   ttl                 = 300
   records             = [azurerm_api_management.apim.private_ip_address]
