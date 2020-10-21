@@ -83,7 +83,7 @@ stages:
             pwsh: true
             targetType: inline
             script: |
-              $routerIp = [system.net.dns]::GetHostByName($(ON_PREMISES_ROUTER_DNS_HOST_NAME)).addresslist.ipaddressToString
+              $routerIp = [system.net.dns]::GetHostByName("$(ON_PREMISES_ROUTER_DNS_HOST_NAME)").addresslist.ipaddressToString
               Write-Host "##vso[task.setvariable variable=routerIp;]$routerIp"
 
         - task: AzureResourceGroupDeployment@2
