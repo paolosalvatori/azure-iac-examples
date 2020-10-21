@@ -18,3 +18,15 @@ resource "azurerm_api_management" "apim" {
 
   tags = var.tags
 }
+
+resource "azurerm_private_dns_zone" "apim_dns_private_zone" {
+  name                = "azure-api.net"
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "apim_zone_to_vnet_link" {
+  name                  = "apim-vnet-plink"
+  resource_group_name   = azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.apim_dns_private_zone.name
+  virtual_network_id    = azurerm_virtual_network.vnet.id
+} 
