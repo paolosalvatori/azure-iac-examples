@@ -66,6 +66,13 @@
 				"description": "AKS node count"
 			}
 		},
+		"aksMaxPodCount": {
+			"type": "int",
+			"defaultValue": 50,
+			"metadata": {
+				"description": "AKS max pod count per worker node"
+			}
+		},
 		"sshPublicKey": {
 			"type": "string",
 			"metadata": {
@@ -411,6 +418,9 @@
 					},
 					"aksNodeCount": {
 						"value": "[parameters('aksNodeCount')]"
+					},
+					"maxPods": {
+						"value": "[parameters('aksMaxPodCount')]"
 					},
 					"aadAdminGroupObjectIdList": {
 						"value": "[parameters('aadAdminGroupObjectIds')]"

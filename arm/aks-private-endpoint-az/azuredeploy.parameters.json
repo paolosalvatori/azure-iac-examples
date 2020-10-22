@@ -103,6 +103,9 @@
 				null
 			]
 		},
+		"aksMaxPodCount": {
+			"value": null
+		},
 		"adminUsername": {
 			"value": "localadmin"
 		},

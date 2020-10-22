@@ -66,6 +66,13 @@
 				"description": "The maximum number of agent nodes for the cluster."
 			}
 		},
+		"maxPods": {
+			"type": "int",
+			"defaultValue": 30,
+			"metadata": {
+				"description": "The maximum number of pods per AKS worker node"
+			}
+		},
 		"aksNodeVMSize": {
 			"defaultValue": "Standard_F2",
 			"allowedValues": [
@@ -362,6 +369,7 @@
 						"count": "[parameters('aksNodeCount')]",
 						"minCount": "[parameters('aksMinNodeCount')]",
 						"maxCount": "[parameters('aksMaxNodeCount')]",
+						"maxPods": "[parameters('maxPods')]",
 						"vmSize": "[parameters('aksNodeVMSize')]",
 						"osType": "Linux",
 						"type": "VirtualMachineScaleSets",
@@ -377,6 +385,7 @@
 						"count": "[parameters('aksNodeCount')]",
 						"minCount": "[parameters('aksMinNodeCount')]",
 						"maxCount": "[parameters('aksMaxNodeCount')]",
+						"maxPods": "[parameters('maxPods')]",
 						"vmSize": "[parameters('aksNodeVMSize')]",
 						"osType": "Linux",
 						"type": "VirtualMachineScaleSets",
