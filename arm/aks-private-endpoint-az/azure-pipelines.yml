@@ -38,6 +38,7 @@ stages:
         vmImage: 'ubuntu-latest'
       steps:
         - task: PowerShell@2
+          displayName: 'Create Sas Token expiry date/time'
           inputs:
             targetType: 'inline'
             script: |
@@ -47,7 +48,7 @@ stages:
 
         - task: AzureResourceGroupDeployment@2
           name: 'deployStorage'
-          displayName: 'Deploy storage account for arm templates'
+          displayName: 'Deploy storage account for ARM templates'
           enabled: true
           inputs:
             action: Create Or Update Resource Group
@@ -117,4 +118,4 @@ stages:
               -routerPublicIpAddress $routerIp
               -dbAdminPassword $(DB_ADMIN_PASSWORD)
               -aksMaxPodCount $(AKS_MAX_POD_COUNT)
-              -aadAdminGroupObjectIds @($(AAD_ADMIN_GROUP_ID))
+              -aadAdminGroupObjectIds ["$(AAD_ADMIN_GROUP_ID)"]
