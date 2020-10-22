@@ -117,3 +117,4 @@ stages:
               -routerPublicIpAddress $routerIp
               -dbAdminPassword $(DB_ADMIN_PASSWORD)
               -aksMaxPodCount $(AKS_MAX_POD_COUNT)
+              -aadAdminGroupObjectIds [$(AAD_ADMIN_GROUP_ID)]
