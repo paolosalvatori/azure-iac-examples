@@ -57,14 +57,6 @@
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
-						},
-						{
-							"name": "ApplicationGatewaySubnet",
-							"addressPrefix": "10.1.2.0/24",
-							"udrName": "default-firewall",
-							"nsgName": null,
-							"privateEndpointNetworkPolicies": "Disabled",
-							"privateLinkServiceNetworkPolicies": "Enabled"
 						}
 					]
 				}
