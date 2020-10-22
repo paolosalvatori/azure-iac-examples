@@ -1,1 +1,1 @@
-# Private AKS cluster with AGIC integration, Azure Firewall & jump box
+# Private AKS cluster with Availability zones, AGIC integration, Azure Firewall & jump box
