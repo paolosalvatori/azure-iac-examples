@@ -339,14 +339,14 @@
 						"config": {
 							"logAnalyticsWorkspaceResourceID": "[parameters('workspaceRef')]"
 						}
-					}
-					/* "IngressApplicationGateway": {
+					},
+					"IngressApplicationGateway": {
 						"enabled": true,
 						"config": {
 							"applicationGatewayName": "[variables('appGwyName')]",
 							"subnetPrefix": "[parameters('appGwySubnetPrefix')]"
 						}
-					} */
+					}
 				},
 				"apiServerAccessProfile": {
 					"enablePrivateCluster": true
