@@ -23,7 +23,7 @@ variables:
   - name: tags
     value: '{"costCentre":"478132","project":"$(projectName)"}'
   - name: containerName
-    value: templates
+    value: nestedtemplates
   - name: folderPath
     value: aks-private-endpoint-az
 
