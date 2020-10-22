@@ -97,18 +97,6 @@
 	},
 	"resources": [
 		{
-			"name": "[variables('vipName')]",
-			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2019-11-01",
-			"location": "[resourceGroup().location]",
-			"tags": {
-				"displayName": "[variables('vipName')]"
-			},
-			"properties": {
-				"publicIPAllocationMethod": "Static"
-			}
-		},
-		{
 			"type": "Microsoft.Network/networkInterfaces",
 			"apiVersion": "2018-10-01",
 			"name": "[variables('networkInterfaceName')]",
@@ -125,10 +113,7 @@
 							"subnet": {
 								"id": "[parameters('subnetRef')]"
 							},
-							"privateIPAllocationMethod": "Dynamic",
-							"publicIPAddress": {
-								"id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vipName'))]"
-							}
+							"privateIPAllocationMethod": "Dynamic"
 						}
 					}
 				],
