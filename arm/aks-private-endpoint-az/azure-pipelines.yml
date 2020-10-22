@@ -56,13 +56,25 @@ stages:
             templateLocation: Linked artifact
             deploymentMode: Incremental
             deploymentName: "storageDeployment-$(timeStamp)"
-            outputVariable: storageTemplateOutput
+            outputVariable: storageDeploymentOutput
             overrideParameters: 
               -containerName $(containerName) 
               -sasTokenExpiry $(sasTokenExpiry)
 
+        - task: PowerShell@2
+          displayName: 'Get Storage Deployment Outputs'
+          inputs:
+            targetType: 'inline'
+            script: |
+              $outputs = '$(storageDeploymentOutput)' | ConvertFrom-Json
+              foreach ($output in $outputs.PSObject.Properties) {
+                Write-Host "$($output.Name) - $($output.Value.value)"
+                Write-Host "##vso[task.setvariable variable=$($output.Name);]$($output.Value.value)" 
+              }
+
         - task: ARM Outputs@5
           name: 'GetStorageDeploymentOutput1'
+          enabled: false
           displayName: 'Get ARM Storage Deployment Output'
           inputs:
             ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
