@@ -56,7 +56,8 @@ stages:
             templateLocation: Linked artifact
             deploymentMode: Incremental
             deploymentName: "storageDeployment-$(timeStamp)"
-            outputVariable: storageDeploymentOutput
+            outputVariable: storageTemplateOutput
+            deploymentOutputs: storageDeploymentOutput
             overrideParameters: 
               -containerName $(containerName) 
               -sasTokenExpiry $(sasTokenExpiry)
