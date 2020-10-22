@@ -88,11 +88,6 @@ stages:
             script: |
               $routerIp = [system.net.dns]::GetHostByName("$(ON_PREMISES_ROUTER_DNS_HOST_NAME)").addresslist.ipaddressToString
               Write-Host "##vso[task.setvariable variable=routerIp;]$routerIp"
-              Write-Host "storageuri: $(storageContainerUri)"
-              Write-Host "sasToken: $(storageAccountSasToken)"
-              Write-Host "sshkey: $(SSH_KEY)"
-              Write-Host "vpn secret: $(VPN_SECRET)"
-              Write-Host "vpn IP: $(VPN_PRIVATE_ADDRESS_SPACE)"
 
         - task: AzureResourceGroupDeployment@2
           name: 'deployResources'
@@ -112,7 +107,7 @@ stages:
             overrideParameters: 
               -artifactsLocation $(storageContainerUri)
               -artifactsLocationSasToken $(storageAccountSasToken)
-              -sshPublicKey $(SSH_KEY)
+              -sshPublicKey "$(SSH_KEY)"
               -vpnGatewaySharedSecret $(VPN_SECRET)
               -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE)
               -routerPublicIpAddress $routerIp
