@@ -111,8 +111,8 @@ stages:
             outputVariable: resourceTemplateOutput
             overrideParameters: 
               -artifactsLocation $(storageContainerUri)
-              -artifactsLocationSasToken "$(storageAccountSasToken)"
-              -sshPublicKey "$(SSH_KEY)"
+              -artifactsLocationSasToken $(storageAccountSasToken)
+              -sshPublicKey $(SSH_KEY)
               -vpnGatewaySharedSecret $(VPN_SECRET)
               -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE)
               -routerPublicIpAddress $routerIp
