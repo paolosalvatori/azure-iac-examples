@@ -114,7 +114,7 @@ stages:
               -artifactsLocationSasToken "$(storageAccountSasToken)"
               -sshPublicKey "$(SSH_KEY)"
               -vpnGatewaySharedSecret $(VPN_SECRET)
-              -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE) `
+              -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE)
               -routerPublicIpAddress $routerIp
               -dbAdminPassword $(DB_ADMIN_PASSWORD)
 

@@ -33,14 +33,6 @@
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
-						},
-						{
-							"name": "ApplicationGatewaySubnet",
-							"addressPrefix": "10.0.3.0/24",
-							"udrName": "default-firewall",
-							"nsgName": null,
-							"privateEndpointNetworkPolicies": "Disabled",
-							"privateLinkServiceNetworkPolicies": "Enabled"
 						}
 					]
 				},
@@ -61,6 +53,14 @@
 						{
 							"name": "DBSubnet",
 							"addressPrefix": "10.1.1.0/24",
+							"udrName": "default-firewall",
+							"nsgName": null,
+							"privateEndpointNetworkPolicies": "Disabled",
+							"privateLinkServiceNetworkPolicies": "Enabled"
+						},
+						{
+							"name": "ApplicationGatewaySubnet",
+							"addressPrefix": "10.1.2.0/24",
 							"udrName": "default-firewall",
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
