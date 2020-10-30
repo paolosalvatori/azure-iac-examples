@@ -113,9 +113,6 @@ stages:
               -artifactsLocation $(storageContainerUri)
               -artifactsLocationSasToken "$(storageAccountSasToken)"
               -sshPublicKey "$(SSH_KEY)"
-              -vpnGatewaySharedSecret "$(VPN_SECRET)"
-              -routerPrivateAddressSpace $(VPN_PRIVATE_ADDRESS_SPACE)
-              -routerPublicIpAddress $routerIp
               -dbAdminPassword $(DB_ADMIN_PASSWORD)
               -aksMaxPodCount $(AKS_MAX_POD_COUNT)
               -aadAdminGroupObjectIds ["$(AAD_ADMIN_GROUP_ID)"]

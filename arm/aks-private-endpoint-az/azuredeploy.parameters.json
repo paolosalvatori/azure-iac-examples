@@ -11,7 +11,7 @@
 					],
 					"subnets": [
 						{
-							"name": "GatewaySubnet",
+							"name": "AzureFirewallSubnet",
 							"addressPrefix": "10.0.0.0/24",
 							"udrName": null,
 							"nsgName": null,
@@ -19,16 +19,8 @@
 							"privateLinkServiceNetworkPolicies": "Enabled"
 						},
 						{
-							"name": "AzureFirewallSubnet",
-							"addressPrefix": "10.0.1.0/24",
-							"udrName": null,
-							"nsgName": null,
-							"privateEndpointNetworkPolicies": "Enabled",
-							"privateLinkServiceNetworkPolicies": "Enabled"
-						},
-						{
 							"name": "ManagementSubnet",
-							"addressPrefix": "10.0.2.0/24",
+							"addressPrefix": "10.0.1.0/24",
 							"udrName": "default-firewall",
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
@@ -105,15 +97,6 @@
 			"value": null
 		},
 		"artifactsLocationSasToken": {
-			"value": null
-		},
-		"vpnGatewaySharedSecret": {
-			"value": null
-		},
-		"routerPrivateAddressSpace": {
-			"value": null
-		},
-		"routerPublicIpAddress": {
 			"value": null
 		}
 	}

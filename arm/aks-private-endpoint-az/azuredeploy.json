@@ -96,37 +96,11 @@
 			"metadata": {
 				"description": "admin user name for Linux jump box VM"
 			}
-		},
-		"vpnGatewaySharedSecret": {
-			"type": "string",
-			"metadata": {
-				"description": "VPN gateway peering connection shared secret"
-			}
-		},
-		"routerPrivateAddressSpace": {
-			"type": "string",
-			"metadata": {
-				"description": "local router private CIDR"
-			}
-		},
-		"routerPublicIpAddress": {
-			"type": "string",
-			"metadata": {
-				"description": "local router public IP"
-			}
-		},
-		"deployGateway": {
-			"type": "bool",
-			"defaultValue": false
-		},
-		"appGwySku": {
-			"type": "string",
-			"defaultValue": "Standard_v2"
 		}
 	},
 	"variables": {
 		"suffix": "[substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)]",
-		"separatedAddressprefix": "[split(parameters('vNets')[0].subnets[1].addressPrefix,'.')]",
+		"separatedAddressprefix": "[split(parameters('vNets')[0].subnets[0].addressPrefix,'.')]",
 		"firewallPrivateIpAddress": "[concat(variables('separatedAddressprefix')[0], '.', variables('separatedAddressprefix')[1],'.',variables('separatedAddressprefix')[2], '.4')]",
 		"udrNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/udr.json', parameters('artifactsLocationSasToken')))]",
 		"vnetNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/vnets.json', parameters('artifactsLocationSasToken')))]",
@@ -137,7 +111,6 @@
 		"sqldbNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/sql.json', parameters('artifactsLocationSasToken')))]",
 		"sqlPrivateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
 		"privateDnsLinkNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private-dns-link.json', parameters('artifactsLocationSasToken')))]",
-		"gatewayNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/gateway.json', parameters('artifactsLocationSasToken')))]",
 		"appGwyNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/appgwy.json', parameters('artifactsLocationSasToken')))]",
 		"privateLinkNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private_link.json', parameters('artifactsLocationSasToken')))]",
 		"privateDnsNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private_dns.json', parameters('artifactsLocationSasToken')))]",
@@ -221,53 +194,6 @@
 			}
 		},
 		{
-			"comments": "This deployment links to the gateway.json nested ARM template",
-			"name": "linkedTemplate-gateway",
-			"type": "Microsoft.Resources/deployments",
-			"condition": "[parameters('deployGateway')]",
-			"apiVersion": "2019-10-01",
-			"dependsOn": [
-				"vnetCopy"
-			],
-			"resourceGroup": "[resourceGroup().name]",
-			"properties": {
-				"mode": "[parameters('deploymentMode')]",
-				"templateLink": {
-					"contentVersion": "1.0.0.0",
-					"uri": "[variables('gatewayNestedTemplateUri')]"
-				},
-				"parameters": {
-					"suffix": {
-						"value": "[variables('suffix')]"
-					},
-					"location": {
-						"value": "[parameters('location')]"
-					},
-					"gatewaySubnetRef": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[0].id]"
-					},
-					"gatewaySku": {
-						"value": "VpnGw1"
-					},
-					"vpnType": {
-						"value": "RouteBased"
-					},
-					"gatewaySharedSecret": {
-						"value": "[parameters('vpnGatewaySharedSecret')]"
-					},
-					"localGatewayAddressPrefix": {
-						"value": "[parameters('routerPrivateAddressSpace')]"
-					},
-					"localGatewayIpAddress": {
-						"value": "[parameters('routerPublicIpAddress')]"
-					},
-					"enableBgp": {
-						"value": true
-					}
-				}
-			}
-		},
-		{
 			"comments": "This deployment links to the peering.json nested ARM template",
 			"name": "linkedTemplate-peering",
 			"type": "Microsoft.Resources/deployments",
@@ -293,7 +219,7 @@
 						"value": "[parameters('vNets')]"
 					},
 					"isGatewayDeployed": {
-						"value": "[parameters('deployGateway')]"
+						"value": false
 					}
 				}
 			}
@@ -338,7 +264,7 @@
 						"value": "Standard_B2s"
 					},
 					"subnetRef": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[2].id]"
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
 					},
 					"customData": {
 						"value": "[concat('#include\n', concat(parameters('artifactsLocation'), '/', 'cloudinit.txt', parameters('artifactsLocationSasToken')))]"
@@ -369,7 +295,7 @@
 						"value": "[parameters('location')]"
 					},
 					"firewallSubnetRef": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[0].id]"
 					},
 					"sourceAddressRangePrefixes": {
 						"value": "[union(reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value)]"
@@ -455,43 +381,6 @@
 					},
 					"vnetResourceGroupName": {
 						"value": "[resourceGroup().name]"
-					}
-				}
-			}
-		},
-		{
-			"comments": "This deployment links to the appgwy.json nested ARM template",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-10-01",
-			"name": "linkedTemplate-appgwy",
-			"condition": false,
-			"dependsOn": [
-				"vnetCopy"
-			],
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"contentVersion": "1.0.0.0",
-					"uri": "[variables('appGwyNestedTemplateUri')]"
-				},
-				"parameters": {
-					"suffix": {
-						"value": "[variables('suffix')]"
-					},
-					"sku": {
-						"value": {
-							"name": "[parameters('appGwySku')]",
-							"tier": "[parameters('appGwySku')]"
-						}
-					},
-					"subnetRef": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[3].id]"
-					},
-					"appGatewayAutoScaleMinCapacity": {
-						"value": 0
-					},
-					"appGatewayAutoScaleMaxCapacity": {
-						"value": 5
 					}
 				}
 			}
