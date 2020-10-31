@@ -84,16 +84,6 @@ stages:
             scriptLocation: 'inlineScript'
             inlineScript: 'az storage blob upload-batch -d $(containerName) -s ./arm/$(folderPath)/nestedtemplates/ --pattern *.json --account-name $(storageAccountName)'
 
-        - task: PowerShell@2
-          enabled: true
-          displayName: 'Get router public IP'
-          inputs:
-            pwsh: true
-            targetType: inline
-            script: |
-              $routerIp = [system.net.dns]::GetHostByName("$(ON_PREMISES_ROUTER_DNS_HOST_NAME)").addresslist.ipaddressToString
-              Write-Host "##vso[task.setvariable variable=routerIp;]$routerIp"
-
         - task: AzureResourceGroupDeployment@2
           name: 'deployResources'
           displayName: 'Deploy resources'
