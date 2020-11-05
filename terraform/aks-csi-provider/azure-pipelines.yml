@@ -21,6 +21,8 @@ variables:
       value: ./terraform/aks-csi-provider/terraform
     - name: UMID_NAME
       value: 'aad-pod-identity-key-vault-user'
+    - name: LOCATION
+      value: australiaeast
 
 stages:
 - stage: dev
@@ -51,6 +53,22 @@ stages:
                 Write-Host "##vso[task.setvariable variable=ARM_CLIENT_SECRET]$env:servicePrincipalKey"
                 Write-Host "##vso[task.setvariable variable=ARM_TENANT_ID]$(az account show | ConvertFrom-Json | Select-Object -expandProperty tenantId)"
                 Write-Host "##vso[task.setvariable variable=ARM_ACCESS_KEY]$((az storage account keys list -n $(TF_STATE_STORAGE_ACCOUNT_NAME) | ConvertFrom-Json)[0].value)"
+          
+          - task: AzureCLI@2
+            displayName: 'Get Latest AKS version'
+            inputs:
+              azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
+              scriptType: pscore
+              inlineScript: |
+                $aksVersions = az aks  get-versions --location $(LOCATION) | ConvertFrom-Json
+                $latestAksVersion = $aksVersions.orchestrators |  
+                  Select-Object -expand orchestratorversion | 
+                  Foreach-Object {[System.Version]$_} | 
+                  Sort-Object -Descending | 
+                  Select-Object -First 1
+
+                Write-Host "##vso[task.setvariable variable=LATEST_AKS_VERSION]$latestAksVersion"
+
           - task: AzureCLI@2
             displayName: 'Deploy AKS Infrastructure'
             inputs:
@@ -66,7 +84,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'ssh_key=$(SSH_KEY)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
+                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'kubernetesVersion=$(LATEST_AKS_VERSION)' -var 'ssh_key=$(SSH_KEY)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
