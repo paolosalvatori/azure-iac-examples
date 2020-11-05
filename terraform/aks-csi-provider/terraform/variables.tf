@@ -36,7 +36,7 @@ variable "csi_provider_demo_key_vault_user_password" {
 
 variable "csi_provider_demo_key_vault_user_name" {
   type    = string
-  default = "csi-provider-demo-key-vault-user@kainiindustries.net"
+  default = "csi-provider-demo-key-vault-user"
 }
 
 variable "csi_provider_demo_domain_suffix" {
