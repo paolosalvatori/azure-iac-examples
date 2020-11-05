@@ -23,6 +23,10 @@
 				"description": "deployment location"
 			}
 		},
+		"deployGateway": {
+			"type": "bool",
+			"defaultValue": false
+		},
 		"deploymentMode": {
 			"type": "string",
 			"allowedValues": [
