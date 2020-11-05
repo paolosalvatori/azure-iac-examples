@@ -23,6 +23,8 @@ variables:
       value: 'aad-pod-identity-key-vault-user'
     - name: LOCATION
       value: australiaeast
+    - name: AKS_VERSION
+      value: 1.18.8
 
 stages:
 - stage: dev
@@ -56,6 +58,7 @@ stages:
           
           - task: AzureCLI@2
             displayName: 'Get Latest AKS version'
+            enabled: false
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
@@ -68,7 +71,7 @@ stages:
                   Sort-Object -Descending | 
                   Select-Object -First 1
 
-                Write-Host "##vso[task.setvariable variable=LATEST_AKS_VERSION]$latestAksVersion"
+                Write-Host "##vso[task.setvariable variable=AKS_VERSION]$latestAksVersion"
 
           - task: AzureCLI@2
             displayName: 'Deploy AKS Infrastructure'
@@ -85,7 +88,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'kubernetesVersion=$(LATEST_AKS_VERSION)' -var 'ssh_key=$(SSH_KEY)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
+                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'azure-service-connection-objectid=$(ARM_CLIENT_ID)' -var 'kubernetesVersion=$(AKS_VERSION)' -var 'ssh_key=$(SSH_KEY)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
 
                 # Show plan
                 Write-Host "############# Terraform show ############"

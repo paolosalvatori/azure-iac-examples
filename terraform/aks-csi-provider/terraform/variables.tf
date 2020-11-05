@@ -39,6 +39,10 @@ variable "csi_provider_demo_key_vault_user_name" {
   default = "csi-provider-demo-key-vault-user"
 }
 
+variable "azure-service-connection-objectid" {
+	type = string
+}
+
 variable "csi_provider_demo_domain_suffix" {
   type    = string
   default = "kainiindustries.net"

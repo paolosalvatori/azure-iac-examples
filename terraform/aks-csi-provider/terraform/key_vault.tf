@@ -30,9 +30,26 @@ resource azurerm_key_vault "kv" {
     ]
   }
 
-    access_policy {
+  access_policy {
     tenant_id = var.tenant_id
     object_id = azuread_user.csi-provider-demo-key-vault-user.id
+
+    key_permissions = [
+      "get",
+    ]
+
+    secret_permissions = [
+      "get",
+    ]
+
+    storage_permissions = [
+      "get",
+    ]
+  }
+
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.azure-service-connection-objectid
 
     key_permissions = [
       "get",
@@ -54,6 +71,8 @@ resource azurerm_key_vault "kv" {
 
   tags = var.tags
 }
+
+
 
 resource azurerm_key_vault_secret "kv_secret" {
   name         = var.secret_name
