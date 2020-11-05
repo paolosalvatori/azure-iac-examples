@@ -21,8 +21,6 @@ variables:
       value: ./terraform/aks-csi-provider/terraform
     - name: UMID_NAME
       value: 'aad-pod-identity-key-vault-user'
-    - name: OBJECT_ID
-      value: 57963f10-818b-406d-a2f6-6e758d86e259
 
 stages:
 - stage: dev
@@ -68,7 +66,7 @@ stages:
 
                 # Create plan
                 Write-Host "############# Terraform plan ############"
-                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'ssh_key=$(SSH_KEY)' -var 'object_id=$(OBJECT_ID)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
+                terraform plan -var 'tenant_id=$(TENANT_ID)' -var 'ssh_key=$(SSH_KEY)' -var 'csi_provider_demo_key_vault_user_password=$(CSI_PROVIDER_DEMO_KEY_VAULT_USER_PASSWORD)' -out tfplan
 
                 # Show plan
                 Write-Host "############# Terraform show ############"
@@ -158,7 +156,7 @@ stages:
 
           - task: HelmDeploy@0
             continueOnError: true
-            displayName: 'Install AAD Pod Identity Component'
+            displayName: 'Deploy AAD Pod Identity Component'
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               azureResourceGroup: $(RESOURCE_GROUP_NAME)
@@ -243,8 +241,8 @@ stages:
                     objects:  |
                       array:
                         - |
-                          objectName: secret-sauce
-                          objectAlias: secret-sauce
+                          objectName: mysecret
+                          objectAlias: mysecret
                           objectType: secret
                           objectVersion: ""
 
@@ -292,5 +290,5 @@ stages:
               azureResourceGroup: $(RESOURCE_GROUP_NAME)
               command: exec
               kubernetesCluster: $(CLUSTER_NAME)
-              arguments: nginx-secrets-store-inline-podid cat /mnt/secrets-store/secret-sauce
+              arguments: nginx-secrets-store-inline-podid cat /mnt/secrets-store/mhysecret
               outputFormat: json

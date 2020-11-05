@@ -30,25 +30,21 @@ variable "aksNodeSku" {
   default = "Standard_F2s_v2"
 }
 
-variable "object_id" {
-  type    = string
-}
-
 variable "csi_provider_demo_key_vault_user_password" {
   type    = string
 }
 
 variable "csi_provider_demo_key_vault_user_name" {
   type = string
-  default = "csi-provider-demo-key-vault-user"
+  default = "csi-provider-demo-key-vault-user@kainiindustries.net"
 }
 
 variable "secret_name" {
-  default = "secret-sauce"
+  default = "mysecret"
 }
 
 variable "secret_value" {
-  default = "daddies"
+  default = "1234567890"
 }
 
 variable "ssh_key" {

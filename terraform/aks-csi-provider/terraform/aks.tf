@@ -11,9 +11,6 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
   private_cluster_enabled = false
 
   addon_profile {
-    kube_dashboard {
-      enabled = true
-    }
     oms_agent {
       enabled                    = true
       log_analytics_workspace_id = azurerm_log_analytics_workspace.workspace.id
@@ -44,7 +41,7 @@ resource azurerm_kubernetes_cluster "aks_cluster" {
     min_count           = 1
     node_count          = 1
     vm_size             = var.aksNodeSku
-    max_pods            = 200
+    max_pods            = 30
     os_disk_size_gb     = 250
     tags                = var.tags
   }
