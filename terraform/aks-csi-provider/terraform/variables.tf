@@ -22,7 +22,7 @@ variable "resourceGroupName" {
 
 variable "kubernetesVersion" {
   type    = string
-  default = "1.16.9"
+  default = "1.18.8"
 }
 
 variable "aksNodeSku" {
