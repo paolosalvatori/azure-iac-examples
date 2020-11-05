@@ -102,8 +102,7 @@
 			"name": "[variables('networkInterfaceName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
-				"[resourceId('Microsoft.Network/publicIPAddresses', variables('vipName'))]"
+				"[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
 			],
 			"properties": {
 				"ipConfigurations": [
