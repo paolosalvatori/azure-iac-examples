@@ -59,6 +59,7 @@ stages:
             inputs:
               azureSubscription: $(ADO_SERVICE_CONNECTION_NAME)
               scriptType: pscore
+              scriptLocation: inlineScript
               inlineScript: |
                 $aksVersions = az aks  get-versions --location $(LOCATION) | ConvertFrom-Json
                 $latestAksVersion = $aksVersions.orchestrators |  
