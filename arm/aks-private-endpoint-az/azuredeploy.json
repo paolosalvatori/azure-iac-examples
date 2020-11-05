@@ -203,7 +203,6 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-10-01",
 			"dependsOn": [
-				"[concat('Microsoft.Resources/deployments/', 'linkedTemplate-gateway')]"
 			],
 			"resourceGroup": "[resourceGroup().name]",
 			"properties": {
