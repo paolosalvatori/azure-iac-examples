@@ -312,5 +312,5 @@ stages:
               azureResourceGroup: $(RESOURCE_GROUP_NAME)
               command: exec
               kubernetesCluster: $(CLUSTER_NAME)
-              arguments: nginx-secrets-store-inline-podid cat /mnt/secrets-store/mhysecret
+              arguments: nginx-secrets-store-inline-podid cat /mnt/secrets-store/mysecret
               outputFormat: json
