@@ -39,7 +39,7 @@ variables:
   - name: apimGatewayHostName
     value: api.$(domainName)
   - name: keyVaultUserObjectId
-    value: 1eb6f33c-ed0a-4d01-8025-593b5d117f12
+    value: 57963f10-818b-406d-a2f6-6e758d86e259
   - name: sslSecretName
     value: kainiindustriespfx
   - name: DB_ADMIN_PASSWORD
