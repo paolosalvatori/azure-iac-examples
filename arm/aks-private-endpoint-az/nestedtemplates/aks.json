@@ -318,14 +318,10 @@
 			"metadata": {
 				"description": "Log Analytics workspace resource id"
 			}
-		},
-		"appGwySubnetPrefix": {
-			"type": "string"
 		}
 	},
 	"variables": {
-		"aksClusterName": "[concat('aks' , '-', parameters('suffix'))]",
-		"appGwyName": "[concat('appgwy' , '-', parameters('suffix'))]"
+		"aksClusterName": "[concat('aks' , '-', parameters('suffix'))]"
 	},
 	"resources": [
 		{
@@ -394,7 +390,7 @@
 					"serviceCidr": "10.100.0.0/16",
 					"dnsServiceIP": "10.100.0.10",
 					"dockerBridgeCidr": "172.17.0.1/16",
-					"outboundType": "userDefinedRouting",
+					"outboundType": "loadBalancer",
 					"loadBalancerSku": "standard"
 				}
 			}
