@@ -89,7 +89,6 @@
 	"variables": {
 		"suffix": "[substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)]",
 		"vnetNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/vnets.json', parameters('artifactsLocationSasToken')))]",
-		"peeringNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/peering.json', parameters('artifactsLocationSasToken')))]",
 		"aksNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/aks.json', parameters('artifactsLocationSasToken')))]",
 		"sqldbNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/sql.json', parameters('artifactsLocationSasToken')))]",
 		"sqlPrivateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
@@ -146,37 +145,6 @@
 					},
 					"tags": {
 						"value": "[parameters('tags')]"
-					}
-				}
-			}
-		},
-		{
-			"comments": "This deployment links to the peering.json nested ARM template",
-			"name": "linkedTemplate-peering",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2019-10-01",
-			"dependsOn": [
-				"vnetCopy"
-			],
-			"resourceGroup": "[resourceGroup().name]",
-			"properties": {
-				"mode": "[parameters('deploymentMode')]",
-				"templateLink": {
-					"contentVersion": "1.0.0.0",
-					"uri": "[variables('peeringNestedTemplateUri')]"
-				},
-				"parameters": {
-					"suffix": {
-						"value": "[variables('suffix')]"
-					},
-					"location": {
-						"value": "[parameters('location')]"
-					},
-					"vNets": {
-						"value": "[parameters('vNets')]"
-					},
-					"isGatewayDeployed": {
-						"value": false
 					}
 				}
 			}
