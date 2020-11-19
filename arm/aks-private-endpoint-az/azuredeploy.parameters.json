@@ -52,9 +52,6 @@
 				"dept": "it"
 			}
 		},
-		"sshPublicKey": {
-			"value": null
-		},
 		"dbAdminPassword": {
 			"value": null
 		},
