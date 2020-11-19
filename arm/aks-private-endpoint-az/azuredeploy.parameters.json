@@ -42,9 +42,6 @@
 		"aksNodeCount": {
 			"value": 1
 		},
-		"deployGateway": {
-			"value": false
-		},
 		"tags": {
 			"value": {
 				"environment": "dev",
@@ -62,9 +59,6 @@
 		},
 		"aksMaxPodCount": {
 			"value": null
-		},
-		"adminUsername": {
-			"value": "localadmin"
 		},
 		"artifactsLocation": {
 			"value": null
