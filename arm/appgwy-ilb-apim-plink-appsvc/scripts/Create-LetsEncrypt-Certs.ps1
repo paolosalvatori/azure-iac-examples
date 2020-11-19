@@ -6,8 +6,7 @@
 # Explicitly set how PowerShell responds to a non-terminating error
 $ErrorActionPreference = 'Stop'
 
-$CertificatePassword = [System.Web.Security.Membership]::GeneratePassword(15,10)
-$CertificatePassword
+$CertificatePassword = "M1cr0soft1234567890"
 
 # Let's Encrypt Server Selection
 Set-PAServer -DirectoryUrl $LetsEncryptServerType
@@ -24,7 +23,7 @@ $auths = Get-PAOrder -Refresh -MainDomain $domain | Get-PAAuthorizations
 # Let's Encrypt Notify the ACME Server
 $auths.HTTP01Url | Send-ChallengeAck
 
-New-PACertificate -Domain $domain -PfxPass $CertificatePassword
+New-PACertificate -Domain $domain -PfxPass $CertificatePassword -DNSSleep 10 -ValidationTimeout 20
 
 <#
 # Get certificate info

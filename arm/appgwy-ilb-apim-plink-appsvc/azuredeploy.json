@@ -30,6 +30,12 @@
 		},
 		"sslCertificateName": {
 			"type": "string"
+		},
+		"zoneName": {
+			"type": "string"
+		},
+		"cName": {
+			"type": "string"
 		}
 	},
 	"variables": {
@@ -395,12 +401,38 @@
 					"uri": "[concat(parameters('storageUri'), '/', 'privatedns.json', parameters('sasToken'))]"
 				}
 			}
+		},
+		{
+			"name": "linkedTemplate-dns-cname",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-10-01",
+			"dependsOn": [
+				"linkedTemplate-private-dnszone"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"parameters": {
+					"zoneName": {
+						"value": "[parameters('zoneName')]"
+					},
+					"cNameRecord": {
+						"value": "[parameters('cName')]"
+					},
+					"targetRecord": {
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-appGateway').outputs.appGatewayPublicDnsName.value]"
+					}
+				},
+				"templateLink": {
+					"uri": "[concat(parameters('storageUri'), '/', 'dns.json', parameters('sasToken'))]",
+					"contentVersion": "1.0.0.0"
+				}
+			}
 		}
 	],
 	"outputs": {
 		"appGatewayPublicDnsName": {
 			"type": "string",
-			"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-appGateway').outputs.appGatewayPublicDnsName.value]"
+			"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-dns-cname').outputs.cNameFQDN.value]"
 		}
 	}
 }
