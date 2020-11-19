@@ -21,7 +21,7 @@
 						{
 							"name": "ManagementSubnet",
 							"addressPrefix": "10.0.1.0/24",
-							"udrName": "default-firewall",
+							"udrName": null,
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
@@ -37,7 +37,7 @@
 						{
 							"name": "AKSSubnet",
 							"addressPrefix": "10.1.0.0/24",
-							"udrName": "default-firewall",
+							"udrName": null,
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Enabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
@@ -45,7 +45,7 @@
 						{
 							"name": "DBSubnet",
 							"addressPrefix": "10.1.1.0/24",
-							"udrName": "default-firewall",
+							"udrName": null,
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
 							"privateLinkServiceNetworkPolicies": "Enabled"
