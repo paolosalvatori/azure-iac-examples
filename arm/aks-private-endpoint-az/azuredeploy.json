@@ -23,10 +23,6 @@
 				"description": "deployment location"
 			}
 		},
-		"deployGateway": {
-			"type": "bool",
-			"defaultValue": false
-		},
 		"deploymentMode": {
 			"type": "string",
 			"allowedValues": [
@@ -77,12 +73,6 @@
 				"description": "AKS max pod count per worker node"
 			}
 		},
-		"sshPublicKey": {
-			"type": "string",
-			"metadata": {
-				"description": "AKS nodes SSH Key"
-			}
-		},
 		"dbAdminPassword": {
 			"type": "string",
 			"metadata": {
@@ -93,12 +83,6 @@
 			"type": "array",
 			"metadata": {
 				"description": "Array of AAD principal ObjectIds"
-			}
-		},
-		"adminUsername": {
-			"type": "string",
-			"metadata": {
-				"description": "admin user name for Linux jump box VM"
 			}
 		}
 	},
@@ -221,7 +205,7 @@
 						"value": "[parameters('aksVersion')]"
 					},
 					"aksSubnetRef": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value[0].id]"
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[0].id]"
 					},
 					"aksNodeVmSize": {
 						"value": "[parameters('aksNodeVmSize')]"
@@ -347,7 +331,7 @@
 						"value": "[variables('sqlGroupType')]"
 					},
 					"subnet": {
-						"value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-1')).outputs.subnetRefs.value[1].id]"
+						"value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.subnetRefs.value[1].id]"
 					}
 				}
 			}
@@ -371,7 +355,7 @@
 						"value": "[variables('sqlPrivateDnsZoneName')]"
 					},
 					"virtualNetworkName": {
-						"value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-1')).outputs.vnetName.value]"
+						"value": "[reference(resourceId('Microsoft.Resources/deployments', 'linkedTemplate-vnet-0')).outputs.vnetName.value]"
 					}
 				}
 			}

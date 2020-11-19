@@ -15,7 +15,7 @@ variables:
   # DB_ADMIN_PASSWORD: # set in variable group
   - group: aks_arm_vars
   - name: projectName
-    value: aks-private-endpoint-az
+    value: aks-private-endpoint-az-fw
   - name: resourceGroupName
     value: "$(projectName)-rg"
   - name: timeStamp

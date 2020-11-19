@@ -5,13 +5,13 @@
 		"vNets": {
 			"value": [
 				{
-					"name": "hub-vnet",
+					"name": "spoke-vnet",
 					"addressPrefixes": [
 						"10.0.0.0/16"
 					],
 					"subnets": [
 						{
-							"name": "AzureFirewallSubnet",
+							"name": "AKSSubnet",
 							"addressPrefix": "10.0.0.0/24",
 							"udrName": null,
 							"nsgName": null,
@@ -19,32 +19,8 @@
 							"privateLinkServiceNetworkPolicies": "Enabled"
 						},
 						{
-							"name": "ManagementSubnet",
-							"addressPrefix": "10.0.1.0/24",
-							"udrName": null,
-							"nsgName": null,
-							"privateEndpointNetworkPolicies": "Disabled",
-							"privateLinkServiceNetworkPolicies": "Enabled"
-						}
-					]
-				},
-				{
-					"name": "spoke-vnet",
-					"addressPrefixes": [
-						"10.1.0.0/16"
-					],
-					"subnets": [
-						{
-							"name": "AKSSubnet",
-							"addressPrefix": "10.1.0.0/24",
-							"udrName": null,
-							"nsgName": null,
-							"privateEndpointNetworkPolicies": "Enabled",
-							"privateLinkServiceNetworkPolicies": "Enabled"
-						},
-						{
 							"name": "DBSubnet",
-							"addressPrefix": "10.1.1.0/24",
+							"addressPrefix": "10.0.1.0/24",
 							"udrName": null,
 							"nsgName": null,
 							"privateEndpointNetworkPolicies": "Disabled",
