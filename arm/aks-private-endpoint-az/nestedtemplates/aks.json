@@ -346,13 +346,6 @@
 						"config": {
 							"logAnalyticsWorkspaceResourceID": "[parameters('workspaceRef')]"
 						}
-					},
-					"IngressApplicationGateway": {
-						"enabled": true,
-						"config": {
-							"applicationGatewayName": "[variables('appGwyName')]",
-							"subnetPrefix": "[parameters('appGwySubnetPrefix')]"
-						}
 					}
 				},
 				"apiServerAccessProfile": {

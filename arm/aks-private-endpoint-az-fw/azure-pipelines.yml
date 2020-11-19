@@ -6,9 +6,9 @@ trigger:
     - develop
   paths:
     include:
-    - arm/aks-private-endpoint-az/*
+    - arm/aks-private-endpoint-az-fw/*
     exclude:
-    - arm/aks-private-endpoint-az/azure-pipelines.yml
+    - arm/aks-private-endpoint-az-fw/azure-pipelines.yml
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # set in variable group
   # LOCATION: # set in variable group
@@ -25,7 +25,7 @@ variables:
   - name: containerName
     value: nestedtemplates
   - name: folderPath
-    value: aks-private-endpoint-az
+    value: aks-private-endpoint-az-fw
   - name: AKS_MAX_POD_COUNT
     value: 50
 
