@@ -138,6 +138,30 @@
 			}
 		},
 		{
+			"comments": "This deployment links to the udr.json nested ARM template",
+			"name": "linkedTemplate-udr",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-10-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"contentVersion": "1.0.0.0",
+					"uri": "[variables('udrNestedTemplateUri')]"
+				},
+				"parameters": {
+					"suffix": {
+						"value": "[variables('suffix')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"azureFirewallPrivateIpAddress": {
+						"value": "[variables('firewallPrivateIpAddress')]"
+					}
+				}
+			}
+		},
+		{
 			"comments": "This deployment links to the vnets.json nested ARM template",
 			"name": "[concat('linkedTemplate-vnet', '-', copyIndex())]",
 			"type": "Microsoft.Resources/deployments",
@@ -200,6 +224,91 @@
 					},
 					"isGatewayDeployed": {
 						"value": false
+					}
+				}
+			}
+		},
+		{
+			"comments": "This deployment links to the vm.json nested ARM template",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-10-01",
+			"name": "linkedTemplate-vm",
+			"dependsOn": [
+				"[concat('Microsoft.Resources/deployments/', 'linkedTemplate-peering')]"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"contentVersion": "1.0.0.0",
+					"uri": "[variables('vmNestedTemplateUri')]"
+				},
+				"parameters": {
+					"suffix": {
+						"value": "[variables('suffix')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"vmName": {
+						"value": "jump-box-vm"
+					},
+					"adminUsername": {
+						"value": "[parameters('adminUsername')]"
+					},
+					"authenticationType": {
+						"value": "sshPublicKey"
+					},
+					"adminPasswordOrKey": {
+						"value": "[parameters('sshPublicKey')]"
+					},
+					"ubuntuOSVersion": {
+						"value": "18.04-LTS"
+					},
+					"VmSize": {
+						"value": "Standard_B2s"
+					},
+					"subnetRef": {
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1].id]"
+					},
+					"customData": {
+						"value": "[concat('#include\n', concat(parameters('artifactsLocation'), '/', 'cloudinit.txt', parameters('artifactsLocationSasToken')))]"
+					}
+				}
+			}
+		},
+		{
+			"comments": "This deployment links to the firewall.json nested ARM template",
+			"name": "linkedTemplate-firewall",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2019-10-01",
+			"dependsOn": [
+				"[concat('Microsoft.Resources/deployments/', 'linkedTemplate-vm')]"
+			],
+			"resourceGroup": "[resourceGroup().name]",
+			"properties": {
+				"mode": "[parameters('deploymentMode')]",
+				"templateLink": {
+					"contentVersion": "1.0.0.0",
+					"uri": "[variables('firewallNestedTemplateUri')]"
+				},
+				"parameters": {
+					"suffix": {
+						"value": "[variables('suffix')]"
+					},
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"firewallSubnetRef": {
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[0].id]"
+					},
+					"sourceAddressRangePrefixes": {
+						"value": "[union(reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/linkedTemplate-vnet-1').outputs.subnetRefs.value)]"
+					},
+					"vmPrivateIp": {
+						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-vm').outputs.vmPrivateIp.value]"
+					},
+					"workspaceRef": {
+						"value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
 					}
 				}
 			}
