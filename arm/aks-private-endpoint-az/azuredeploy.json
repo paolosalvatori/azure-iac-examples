@@ -104,18 +104,12 @@
 	},
 	"variables": {
 		"suffix": "[substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)]",
-		"separatedAddressprefix": "[split(parameters('vNets')[0].subnets[0].addressPrefix,'.')]",
-		"firewallPrivateIpAddress": "[concat(variables('separatedAddressprefix')[0], '.', variables('separatedAddressprefix')[1],'.',variables('separatedAddressprefix')[2], '.4')]",
-		"udrNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/udr.json', parameters('artifactsLocationSasToken')))]",
 		"vnetNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/vnets.json', parameters('artifactsLocationSasToken')))]",
 		"peeringNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/peering.json', parameters('artifactsLocationSasToken')))]",
-		"vmNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/vm.json', parameters('artifactsLocationSasToken')))]",
-		"firewallNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/firewall.json', parameters('artifactsLocationSasToken')))]",
 		"aksNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/aks.json', parameters('artifactsLocationSasToken')))]",
 		"sqldbNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/sql.json', parameters('artifactsLocationSasToken')))]",
 		"sqlPrivateDnsZoneName": "[concat('privatelink', environment().suffixes.sqlServerHostname)]",
 		"privateDnsLinkNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private-dns-link.json', parameters('artifactsLocationSasToken')))]",
-		"appGwyNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/appgwy.json', parameters('artifactsLocationSasToken')))]",
 		"privateLinkNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private_link.json', parameters('artifactsLocationSasToken')))]",
 		"privateDnsNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/private_dns.json', parameters('artifactsLocationSasToken')))]",
 		"privateDnsRecordNestedTemplateUri": "[uri(parameters('artifactsLocation'), concat('nestedtemplates/dns_record.json', parameters('artifactsLocationSasToken')))]",
@@ -210,7 +204,6 @@
 			"apiVersion": "2019-10-01",
 			"name": "linkedTemplate-aks",
 			"dependsOn": [
-				"[concat('Microsoft.Resources/deployments/', 'linkedTemplate-firewall')]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -443,10 +436,6 @@
 		}
 	],
 	"outputs": {
-		"firewallPublicIpAddress": {
-			"type": "string",
-			"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-firewall').outputs.firewallPublicIpAddress.value]"
-		},
 		"aksClusterPrivateDnsHostName": {
 			"type": "string",
 			"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-aks').outputs.aksControlPlanePrivateFQDN.value]"
