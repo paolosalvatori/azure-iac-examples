@@ -137,7 +137,6 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2019-10-01",
 			"dependsOn": [
-				"[concat('Microsoft.Resources/deployments/', 'linkedTemplate-udr')]"
 			],
 			"condition": true,
 			"resourceGroup": "[resourceGroup().name]",
