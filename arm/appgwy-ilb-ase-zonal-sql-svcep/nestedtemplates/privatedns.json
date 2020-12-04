@@ -1,0 +1,77 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"privateDnsZoneName": {
+			"type": "string"
+		},
+		"vnetName": {
+			"type": "string"
+		},
+		"aseIpAddress": {
+			"type": "string"
+		},
+		"aseName": {
+			"type": "string"
+		}
+	},
+	"variables": {},
+	"resources": [
+		{
+			"type": "Microsoft.Network/privateDnsZones",
+			"apiVersion": "2020-01-01",
+			"name": "[parameters('privateDnsZoneName')]",
+			"location": "global"
+		},
+		{
+			"type": "Microsoft.Network/dnsZones/A",
+			"apiVersion": "2018-05-01",
+			"name": "[concat(parameters('privateDnsZoneName'), '/', parameters('aseName'))]",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('privateDnsZoneName')]"
+			],
+			"properties": {
+				"TTL": 3600,
+				"ARecords": [
+					{
+						"ipv4Address": "[parameters('aseIpAddress')]"
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/dnsZones/A",
+			"apiVersion": "2018-05-01",
+			"name": "[concat(parameters('privateDnsZoneName'), '/', 'scm', '.', parameters('aseName'))]",
+			"location": "global",
+			"dependsOn": [
+				"[parameters('privateDnsZoneName')]"
+			],
+			"properties": {
+				"TTL": 3600,
+				"ARecords": [
+					{
+						"ipv4Address": "[parameters('aseIpAddress')]"
+					}
+				]
+			}
+		},
+		{
+			"type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+			"apiVersion": "2020-01-01",
+			"name": "[concat(parameters('privateDnsZoneName'), '/', parameters('privateDnsZoneName'), '-link')]",
+			"location": "global",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+			],
+			"properties": {
+				"registrationEnabled": false,
+				"virtualNetwork": {
+					"id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+				}
+			}
+		}
+	],
+	"outputs": {}
+}
