@@ -151,8 +151,6 @@ while ($i -lt $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value.Count) 
 	$i++
 }
 
-$appGwyApp | ConvertTo-Json
-
 # create self-signed ssl certificate in key vault
 $policy = New-AzKeyVaultCertificatePolicy -ValidityInMonths 12 `
 	-SubjectName "CN=$certName" `
