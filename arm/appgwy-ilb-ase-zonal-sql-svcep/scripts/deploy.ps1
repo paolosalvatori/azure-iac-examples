@@ -20,7 +20,7 @@ param(
 
 $ProgressPreference = 'SilentlyContinue'
 
-function Set-PfxAsKeyVaultSecret {
+<# function Set-PfxAsKeyVaultSecret {
 
 	[CmdletBinding()]
 	param (
@@ -53,7 +53,7 @@ function Set-PfxAsKeyVaultSecret {
 	$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
 	$secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText -Force
 	Set-AzKeyVaultSecret -VaultName $KeyVaultName -Name $($pfxFile.BaseName -replace '\.', '-') -SecretValue $secret -ContentType $SecretContentType
-}
+} #>
 
 $rgName = "$prefix-rg"
 $certName = 'api.kainiindustries.net'
@@ -71,7 +71,7 @@ if (!($rg = Get-AzResourceGroup -Name $rgName -Location $location -ErrorAction S
 # deploy storage account to hold child ARM templates
 $sasTokenExpiry = (Get-Date).AddHours(2).ToString('u') -replace ' ', 'T'
 $storageDeployment = New-AzResourceGroupDeployment `
-	-Name "deploy-storage-$((Get-Date).ToFileTime())" `
+	-Name "deploy-storage" `
 	-ResourceGroupName $rg.ResourceGroupName `
 	-Mode Incremental `
 	-TemplateFile $PSScriptRoot\..\nestedtemplates\storage.json `
@@ -93,7 +93,7 @@ Get-ChildItem $PSScriptRoot\..\nestedtemplates -File | ForEach-Object {
 
 # deploy key vault to store app gateway ssl certificate 
 $keyVaultDeployment = New-AzResourceGroupDeployment `
-	-Name "deploy-keyvault-$((Get-Date).ToFileTime())" `
+	-Name "deploy-keyvault" `
 	-ResourceGroupName $rg.ResourceGroupName `
 	-Mode Incremental `
 	-TemplateFile $PSScriptRoot\..\nestedtemplates\keyvault.json `
@@ -109,29 +109,49 @@ Set-PfxAsKeyVaultSecret `
 	-Verbose 
 #>
 
+$keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-keyvault'
+$storageDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-storage'
+$resourceDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-ase-db'
+
+$templateParams = @{
+	storageUri      = $storageDeployment.Outputs.storageContainerUri.value
+	sasToken        = $storageDeployment.Outputs.storageAccountSasToken.value
+	dbAdminLogin    = 'dbadmin'
+	dbAdminPassword = $dbAdminPassword
+	aseZones        = @('1', '2')
+}
+
 # deploy nsg, vnet, 2 x ase & mySql flexible server, 
 $resourceDeployment = New-AzResourceGroupDeployment `
-	-Name "deploy-resources-$((Get-Date).ToFileTime())" `
+	-Name "deploy-ase-db" `
 	-ResourceGroupName $rg.ResourceGroupName `
 	-Mode Incremental `
 	-TemplateFile $PSScriptRoot\..\azuredeploy-1.json `
 	-TemplateParameterFile $PSScriptRoot\..\azuredeploy-1.parameters.json `
-	-StorageUri $storageDeployment.Outputs.storageContainerUri.value `
-	-SasToken $storageDeployment.Outputs.storageAccountSasToken.value `
-	-dbAdminLogin "dbadmin" `
-	-dbAdminPassword $dbAdminPassword `
-	-AseZones @('1', '2') `
+	@templateParams `
 	-Verbose
 
-# get internal Load Balancer (ILB) App Service Environment (ASE) private IP Addresses
-$aseIpList = @()
-$i = 0
+# get internal Load Balancer (ILB) App Service Environment (ASE) site fqdns
+# create temaplte parameter input array object
+$appGwyApp = @{name = 'test-site'; hostName = 'api.kainiindustries.net'; backendAddresses = @(); backends = @(); probePath = '/'; }
 
+$i = 0
 while ($i -lt $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value.Count) {
-	$id = $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value[$i].value
-	$aseIpList += az resource show --ids "$id/capacities/virtualip" --query internalIpAddress --output tsv --api-version 2018-02-01
+	$appGwyApp.backendAddresses += @{fqdn = $($resourceDeployment.Outputs.siteFqdns.Value[$i].value) }
+	$aseId = $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value[$i].value
+	$aseIp = az resource show --ids "$aseId/capacities/virtualip" --query internalIpAddress --output tsv --api-version 2018-02-01
+
+	$appGwyApp.backends += @{
+		asefqdn   = $($resourceDeployment.Outputs.aseFqdns.Value[$i].value)
+		sitename  = $($resourceDeployment.Outputs.siteNames.Value[$i].value)
+		asevnetid = $($resourceDeployment.Outputs.aseVnetIds.Value[$i].value)
+		ip        = $aseIp
+	}
+
 	$i++
 }
+
+$appGwyApp | ConvertTo-Json
 
 # create self-signed ssl certificate in key vault
 $policy = New-AzKeyVaultCertificatePolicy -ValidityInMonths 12 `
@@ -157,19 +177,21 @@ while ($null -eq ($certificate = Get-AzKeyVaultCertificate -VaultName $keyVaultD
 
 $secretId = $certificate.SecretId.Replace($certificate.Version, "")
 
-# deploy application gateway
+$templateParams = @{
+	StorageUri         = $storageDeployment.Outputs.storageContainerUri.value
+	SasToken           = $storageDeployment.Outputs.storageAccountSasToken.value
+	SubnetId           = $resourceDeployment.outputs.appGatewaySubnetId.value
+	KeyVaultName       = $keyVaultDeployment.outputs.keyVaultName.value
+	AppGwyApplications = $appGwyApp
+	CertificateId      = $secretId
+}
+
+# deploy application gateway, private DNS zones & DNS records
 $appGwyDeployment = New-AzResourceGroupDeployment `
-	-Name "deploy-app-gateway-$((Get-Date).ToFileTime())" `
+	-Name "deploy-app-gateway" `
 	-ResourceGroupName $rg.ResourceGroupName `
 	-Mode Incremental `
 	-TemplateFile $PSScriptRoot\..\azuredeploy-2.json `
-	-StorageUri $storageDeployment.Outputs.storageContainerUri.value `
-	-SasToken $storageDeployment.Outputs.storageAccountSasToken.value `
-	-HostName 'api.kainiindustries.net' `
-	-appGatewaySubnetId $resourceDeployment.outputs.appGatewaySubnetId.value `
-	-AsePrivateIpAddresses $aseIpList `
-	-KeyVaultUri $keyVaultDeployment.outputs.keyVaultUri.value `
-	-KeyVaultName $keyVaultDeployment.outputs.keyVaultName.value `
-	-SslCertificateName $certName `
-	-CertificateId $secretId `
+	-TemplateParameterFile $PSScriptRoot\..\azuredeploy-2.parameters.json `
+	@templateParams `
 	-Verbose

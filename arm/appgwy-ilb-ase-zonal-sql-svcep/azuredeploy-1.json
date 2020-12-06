@@ -283,6 +283,34 @@
 				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-0').outputs.aseHostingEnvironmentId.value]",
 				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-1').outputs.aseHostingEnvironmentId.value]"
 			]
+		},
+		"siteFqdns": {
+			"type": "array",
+			"value": [
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-0').outputs.siteFqdn.value]",
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-1').outputs.siteFqdn.value]"
+			]
+		},
+		"aseFqdns": {
+			"type": "array",
+			"value": [
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-0').outputs.aseFqdn.value]",
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-1').outputs.aseFqdn.value]"
+			]
+		},
+		"aseVnetIds": {
+			"type": "array",
+			"value": [
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-0').outputs.aseVnetId.value]",
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-1').outputs.aseVnetId.value]"
+			]
+		},
+		"siteNames": {
+			"type": "array",
+			"value": [
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-0').outputs.siteName.value]",
+				"[reference('Microsoft.Resources/deployments/linkedTemplate-ase-1').outputs.siteName.value]"
+			]
 		}
 	}
 }

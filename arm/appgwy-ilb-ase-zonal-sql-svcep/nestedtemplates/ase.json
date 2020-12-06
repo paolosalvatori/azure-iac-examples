@@ -128,6 +128,22 @@
 		"aseHostingEnvironmentId": {
 			"type": "string",
 			"value": "[resourceId('Microsoft.Web/hostingEnvironments', variables('aseName'))]"
+		},
+		"siteFqdn": {
+			"type": "string",
+			"value": "[concat(parameters('siteName'), '.', variables('aseName'), '.', 'appserviceenvironment.net')]"
+		},
+		"aseFqdn": {
+			"type": "string",
+			"value": "[concat(variables('aseName'), '.', 'appserviceenvironment.net')]"
+		},
+		"siteName": {
+			"type": "string",
+			"value": "[parameters('siteName')]"
+		},
+		"aseVnetId": {
+			"type": "string",
+			"value": "[parameters('vnetId')]"
 		}
 	}
 }

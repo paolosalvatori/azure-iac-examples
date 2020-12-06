@@ -1,0 +1,27 @@
+{
+	"hostName": "api.kainiindustries.net",
+	"backendAddresses": [
+		{
+			"fqdn": "site-1-kteopb.ase-1-kteopb.appserviceenvironment.net"
+		},
+		{
+			"fqdn": "site-2-kteopb.ase-2-kteopb.appserviceenvironment.net"
+		}
+	],
+	"name": "test-site",
+	"probePath": "/",
+	"backends": [
+		{
+			"asefqdn": "ase-1-kteopb.appserviceenvironment.net",
+			"ip": "10.1.1.11",
+			"sitename": "site-1-kteopb",
+			"asevnetid": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/appgwy-ilb-ase-zonal-sql-svcep-rg/providers/Microsoft.Network/virtualNetworks/vnet-kteopb"
+		},
+		{
+			"asefqdn": "ase-2-kteopb.appserviceenvironment.net",
+			"ip": "10.1.2.11",
+			"sitename": "site-2-kteopb",
+			"asevnetid": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/appgwy-ilb-ase-zonal-sql-svcep-rg/providers/Microsoft.Network/virtualNetworks/vnet-kteopb"
+		}
+	]
+}

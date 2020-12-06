@@ -10,19 +10,13 @@
 			"type": "string",
 			"defaultValue": null
 		},
-		"hostName": {
-			"type": "string"
-		},
-		"appGatewaySubnetId": {
-			"type": "string"
-		},
-		"asePrivateIpAddresses": {
-			"type": "array"
-		},
-		"aseHostNames": {
-			"type": "array"
+		"appGwyApplications": {
+			"type": "object"
 		},
 		"keyVaultName": {
+			"type": "string"
+		},
+		"subnetId": {
 			"type": "string"
 		},
 		"certificateId": {
@@ -49,41 +43,42 @@
 					"suffix": {
 						"value": "[variables('suffix')]"
 					},
-					"skuName": {
-						"value": "Standard"
-					},
-					"tier": {
-						"value": "Regional"
-					},
-					"hostName": {
-						"value": "[parameters('hostName')]"
-					},
-					"gatewaySku": {
-						"value": {
-							"name": "WAF_v2",
-							"tier": "WAF_v2"
-						}
-					},
-					"subnetId": {
-						"value": "[parameters('appGatewaySubnetId')]"
-					},
-					"frontEndPort": {
-						"value": 443
-					},
-					"requestTimeOut": {
-						"value": 180
-					},
-					"asePrivateIpAddresses": {
-						"value": "[parameters('asePrivateIpAddresses')]"
+					"location": {
+						"value": "[resourceGroup().location]"
 					},
 					"keyVaultName": {
 						"value": "[parameters('keyVaultName')]"
 					},
+					"appGwyApplications": {
+						"value": "[parameters('appGwyApplications')]"
+					},
+					"subnetId": {
+						"value": "[parameters('subnetId')]"
+					},
+					"appGwyZones": {
+						"value": "1,2,3"
+					},
 					"certificateId": {
 						"value": "[parameters('certificateId')]"
-					},
-					"aseHostNames": {
-						"value": "[parameters('aseHostNames')]"
+					}
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-05-01",
+			"name": "linkedTemplate-dns",
+			"dependsOn": [
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"contentVersion": "1.0.0.0",
+					"uri": "[concat(parameters('storageUri'), '/', 'privatedns.json', parameters('sasToken'))]"
+				},
+				"parameters": {
+					"aseApplications": {
+						"value": "[parameters('appGwyApplications')]"
 					}
 				}
 			}
@@ -105,9 +100,6 @@
 					"suffix": {
 						"value": "[variables('suffix')]"
 					}
-/* 					"appGatewayPublicIpAddress": {
-						"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-appgwy').outputs.appGatewayPublicIpAddress.value]"
-					} */
 				}
 			}
 		}

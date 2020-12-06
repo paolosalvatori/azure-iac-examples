@@ -5,83 +5,59 @@
 		"suffix": {
 			"type": "string"
 		},
-		"skuName": {
+		"location": {
 			"type": "string",
-			"defaultValue": "Standard"
-		},
-		"tier": {
-			"type": "string",
-			"defaultValue": "Regional"
-		},
-		"hostName": {
-			"type": "string"
-		},
-		"gatewaySku": {
-			"type": "object",
-			"defaultValue": {
-				"name": "WAF_v2",
-				"tier": "WAF_v2"
-			}
-		},
-		"subnetId": {
-			"type": "string"
-		},
-		"frontEndPort": {
-			"type": "int",
-			"defaultValue": 443
-		},
-		"requestTimeOut": {
-			"type": "int",
-			"defaultValue": 180
-		},
-		"asePrivateIpAddresses": {
-			"type": "array"
+			"defaultValue": "[resourceGroup().location]"
 		},
 		"keyVaultName": {
 			"type": "string"
 		},
-		"certificateId": {
+		"appGwyApplications": {
+			"type": "object",
+			"metadata": {
+				"description": "List of applications to configure. Each element format is: { name, hostName, backendAddresses, certificate: { data, password }, probePath }"
+			}
+		},
+		"appGwyZones": {
+			"defaultValue": "1,2,3",
 			"type": "string"
 		},
-		"aseHostNames": {
-			"type": "array"
+		"subnetId": {
+			"type": "string"
+		},
+		"certificateId": {
+			"type": "string"
 		}
 	},
 	"variables": {
-		"pipName": "[concat('appgwy-pip', '-', parameters('suffix'))]",
-		"pipDomainName": "[variables('appGwyName')]",
-		"appGwyName": "[concat('appgwy', '-', parameters('suffix'))]",
+		"appgwyName": "[concat('appgwyy', '-', parameters('suffix'))]",
+		"appgwyId": "[resourceId('Microsoft.Network/applicationGateways', variables('appgwyName'))]",
 		"appGatewayIdentityName": "appGatewayIdentity",
 		"appGatewayIdentityID": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('appGatewayIdentityName'))]",
-		"copy": [
-			{
-				"name": "aseIpAddressObjectArray",
-				"count": "[length(parameters('asePrivateIpAddresses'))]",
-				"input": {
-					"ipAddress": "[parameters('asePrivateIpAddresses')[copyIndex('aseIpAddressObjectArray')]]"
-				}
-			}
-		]
+		"appgwyPublicIpAddressName": "[concat('appgwy-pip', '-', parameters('suffix'))]",
+		"appgwyPublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appgwyPublicIpAddressName'))]",
+		"appgwyIpConfigName": "[concat(variables('appgwyName'), '-ipconfig')]",
+		"appgwyFrontendName": "[concat(variables('appgwyName'), '-frontend')]",
+		"appgwyBackendName": "[concat(variables('appgwyName'), '-backend-')]",
+		"appgwyHttpSettingsName": "[concat(variables('appgwyName'), '-httpsettings-')]",
+		"appgwyHealthProbeName": "[concat(variables('appgwyName'), '-healthprobe-')]",
+		"appgwyListenerName": "[concat(variables('appgwyName'), '-listener-')]",
+		"appgwyRouteRulesName": "[concat(variables('appgwyName'), '-routerules-')]",
+		"appgwyAutoScaleMinCapacity": 0,
+		"appgwyAutoScaleMaxCapacity": 10,
+		"appgwyZonesArray": "[if(empty(parameters('appgwyZones')),json('null'),split(parameters('appgwyZones'), ','))]"
 	},
 	"resources": [
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2018-12-01",
-			"name": "[variables('pipName')]",
-			"location": "[resourceGroup().location]",
+			"apiVersion": "2019-11-01",
+			"name": "[variables('appgwyPublicIpAddressName')]",
+			"location": "[parameters('location')]",
 			"sku": {
-				"name": "[parameters('skuName')]",
-				"tier": "[parameters('tier')]"
+				"name": "Standard"
 			},
 			"properties": {
-				"dnsSettings": {
-					"domainNameLabel": "[variables('pipDomainName')]"
-				},
-				"publicIPAddressVersion": "IPv4",
-				"publicIPAllocationMethod": "Static",
-				"idleTimeoutInMinutes": 4,
-				"ipTags": [
-				]
+				"publicIPAllocationMethod": "Static"
 			}
 		},
 		{
@@ -120,33 +96,29 @@
 		},
 		{
 			"type": "Microsoft.Network/applicationGateways",
-			"apiVersion": "2018-12-01",
-			"name": "[variables('appGwyName')]",
-			"location": "[resourceGroup().location]",
+			"apiVersion": "2019-11-01",
+			"name": "[variables('appgwyName')]",
+			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+				"[variables('appgwyPublicIpAddressId')]",
+				"[variables('appGatewayIdentityName')]"
 			],
-			"zones": [
-				"1",
-				"2",
-				"3"
-			],
+			"zones": "[variables('appgwyZonesArray')]",
 			"identity": {
 				"type": "UserAssigned",
 				"userAssignedIdentities": {
 					"[variables('appGatewayIdentityID')]": {}
 				}
 			},
+			"tags": {},
 			"properties": {
-				"autoscaleConfiguration": {
-					"minCapacity": 1,
-					"maxCapacity": 3
+				"sku": {
+					"name": "WAF_v2",
+					"tier": "WAF_v2"
 				},
-				"sku": "[parameters('gatewaySku')]",
 				"gatewayIPConfigurations": [
 					{
-						"name": "gateway-ip",
-						"type": "Microsoft.Network/applicationGateways/gatewayIPConfigurations",
+						"name": "[variables('appgwyIpConfigName')]",
 						"properties": {
 							"subnet": {
 								"id": "[parameters('subnetId')]"
@@ -154,6 +126,34 @@
 						}
 					}
 				],
+				"frontendIPConfigurations": [
+					{
+						"name": "[variables('appgwyFrontendName')]",
+						"properties": {
+							"PublicIPAddress": {
+								"id": "[variables('appgwyPublicIpAddressId')]"
+							}
+						}
+					}
+				],
+				"frontendPorts": [
+					{
+						"name": "port_443",
+						"properties": {
+							"Port": 443
+						}
+					}
+				],
+				"autoscaleConfiguration": {
+					"minCapacity": "[variables('appgwyAutoScaleMinCapacity')]",
+					"maxCapacity": "[variables('appgwyAutoScaleMaxCapacity')]"
+				},
+				"webApplicationFirewallConfiguration": {
+					"enabled": true,
+					"firewallMode": "Detection",
+					"ruleSetType": "OWASP",
+					"ruleSetVersion": "3.0"
+				},
 				"sslCertificates": [
 					{
 						"name": "appGatewaySslCert",
@@ -162,202 +162,93 @@
 						}
 					}
 				],
-				"frontendIPConfigurations": [
-					{
-						"name": "frontend",
-						"type": "Microsoft.Network/applicationGateways/frontendIPConfigurations",
-						"properties": {
-							"privateIPAllocationMethod": "Dynamic",
-							"publicIPAddress": {
-								"id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
-							}
-						}
-					}
-				],
-				"frontendPorts": [
-					{
-						"name": "frontend-port",
-						"type": "Microsoft.Network/applicationGateways/frontendPorts",
-						"properties": {
-							"port": "[parameters('frontEndPort')]"
-						}
-					}
-				],
+				"enableHttp2": false,
 				"backendAddressPools": [
 					{
-						"name": "ase-backend",
-						"type": "Microsoft.Network/applicationGateways/backendAddressPools",
+						"name": "[concat(variables('appgwyBackendName'), parameters('appGwyApplications').name)]",
 						"properties": {
-							"backendAddresses": "[variables('aseIpAddressObjectArray')]"
-						}
-					},
-					{
-						"name": "sinkpool",
-						"type": "Microsoft.Network/applicationGateways/backendAddressPools",
-						"properties": {
-							"backendAddresses": [
-							]
+							"backendAddresses": "[parameters('appGwyApplications').backendAddresses]"
 						}
 					}
 				],
 				"backendHttpSettingsCollection": [
 					{
-						"name": "ase-poolsetting",
-						"type": "Microsoft.Network/applicationGateways/backendHttpSettingsCollection",
+						"name": "[concat(variables('appgwyHttpSettingsName'), parameters('appGwyApplications').name)]",
 						"properties": {
-							"port": "[parameters('frontEndPort')]",
-							"protocol": "Https",
+							"Port": 443,
+							"Protocol": "Https",
 							"cookieBasedAffinity": "Disabled",
 							"pickHostNameFromBackendAddress": true,
-							"requestTimeout": "[parameters('requestTimeOut')]",
+							"requestTimeout": 20,
 							"probe": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/probes/ase-probe')]"
+								"id": "[concat(variables('appgwyId'), '/probes/', variables('appgwyHealthProbeName'), parameters('appGwyApplications').name)]"
 							}
 						}
+
 					}
 				],
 				"httpListeners": [
 					{
-						"name": "ase-listener",
-						"type": "Microsoft.Network/applicationGateways/httpListeners",
+						"name": "[concat(variables('appgwyListenerName'), parameters('appGwyApplications').name)]",
 						"properties": {
 							"frontendIPConfiguration": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/frontendIPConfigurations/frontend')]"
+								"id": "[concat(variables('appgwyId'), '/frontendIPConfigurations/', variables('appgwyFrontendName'))]"
 							},
 							"frontendPort": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/frontendPorts/frontend-port')]"
+								"id": "[concat(variables('appgwyId'), '/frontendPorts/port_443')]"
 							},
 							"protocol": "Https",
 							"sslCertificate": {
 								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/sslCertificates/appGatewaySslCert')]"
 							},
-							"hostName": "[parameters('hostName')]",
-							"requireServerNameIndication": true,
-							"customErrorConfigurations": [
-							]
-						}
-					}
-				],
-				"urlPathMaps": [
-					{
-						"name": "external-urlpathmapconfig",
-						"type": "Microsoft.Network/applicationGateways/urlPathMaps",
-						"properties": {
-							"defaultBackendAddressPool": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendAddressPools/sinkpool')]"
-							},
-							"defaultBackendHttpSettings": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendHttpSettingsCollection/ase-poolsetting')]"
-							},
-							"pathRules": [
-								{
-									"name": "external",
-									"type": "Microsoft.Network/applicationGateways/urlPathMaps/pathRules",
-									"properties": {
-										"paths": [
-											"/*"
-										],
-										"backendAddressPool": {
-											"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendAddressPools/ase-backend')]"
-										},
-										"backendHttpSettings": {
-											"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendHttpSettingsCollection/ase-poolsetting')]"
-										}
-									}
-								}
-							]
+							"hostName": "[parameters('appGwyApplications').hostName]",
+							"requireServerNameIndication": true
 						}
 					}
 				],
 				"requestRoutingRules": [
 					{
-						"name": "ase-rule",
-						"type": "Microsoft.Network/applicationGateways/requestRoutingRules",
+						"name": "[concat(variables('appgwyRouteRulesName'), parameters('appGwyApplications').name)]",
 						"properties": {
-							"ruleType": "PathBasedRouting",
+							"RuleType": "Basic",
 							"httpListener": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/httpListeners/ase-listener')]"
+								"id": "[concat(variables('appgwyId'), '/httpListeners/', variables('appgwyListenerName'), parameters('appGwyApplications').name)]"
 							},
-							/* 	"backendAddressPool": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendAddressPools/ase-backend')]"
-							}, */
-							/* 							"backendHttpSettings": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/backendHttpSettingsCollection/ase-poolsetting')]"
-							}, */
-							"urlPathMap": {
-								"id": "[concat(resourceId('Microsoft.Network/applicationGateways', variables('appGwyName')), '/urlPathMaps/external-urlpathmapconfig')]"
+							"backendAddressPool": {
+								"id": "[concat(variables('appgwyId'), '/backendAddressPools/', variables('appgwyBackendName'), parameters('appGwyApplications').name)]"
+							},
+							"backendHttpSettings": {
+								"id": "[concat(variables('appgwyId'), '/backendHttpSettingsCollection/', variables('appgwyHttpSettingsName'), parameters('appGwyApplications').name)]"
 							}
 						}
 					}
 				],
 				"probes": [
 					{
-						"name": "ase-1-probe",
-						"type": "Microsoft.Network/applicationGateways/probes",
+						"name": "[concat(variables('appgwyHealthProbeName'), parameters('appGwyApplications').name)]",
 						"properties": {
 							"protocol": "Https",
-							"host": "[parameters('aseHostNames')[0]]",
-							"path": "/",
+							"path": "[parameters('appGwyApplications').probePath]",
 							"interval": 30,
-							"timeout": 120,
-							"unhealthyThreshold": 8,
-							"pickHostNameFromBackendHttpSettings": false,
+							"timeout": 30,
+							"unhealthyThreshold": 3,
+							"pickHostNameFromBackendHttpSettings": true,
 							"minServers": 0,
 							"match": {
-							}
-						}
-					},
-					{
-						"name": "ase-2-probe",
-						"type": "Microsoft.Network/applicationGateways/probes",
-						"properties": {
-							"protocol": "Https",
-							"host": "[parameters('aseHostNames')[1]]",
-							"path": "/",
-							"interval": 30,
-							"timeout": 120,
-							"unhealthyThreshold": 8,
-							"pickHostNameFromBackendHttpSettings": false,
-							"minServers": 0,
-							"match": {
+								"statusCodes": [
+									"200-399"
+								]
 							}
 						}
 					}
-				],
-				"rewriteRuleSets": [
-				],
-				"redirectConfigurations": [
-				],
-				"webApplicationFirewallConfiguration": {
-					"enabled": true,
-					"firewallMode": "Prevention",
-					"ruleSetType": "OWASP",
-					"ruleSetVersion": "3.0",
-					"disabledRuleGroups": [
-					],
-					"exclusions": [
-					],
-					"requestBodyCheck": true,
-					"maxRequestBodySizeInKb": 128,
-					"fileUploadLimitInMb": 100
-				},
-				"customErrorConfigurations": [
 				]
 			}
 		}
 	],
 	"outputs": {
-		"appGwyID": {
-			"type": "string",
-			"value": "[resourceId('Microsoft.Network/applicationGateways', variables('appGwyName'))]"
-		},
-		"appGatewayPublicDnsName": {
-			"type": "string",
-			"value": "[reference(variables('pipName')).dnsSettings.fqdn]"
-		},
-		"appGatewayPublicIpAddress": {
-			"type": "string",
-			"value": "[reference(variables('pipName')).ipAddress]"
+		"appgwyPublicIpAddress": {
+			"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('appgwyPublicIpAddressName'))).ipAddress]",
+			"type": "string"
 		}
 	}
 }
