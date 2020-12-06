@@ -21,7 +21,47 @@
 		{
 			"type": "Microsoft.Network/privateDnsZones/A",
 			"apiVersion": "2018-09-01",
-			"name": "[concat(parameters('aseApplications').backends[copyIndex('recordCopy')].asefqdn, '/', parameters('aseApplications').backends[copyIndex('recordCopy')].sitename)]",
+			"name": "[concat(parameters('aseApplications').backends[copyIndex('recordCopy')].asefqdn, '/', '*')]",
+			"copy": {
+				"name": "recordCopy",
+				"count": "[length(parameters('aseApplications').backends)]"
+			},
+			"dependsOn": [
+				"zoneCopy"
+			],
+			"properties": {
+				"ttl": 3600,
+				"aRecords": [
+					{
+						"ipv4Address": "[parameters('aseApplications').backends[copyIndex('recordCopy')].ip]"
+					}
+				]
+			}
+		},
+				{
+			"type": "Microsoft.Network/privateDnsZones/A",
+			"apiVersion": "2018-09-01",
+			"name": "[concat(parameters('aseApplications').backends[copyIndex('recordCopy')].asefqdn, '/', '@')]",
+			"copy": {
+				"name": "recordCopy",
+				"count": "[length(parameters('aseApplications').backends)]"
+			},
+			"dependsOn": [
+				"zoneCopy"
+			],
+			"properties": {
+				"ttl": 3600,
+				"aRecords": [
+					{
+						"ipv4Address": "[parameters('aseApplications').backends[copyIndex('recordCopy')].ip]"
+					}
+				]
+			}
+		},
+				{
+			"type": "Microsoft.Network/privateDnsZones/A",
+			"apiVersion": "2018-09-01",
+			"name": "[concat(parameters('aseApplications').backends[copyIndex('recordCopy')].asefqdn, '/', '*.scm')]",
 			"copy": {
 				"name": "recordCopy",
 				"count": "[length(parameters('aseApplications').backends)]"

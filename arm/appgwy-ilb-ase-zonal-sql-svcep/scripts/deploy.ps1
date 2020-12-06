@@ -15,7 +15,7 @@ param(
 	},
 
 	[string]
-	$DbAdminPassword
+	$DbAdminPassword = 'yourSuperS3cretP@ssw0rd'
 )
 
 $ProgressPreference = 'SilentlyContinue'
