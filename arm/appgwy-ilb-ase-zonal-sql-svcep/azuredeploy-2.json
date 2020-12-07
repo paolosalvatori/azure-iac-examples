@@ -67,7 +67,7 @@
 		{
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2018-05-01",
-			"name": "linkedTemplate-dns",
+			"name": "linkedTemplate-private-dns",
 			"dependsOn": [
 			],
 			"properties": {
@@ -104,5 +104,10 @@
 			}
 		}
 	],
-	"outputs": {}
+	"outputs": {
+		"appGatewayPublicIpAddressId": {
+			"type": "string",
+			"value": "[reference('Microsoft.Resources/deployments/linkedTemplate-appgwy').outputs.appGatewayPublicIpAddressId.value]"
+		}
+	}
 }

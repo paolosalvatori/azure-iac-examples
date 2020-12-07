@@ -18,44 +18,10 @@ param(
 	$DbAdminPassword = 'yourSuperS3cretP@ssw0rd'
 )
 
-$ProgressPreference = 'SilentlyContinue'
-
-<# function Set-PfxAsKeyVaultSecret {
-
-	[CmdletBinding()]
-	param (
-		[Parameter()]
-		[System.IO.FileInfo]
-		$PfxFile,
-
-		[Parameter()]
-		[String]
-		$CertificatePassword,
-
-		[Parameter()]
-		[String]
-		$SecretContentType = 'application/x-pkcs12',
-
-		[Parameter()]
-		[String]
-		$KeyVaultName,
-
-		[Parameter()]
-		[String]
-		$CertificateName
-	)
-	
-	$collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-	$flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
-	$collection.Import($PfxFile.FullName, $CertificatePassword, $flag)
-	$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12
-	$clearBytes = $collection.Export($pkcs12ContentType)
-	$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-	$secret = ConvertTo-SecureString -String $fileContentEncoded -AsPlainText -Force
-	Set-AzKeyVaultSecret -VaultName $KeyVaultName -Name $($pfxFile.BaseName -replace '\.', '-') -SecretValue $secret -ContentType $SecretContentType
-} #>
+$ProgressPreference = 'Continue'
 
 $rgName = "$prefix-rg"
+$dnsRgName = 'external-dns-zones-rg'
 $certName = 'api.kainiindustries.net'
 
 # get executing user's mail & objectId to add to keyvault access policy 
@@ -99,15 +65,6 @@ $keyVaultDeployment = New-AzResourceGroupDeployment `
 	-TemplateFile $PSScriptRoot\..\nestedtemplates\keyvault.json `
 	-KeyVaultUserObjectId $keyVaultUserObjectId `
 	-Verbose
-
-<# 
-# base64 encode and upload .pfx ssl certificate to key vault
-Set-PfxAsKeyVaultSecret `
-	-PfxFile $certFile.FullName `
-	-CertificatePassword $certificatePassword `
-	-KeyVaultName $keyVaultDeployment.Outputs.keyVaultName.value `
-	-Verbose 
-#>
 
 $keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-keyvault'
 $storageDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-storage'
@@ -193,3 +150,21 @@ $appGwyDeployment = New-AzResourceGroupDeployment `
 	-TemplateParameterFile $PSScriptRoot\..\azuredeploy-2.parameters.json `
 	@templateParams `
 	-Verbose
+
+$templateParams = @{
+	zoneName = 'kainiindustries.net'
+	dnsName = 'api'
+	publicIpAddressId = $appGwyDeployment.Outputs.appGatewayPublicIpAddressId.value
+}
+
+# add Azure DNS alias for App Gateway public ip address resource
+# this will only work if the Azure DNS zone already exists
+$publicDnsDeployment = New-AzResourceGroupDeployment `
+	-Name "deploy-public-dns-alias" `
+	-ResourceGroupName $dnsRgName `
+	-Mode Incremental `
+	-TemplateFile $PSScriptRoot\..\nestedtemplates\dns.json `
+	@templateParams `
+	-Verbose
+
+$publicDnsDeployment.Outputs.url.value

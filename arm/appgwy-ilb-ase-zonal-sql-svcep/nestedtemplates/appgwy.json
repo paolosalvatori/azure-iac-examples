@@ -249,6 +249,10 @@
 		"appgwyPublicIpAddress": {
 			"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('appgwyPublicIpAddressName'))).ipAddress]",
 			"type": "string"
+		},
+		"appGatewayPublicIpAddressId": {
+			"type": "string",
+			"value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appgwyPublicIpAddressName'))]"
 		}
 	}
 }
