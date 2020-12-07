@@ -1,28 +1,32 @@
 param(
+	[Parameter(Mandatory)]
 	[string]
 	$Location = 'australiaeast',
 
+	[Parameter(Mandatory)]
 	[string]
 	$Prefix = 'appgwy-ilb-ase-zonal-sql-svcep',
 
+	[Parameter(Mandatory)]
 	[string]
-	$ContainerName = 'nestedtemplates',
-
-	[object]
-	$Tags = @{
-		'environment' = 'dev'
-		'app'         = 'testapp'
-	},
+	$DomainName = 'kainiindustries.net',
 
 	[string]
-	$DbAdminPassword = 'yourSuperS3cretP@ssw0rd'
+	$DnsResourceGroupName,
+
+	[string]
+	$DbUserName = 'dbadmin',
+
+	[Parameter(Mandatory)]
+	[string]
+	$DbAdminPassword
 )
 
 $ProgressPreference = 'Continue'
 
-$rgName = "$prefix-rg"
-$dnsRgName = 'external-dns-zones-rg'
-$certName = 'api.kainiindustries.net'
+$resourceGroupName = "$prefix-rg"
+$certificateName = "api.$DomainName"
+$containerName = 'nestedtemplates'
 
 # get executing user's mail & objectId to add to keyvault access policy 
 $ctx = Get-AzContext
@@ -30,8 +34,8 @@ $keyVaultUserEmailAddress = (Get-AzADUser -Mail $ctx.Account).Mail
 $keyVaultUserObjectId = (Get-AzADUser -Mail $ctx.Account).Id
 
 # create resource group
-if (!($rg = Get-AzResourceGroup -Name $rgName -Location $location -ErrorAction SilentlyContinue)) {
-	$rg = New-AzResourceGroup -Name $rgName -Location $location -Verbose
+if (!($rg = Get-AzResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
+	$rg = New-AzResourceGroup -Name $resourceGroupName -Location $location -Verbose
 }
 
 # deploy storage account to hold child ARM templates
@@ -46,7 +50,7 @@ $storageDeployment = New-AzResourceGroupDeployment `
 	-Verbose
 
 # upload ARM template files to blob storage account
-$sa = Get-AzStorageAccount -ResourceGroupName $rgName -Name $storageDeployment.Outputs.storageAccountName.Value
+$sa = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageDeployment.Outputs.storageAccountName.Value
 Get-ChildItem $PSScriptRoot\..\nestedtemplates -File | ForEach-Object {
 	Set-AzStorageBlobContent `
 		-File $_.FullName `
@@ -66,15 +70,15 @@ $keyVaultDeployment = New-AzResourceGroupDeployment `
 	-KeyVaultUserObjectId $keyVaultUserObjectId `
 	-Verbose
 
-$keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-keyvault'
-$storageDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-storage'
-$resourceDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $rgName -Name 'deploy-ase-db'
+$keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-keyvault'
+$storageDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-storage'
+$resourceDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-ase-db'
 
 $templateParams = @{
 	storageUri      = $storageDeployment.Outputs.storageContainerUri.value
 	sasToken        = $storageDeployment.Outputs.storageAccountSasToken.value
-	dbAdminLogin    = 'dbadmin'
-	dbAdminPassword = $dbAdminPassword
+	dbAdminLogin    = $DbUserName
+	dbAdminPassword = $DbAdminPassword
 	aseZones        = @('1', '2')
 }
 
@@ -90,7 +94,7 @@ $resourceDeployment = New-AzResourceGroupDeployment `
 
 # get internal Load Balancer (ILB) App Service Environment (ASE) site fqdns
 # create temaplte parameter input array object
-$appGwyApp = @{name = 'test-site'; hostName = 'api.kainiindustries.net'; backendAddresses = @(); backends = @(); probePath = '/'; }
+$appGwyApp = @{name = 'test-site'; hostName = $certificateName; backendAddresses = @(); backends = @(); probePath = '/'; }
 
 $i = 0
 while ($i -lt $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value.Count) {
@@ -110,22 +114,22 @@ while ($i -lt $resourceDeployment.Outputs.aseHostingEnvironmentIds.Value.Count) 
 
 # create self-signed ssl certificate in key vault
 $policy = New-AzKeyVaultCertificatePolicy -ValidityInMonths 12 `
-	-SubjectName "CN=$certName" `
+	-SubjectName "CN=$certificateName" `
 	-IssuerName self `
 	-RenewAtNumberOfDaysBeforeExpiry 30
 
-$certName = $($certName -replace '\.', '-') + '-1'
+$certificateName = $($certificateName -replace '\.', '-') + '-1'
 
 Set-AzKeyVaultAccessPolicy -VaultName $keyVaultDeployment.Outputs.keyVaultName.value `
 	-EmailAddress $keyVaultUserEmailAddress `
 	-PermissionsToCertificates create, get, list
 
 $certificate = Add-AzKeyVaultCertificate -VaultName $keyVaultDeployment.Outputs.keyVaultName.value `
-	-Name $certName `
+	-Name $certificateName `
 	-CertificatePolicy $policy
 
 $sleepInterval = 5
-while ($null -eq ($certificate = Get-AzKeyVaultCertificate -VaultName $keyVaultDeployment.Outputs.keyVaultName.value -Name $certName)) {
+while ($null -eq ($certificate = Get-AzKeyVaultCertificate -VaultName $keyVaultDeployment.Outputs.keyVaultName.value -Name $certificateName)) {
 	Write-Host "Sleeping '$sleepInterval' seconds until certificate becomes available..."
 	Start-Sleep -Seconds $sleepInterval
 }
@@ -150,21 +154,22 @@ $appGwyDeployment = New-AzResourceGroupDeployment `
 	-TemplateParameterFile $PSScriptRoot\..\azuredeploy-2.parameters.json `
 	@templateParams `
 	-Verbose
+	
+# add Azure DNS alias for App Gateway public ip address resource (this will only work if the Azure DNS zone already exists & name is specified in script arguments)
+if ($null -ne $DnsResourceGroupName) {
+	$templateParams = @{
+		zoneName          = $DomainName
+		dnsName           = 'api'
+		publicIpAddressId = $appGwyDeployment.Outputs.appGatewayPublicIpAddressId.value
+	}
 
-$templateParams = @{
-	zoneName = 'kainiindustries.net'
-	dnsName = 'api'
-	publicIpAddressId = $appGwyDeployment.Outputs.appGatewayPublicIpAddressId.value
+	$publicDnsDeployment = New-AzResourceGroupDeployment `
+		-Name "deploy-public-dns-alias" `
+		-ResourceGroupName $DnsResourceGroupName `
+		-Mode Incremental `
+		-TemplateFile $PSScriptRoot\..\nestedtemplates\dns.json `
+		@templateParams `
+		-Verbose
+
+	$publicDnsDeployment.Outputs.url.value
 }
-
-# add Azure DNS alias for App Gateway public ip address resource
-# this will only work if the Azure DNS zone already exists
-$publicDnsDeployment = New-AzResourceGroupDeployment `
-	-Name "deploy-public-dns-alias" `
-	-ResourceGroupName $dnsRgName `
-	-Mode Incremental `
-	-TemplateFile $PSScriptRoot\..\nestedtemplates\dns.json `
-	@templateParams `
-	-Verbose
-
-$publicDnsDeployment.Outputs.url.value
