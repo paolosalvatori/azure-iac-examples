@@ -151,7 +151,8 @@
 			"apiVersion": "2018-05-01",
 			"name": "linkedTemplate-mariadb-server",
 			"dependsOn": [
-				"vnetCopy"
+				"vnetCopy",
+				"aseCopy"
 			],
 			"condition": true,
 			"properties": {
@@ -186,6 +187,12 @@
 					},
 					"version": {
 						"value": "10.3"
+					},
+					"sourceSubnetIds": {
+						"value": [
+							"[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[1]]",
+							"[reference('Microsoft.Resources/deployments/linkedTemplate-vnet-0').outputs.subnetRefs.value[2]]"
+						]
 					}
 				},
 				"templateLink": {

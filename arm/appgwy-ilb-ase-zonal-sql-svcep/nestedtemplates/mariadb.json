@@ -73,6 +73,9 @@
 				"Disabled"
 			],
 			"defaultValue": "Disabled"
+		},
+		"sourceSubnetIds": {
+			"type": "array"
 		}
 	},
 	"resources": [
@@ -103,6 +106,19 @@
 			},
 			"tags": "[parameters('tags')]",
 			"type": "Microsoft.DBforMariaDB/servers"
+		},
+		{
+			"name": "[concat(parameters('serverName'), '/', 'rule-', parameters('sourceSubnetIds')[copyIndex('firewallCopy')].name)]",
+			"type": "Microsoft.DBforMariaDB/servers/virtualNetworkRules",
+			"apiVersion": "2018-06-01",
+			"copy": {
+				"name": "firewallCopy",
+				"count": "[length(parameters('sourceSubnetIds'))]"
+			},
+			"properties": {
+				"virtualNetworkSubnetId": "[parameters('sourceSubnetIds')[copyIndex('firewallCopy')].id]",
+				"ignoreMissingVnetServiceEndpoint": true
+			}
 		}
 	],
 	"variables": {}
