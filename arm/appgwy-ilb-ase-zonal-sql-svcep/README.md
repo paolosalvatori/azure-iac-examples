@@ -20,6 +20,8 @@
  - Execute the deployment script (assuming cwd is repo root)
    - `PS C:\> ./scripts/deploy.ps1 -Location 'australiaeast' -Prefix '<resource prefix>' -DomainName '<domain name>' -DbAdminPassword '<db admin password>'`
 
+## Solution architecture
+
 ![https://github.com/cbellee/azure-iac-examples/blob/master/arm/appgwy-ilb-ase-zonal-sql-svcep/images/solution.png](https://github.com/cbellee/azure-iac-examples/blob/master/arm/appgwy-ilb-ase-zonal-sql-svcep/images/solution.png)
 
 
