@@ -35,6 +35,10 @@
 		"dbAdminLogin": {
 			"type": "string",
 			"defaultValue": "dbadmin"
+		},
+		"flexServerEnabled": {
+			"type": "bool",
+			"defaultValue": true
 		}
 	},
 	"variables": {
@@ -66,7 +70,7 @@
 			"name": "[concat('linkedTemplate-vnet', '-', copyIndex())]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2017-05-10",
-			"comments": "This deployment links to the gatewayVpn nested ARM template",
+			"comments": "This deployment links to the vnet nested ARM template",
 			"dependsOn": [
 				"linkedTemplate-nsg"
 			],
@@ -151,10 +155,9 @@
 			"apiVersion": "2018-05-01",
 			"name": "linkedTemplate-mariadb-server",
 			"dependsOn": [
-				"vnetCopy",
-				"aseCopy"
+				"vnetCopy"
 			],
-			"condition": true,
+			"condition": "[if(equals(parameters('flexServerEnabled'), bool('true')), bool('false'), bool('true'))]",
 			"properties": {
 				"mode": "Incremental",
 				"parameters": {
@@ -205,7 +208,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2018-05-01",
 			"name": "linkedTemplate-mysqldb-flex-server",
-			"condition": false,
+			"condition": "[if(equals(parameters('flexServerEnabled'), bool('true')), bool('true'), bool('false'))]",
 			"dependsOn": [
 				"vnetCopy"
 			],

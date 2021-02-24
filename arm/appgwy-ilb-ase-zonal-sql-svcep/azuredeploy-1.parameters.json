@@ -129,6 +129,9 @@
 		},
 		"dbAdminLogin": {
 			"value": null
+		},
+		"flexServerEnabled": {
+			"value": true
 		}
 	}
 }

@@ -1,25 +1,25 @@
 param(
-	[Parameter(Mandatory)]
+	#[Parameter(Mandatory)]
 	[string]
 	$Location = 'australiaeast',
 
-	[Parameter(Mandatory)]
+	#[Parameter(Mandatory)]
 	[string]
-	$Prefix = 'appgwy-ilb-ase-zonal-sql-svcep',
+	$Prefix = 'appgwy-ilb-ase-zonal',
 
-	[Parameter(Mandatory)]
+	#[Parameter(Mandatory)]
 	[string]
 	$DomainName = 'kainiindustries.net',
 
 	[string]
-	$DnsResourceGroupName,
+	$DnsResourceGroupName = 'external-dns-zones-rg',
 
 	[string]
 	$DbUserName = 'dbadmin',
 
-	[Parameter(Mandatory)]
+	#[Parameter(Mandatory)]
 	[string]
-	$DbAdminPassword
+	$DbAdminPassword = 'M1cr0soft1234567890'
 )
 
 $ProgressPreference = 'Continue'
@@ -70,9 +70,10 @@ $keyVaultDeployment = New-AzResourceGroupDeployment `
 	-KeyVaultUserObjectId $keyVaultUserObjectId `
 	-Verbose
 
-$keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-keyvault'
+<# $keyVaultDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-keyvault'
 $storageDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-storage'
 $resourceDeployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name 'deploy-ase-db'
+#>
 
 $templateParams = @{
 	storageUri      = $storageDeployment.Outputs.storageContainerUri.value
