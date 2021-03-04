@@ -1,0 +1,819 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "australiaeast",
+        "australiasoutheast"
+      ]
+    },
+    "tags": {
+      "type": "object"
+    },
+    "prefix": {
+      "type": "string"
+    },
+    "suffix": {
+      "type": "string"
+    },
+    "aksVersion": {
+      "type": "string",
+      "defaultValue": "1.19.6"
+    },
+    "vmSKU": {
+      "type": "string"
+    },
+    "addressPrefix": {
+      "type": "string"
+    },
+    "subnets": {
+      "type": "array"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "wksDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "name": {
+            "value": "wks"
+          },
+          "retentionInDays": {
+            "value": 30
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 30
+            }
+          },
+          "functions": [],
+          "variables": {
+            "workspaceName": "[format('{0}-{1}', parameters('name'), uniqueString(resourceGroup().id))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-10-01",
+              "location": "[parameters('location')]",
+              "name": "[variables('workspaceName')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "sku": {
+                  "name": "Standard"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "vnetDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "addressPrefix": {
+            "value": "[parameters('addressPrefix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnets": {
+            "value": "[parameters('subnets')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            },
+            "addressPrefix": {
+              "type": "string"
+            },
+            "subnets": {
+              "type": "array"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "vnetName": "[format('{0}-vnet', parameters('suffix'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "name": "[variables('vnetName')]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "subnets",
+                    "count": "[length(parameters('subnets'))]",
+                    "input": {
+                      "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                      "properties": {
+                        "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]"
+                      }
+                    }
+                  }
+                ],
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('addressPrefix')]"
+                  ]
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "subnets": {
+              "type": "array",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))).subnets]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "acrDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "suffix": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "acrName": "[format('acr{0}', uniqueString(resourceGroup().id))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerRegistry/registries",
+              "apiVersion": "2020-11-01-preview",
+              "name": "[variables('acrName')]",
+              "location": "[resourceGroup().location]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "adminUserEnabled": true
+              }
+            }
+          ],
+          "outputs": {
+            "registryName": {
+              "type": "string",
+              "value": "[variables('acrName')]"
+            },
+            "registryServer": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))).loginServer]"
+            },
+            "registryPassword": {
+              "type": "string",
+              "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName')), '2017-03-01').passwords[0].value]"
+            },
+            "registryResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "appGwyDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appGwySKU": {
+            "value": "WAF_v2"
+          },
+          "appGwySubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2019-10-01').outputs.subnets.value[0].id]"
+          },
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "appGwySKU": {
+              "type": "string",
+              "defaultValue": "WAF_v2",
+              "allowedValues": [
+                "Standard_v2",
+                "WAF_v2"
+              ]
+            },
+            "appGwySubnetId": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "suffix": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "publicIpName": "[format('appgwy-vip-{0}', parameters('suffix'))]",
+            "appGwyName": "[format('appgwy-{0}', parameters('suffix'))]",
+            "webApplicationFirewallConfiguration": {
+              "enabled": "true",
+              "firewallMode": "Detection"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2018-08-01",
+              "name": "[variables('publicIpName')]",
+              "location": "[resourceGroup().location]",
+              "sku": {
+                "name": "Standard"
+              },
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2018-08-01",
+              "name": "[variables('appGwyName')]",
+              "location": "[resourceGroup().location]",
+              "tags": {
+                "managed-by-k8s-ingress": "true"
+              },
+              "properties": {
+                "sku": {
+                  "name": "[parameters('appGwySKU')]",
+                  "tier": "[parameters('appGwySKU')]",
+                  "capacity": 2
+                },
+                "gatewayIPConfigurations": [
+                  {
+                    "name": "appGatewayIpConfig",
+                    "properties": {
+                      "subnet": {
+                        "id": "[parameters('appGwySubnetId')]"
+                      }
+                    }
+                  }
+                ],
+                "frontendIPConfigurations": [
+                  {
+                    "name": "appGatewayFrontendIP",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+                      }
+                    }
+                  }
+                ],
+                "frontendPorts": [
+                  {
+                    "name": "appGatewayFrontendHttpPort",
+                    "properties": {
+                      "port": 80
+                    }
+                  },
+                  {
+                    "name": "appGatewayFrontendHttpsPort",
+                    "properties": {
+                      "port": 443
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "appGatewayBackendPool",
+                    "properties": {
+                      "backendAddresses": []
+                    }
+                  }
+                ],
+                "httpListeners": [
+                  {
+                    "name": "appGatewayHttpListener",
+                    "properties": {
+                      "protocol": "Http",
+                      "frontendPort": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGwyName'), 'appGatewayFrontendHttpPort')]"
+                      },
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGwyName'), 'appGatewayFrontendIp')]"
+                      }
+                    }
+                  }
+                ],
+                "backendHttpSettingsCollection": [
+                  {
+                    "name": "appGatewayBackendHttpSettings",
+                    "properties": {
+                      "port": 80,
+                      "protocol": "Http"
+                    }
+                  }
+                ],
+                "requestRoutingRules": [
+                  {
+                    "name": "rule1",
+                    "properties": {
+                      "httpListener": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGwyName'), 'appGatewayHttpListener')]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGwyName'), 'appGatewayBackendPool')]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGwyName'), 'appGatewayBackendHttpSettings')]"
+                      }
+                    }
+                  }
+                ],
+                "webApplicationFirewallConfiguration": "[if(equals(parameters('appGwySKU'), 'WAF_v2'), variables('webApplicationFirewallConfiguration'), json('null'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "applicationGatewayId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/applicationGateways', variables('appGwyName'))]"
+            },
+            "appGwyName": {
+              "type": "string",
+              "value": "[variables('appGwyName')]"
+            },
+            "appGwyPublicIpResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'wksDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "aksDeploy",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "suffix": {
+            "value": "[parameters('suffix')]"
+          },
+          "aksDnsPrefix": {
+            "value": "[parameters('prefix')]"
+          },
+          "aksAgentOsDiskSizeGB": {
+            "value": 60
+          },
+          "aksDnsServiceIP": {
+            "value": "10.100.0.10"
+          },
+          "aksDockerBridgeCIDR": {
+            "value": "172.17.0.1/16"
+          },
+          "aksEnableRBAC": {
+            "value": true
+          },
+          "aksMaxNodeCount": {
+            "value": 10
+          },
+          "aksMinNodeCount": {
+            "value": 1
+          },
+          "aksNodeCount": {
+            "value": 3
+          },
+          "aksNodeVMSize": {
+            "value": "[parameters('vmSKU')]"
+          },
+          "aksServiceCIDR": {
+            "value": "10.100.0.0/16"
+          },
+          "aksSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2019-10-01').outputs.subnets.value[1].id]"
+          },
+          "aksVersion": {
+            "value": "[parameters('aksVersion')]"
+          },
+          "enableAutoScaling": {
+            "value": true
+          },
+          "enableHttpApplicationRouting": {
+            "value": false
+          },
+          "maxPods": {
+            "value": 30
+          },
+          "networkPlugin": {
+            "value": "azure"
+          },
+          "enablePodSecurityPolicy": {
+            "value": false
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "appGwySubnetAddressPrefix": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2019-10-01').outputs.subnets.value[0].properties.addressPrefix]"
+          },
+          "appGwySubnetName": {
+            "value": "[parameters('subnets')[0].name]"
+          },
+          "appGwyId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+          },
+          "addOns": {
+            "value": {
+              "azurepolicy": {
+                "enabled": true,
+                "config": {
+                  "version": "v2"
+                }
+              },
+              "ingressAPplicationGateway": {
+                "enabled": true,
+                "config": {
+                  "applicationGatewayId": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+                }
+              },
+              "httpApplicationRouting": {
+                "enabled": false
+              },
+              "omsagent": {
+                "enabled": true,
+                "config": {
+                  "logAnalyticsWorkspaceResourceID": "[reference(resourceId('Microsoft.Resources/deployments', 'wksDeploy'), '2019-10-01').outputs.workspaceId.value]"
+                }
+              }
+            }
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "aksDnsPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+              },
+              "defaultValue": "aks"
+            },
+            "aksAgentOsDiskSizeGB": {
+              "type": "int",
+              "minValue": 30,
+              "maxValue": 1023,
+              "metadata": {
+                "description": "Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 30 to 1023."
+              },
+              "defaultValue": 250
+            },
+            "addOns": {
+              "type": "object"
+            },
+            "appGwyId": {
+              "type": "string"
+            },
+            "appGwySubnetName": {
+              "type": "string"
+            },
+            "appGwySubnetAddressPrefix": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "maxPods": {
+              "type": "int",
+              "minValue": 10,
+              "maxValue": 120,
+              "defaultValue": 50
+            },
+            "networkPlugin": {
+              "type": "string",
+              "defaultValue": "azure",
+              "allowedValues": [
+                "azure",
+                "kubenet"
+              ]
+            },
+            "enablePodSecurityPolicy": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "enableHttpApplicationRouting": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "aksNodeCount": {
+              "type": "int",
+              "minValue": 1,
+              "maxValue": 50,
+              "metadata": {
+                "description": "The default number of agent nodes for the cluster."
+              },
+              "defaultValue": 3
+            },
+            "enableAutoScaling": {
+              "type": "bool",
+              "defaultValue": true
+            },
+            "aksMinNodeCount": {
+              "type": "int",
+              "minValue": 1,
+              "maxValue": 50,
+              "metadata": {
+                "description": "The minimum number of agent nodes for the cluster."
+              },
+              "defaultValue": 1
+            },
+            "aksMaxNodeCount": {
+              "type": "int",
+              "minValue": 1,
+              "maxValue": 50,
+              "metadata": {
+                "description": "The maximum number of agent nodes for the cluster."
+              },
+              "defaultValue": 10
+            },
+            "aksNodeVMSize": {
+              "type": "string",
+              "metadata": {
+                "description": "The size of the Virtual Machine."
+              },
+              "defaultValue": "Standard_D4s_v3"
+            },
+            "aksVersion": {
+              "type": "string",
+              "metadata": {
+                "description": "The version of Kubernetes."
+              },
+              "defaultValue": "1.19.6"
+            },
+            "aksSubnetId": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            },
+            "aksServiceCIDR": {
+              "type": "string",
+              "metadata": {
+                "description": "A CIDR notation IP range from which to assign service cluster IPs."
+              },
+              "defaultValue": "10.100.0.0/16"
+            },
+            "aksDnsServiceIP": {
+              "type": "string",
+              "metadata": {
+                "description": "Containers DNS server IP address."
+              },
+              "defaultValue": "10.100.0.10"
+            },
+            "aksDockerBridgeCIDR": {
+              "type": "string",
+              "metadata": {
+                "description": "A CIDR notation IP for Docker bridge."
+              },
+              "defaultValue": "172.17.0.1/16"
+            },
+            "aksEnableRBAC": {
+              "type": "bool",
+              "metadata": {
+                "description": "Enable RBAC on the AKS cluster."
+              },
+              "defaultValue": true
+            }
+          },
+          "functions": [],
+          "variables": {
+            "storageAccountName": "[format('stor{0}', substring(uniqueString(resourceGroup().id), 0, 10))]",
+            "aksClusterName": "[format('{0}-aks', parameters('suffix'))]",
+            "aksClusterId": "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2018-07-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[resourceGroup().location]",
+              "tags": {
+                "displayName": "[variables('storageAccountName')]"
+              },
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2"
+            },
+            {
+              "type": "Microsoft.ContainerService/managedClusters",
+              "apiVersion": "2020-12-01",
+              "name": "[variables('aksClusterName')]",
+              "location": "[resourceGroup().location]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "kubernetesVersion": "[parameters('aksVersion')]",
+                "enableRBAC": "[parameters('aksEnableRBAC')]",
+                "enablePodSecurityPolicy": "[parameters('enablePodSecurityPolicy')]",
+                "dnsPrefix": "[parameters('aksDnsPrefix')]",
+                "addonProfiles": "[parameters('addOns')]",
+                "agentPoolProfiles": [
+                  {
+                    "name": "system",
+                    "mode": "System",
+                    "availabilityZones": [
+                      "1",
+                      "2",
+                      "3"
+                    ],
+                    "count": 1,
+                    "enableAutoScaling": true,
+                    "minCount": "[parameters('aksMinNodeCount')]",
+                    "maxCount": "[parameters('aksMaxNodeCount')]",
+                    "maxPods": "[parameters('maxPods')]",
+                    "osDiskSizeGB": "[parameters('aksAgentOsDiskSizeGB')]",
+                    "osType": "Linux",
+                    "type": "VirtualMachineScaleSets",
+                    "vnetSubnetID": "[parameters('aksSubnetId')]",
+                    "tags": "[parameters('tags')]",
+                    "vmSize": "[parameters('aksNodeVMSize')]",
+                    "osDiskType": "Ephemeral"
+                  },
+                  {
+                    "name": "user1",
+                    "mode": "User",
+                    "availabilityZones": [
+                      "1",
+                      "2",
+                      "3"
+                    ],
+                    "osDiskSizeGB": "[parameters('aksAgentOsDiskSizeGB')]",
+                    "count": "[parameters('aksNodeCount')]",
+                    "minCount": "[parameters('aksMinNodeCount')]",
+                    "maxCount": "[parameters('aksMaxNodeCount')]",
+                    "vmSize": "[parameters('aksNodeVMSize')]",
+                    "osType": "Linux",
+                    "osDiskType": "Ephemeral",
+                    "type": "VirtualMachineScaleSets",
+                    "vnetSubnetID": "[parameters('aksSubnetId')]",
+                    "enableAutoScaling": "[parameters('enableAutoScaling')]",
+                    "maxPods": "[parameters('maxPods')]",
+                    "tags": "[parameters('tags')]"
+                  }
+                ],
+                "networkProfile": {
+                  "networkPlugin": "[parameters('networkPlugin')]",
+                  "serviceCidr": "[parameters('aksServiceCIDR')]",
+                  "dnsServiceIP": "[parameters('aksDnsServiceIP')]",
+                  "dockerBridgeCidr": "[parameters('aksDockerBridgeCIDR')]",
+                  "loadBalancerSku": "standard"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "aksName": {
+              "type": "string",
+              "value": "[variables('aksClusterName')]"
+            },
+            "aksControlPlaneFQDN": {
+              "type": "string",
+              "value": "[reference(format('Microsoft.ContainerService/managedClusters/{0}', variables('aksClusterName'))).fqdn]"
+            },
+            "aksApiServerUri": {
+              "type": "string",
+              "value": "[format('{0}:443', reference(variables('aksClusterId'), '2018-03-31').fqdn)]"
+            },
+            "aksClusterName": {
+              "type": "string",
+              "value": "[variables('aksClusterName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appGwyDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'wksDeploy')]"
+      ]
+    }
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "11796197759991247681"
+    }
+  }
+}
