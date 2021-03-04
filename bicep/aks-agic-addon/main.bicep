@@ -5,6 +5,8 @@ param location string {
   ]
 }
 
+param adminGroupObjectID string
+
 param tags object
 
 param prefix string
@@ -51,15 +53,15 @@ module acr 'acr.bicep' = {
   }
 }
 
-module appGwy 'appGwy.bicep' = {
-  name: 'appGwyDeploy'
+module applicationGateway 'appGwy.bicep' = {
+  name: 'applicationGatewayDeploy'
   dependsOn: [
     vnet
     wks
   ]
   params: {
-    appGwySKU: 'WAF_v2'
-    appGwySubnetId: vnet.outputs.subnets[0].id
+    applicationGatewaySKU: 'WAF_v2'
+    applicationGatewaySubnetId: vnet.outputs.subnets[0].id
     suffix: suffix
     tags: tags
   }
@@ -70,7 +72,7 @@ module aks 'aks.bicep' = {
   dependsOn: [
     vnet
     wks
-    appGwy
+    applicationGateway
   ]
   params: {
     suffix: suffix
@@ -92,9 +94,10 @@ module aks 'aks.bicep' = {
     networkPlugin: 'azure'
     enablePodSecurityPolicy: false
     tags: tags
-    appGwySubnetAddressPrefix: vnet.outputs.subnets[0].properties.addressPrefix
-    appGwySubnetName: subnets[0].name
-    appGwyId: appGwy.outputs.applicationGatewayId
+    applicationGatewaySubnetAddressPrefix: vnet.outputs.subnets[0].properties.addressPrefix
+    applicationGatewaySubnetName: subnets[0].name
+    applicationGatewayId: applicationGateway.outputs.applicationGatewayId
+    adminGroupObjectID: adminGroupObjectID
     addOns: {
       azurepolicy: {
         enabled: true
@@ -105,8 +108,13 @@ module aks 'aks.bicep' = {
       ingressAPplicationGateway: {
         enabled: true
         config: {
-          applicationGatewayId: appGwy.outputs.applicationGatewayId
+          applicationGatewayId: applicationGateway.outputs.applicationGatewayId
         }
+        identity: {
+              clientId: applicationGateway.outputs.managedIdentityClientId
+              objectId: applicationGateway.outputs.managedIdentityPrincipalId
+              resourceId: applicationGateway.outputs.managedIdentityId
+            }
       }
       httpApplicationRouting: {
         enabled: false

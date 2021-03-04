@@ -16,6 +16,9 @@
 		"suffix": {
 			"value": "demo"
 		},
+		"adminGroupObjectId": {
+			"value": "f6a900e2-df11-43e7-ba3e-22be99d3cede"
+		},
 		"aksVersion": {
 			"value": "1.19.6"
 		},

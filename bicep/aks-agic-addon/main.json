@@ -9,6 +9,9 @@
         "australiasoutheast"
       ]
     },
+    "adminGroupObjectID": {
+      "type": "string"
+    },
     "tags": {
       "type": "object"
     },
@@ -267,17 +270,17 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
-      "name": "appGwyDeploy",
+      "name": "applicationGatewayDeploy",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
         "mode": "Incremental",
         "parameters": {
-          "appGwySKU": {
+          "applicationGatewaySKU": {
             "value": "WAF_v2"
           },
-          "appGwySubnetId": {
+          "applicationGatewaySubnetId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2019-10-01').outputs.subnets.value[0].id]"
           },
           "suffix": {
@@ -291,7 +294,7 @@
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "appGwySKU": {
+            "applicationGatewaySKU": {
               "type": "string",
               "defaultValue": "WAF_v2",
               "allowedValues": [
@@ -299,7 +302,7 @@
                 "WAF_v2"
               ]
             },
-            "appGwySubnetId": {
+            "applicationGatewaySubnetId": {
               "type": "string"
             },
             "tags": {
@@ -311,8 +314,10 @@
           },
           "functions": [],
           "variables": {
-            "publicIpName": "[format('appgwy-vip-{0}', parameters('suffix'))]",
-            "appGwyName": "[format('appgwy-{0}', parameters('suffix'))]",
+            "publicIpName": "[format('applicationGateway-vip-{0}', parameters('suffix'))]",
+            "applicationGatewayName": "[format('applicationGateway-{0}', parameters('suffix'))]",
+            "uamIdName": "applicationGatewayUmId",
+            "uamId": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('uamIdName'))]",
             "webApplicationFirewallConfiguration": {
               "enabled": "true",
               "firewallMode": "Detection"
@@ -333,17 +338,28 @@
               }
             },
             {
-              "type": "Microsoft.Network/applicationGateways",
-              "apiVersion": "2018-08-01",
-              "name": "[variables('appGwyName')]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
               "location": "[resourceGroup().location]",
-              "tags": {
-                "managed-by-k8s-ingress": "true"
+              "name": "[variables('uamIdName')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('applicationGatewayName')]",
+              "location": "[resourceGroup().location]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[variables('uamId')]": {}
+                }
               },
               "properties": {
                 "sku": {
-                  "name": "[parameters('appGwySKU')]",
-                  "tier": "[parameters('appGwySKU')]",
+                  "name": "[parameters('applicationGatewaySKU')]",
+                  "tier": "[parameters('applicationGatewaySKU')]",
                   "capacity": 2
                 },
                 "gatewayIPConfigurations": [
@@ -351,7 +367,7 @@
                     "name": "appGatewayIpConfig",
                     "properties": {
                       "subnet": {
-                        "id": "[parameters('appGwySubnetId')]"
+                        "id": "[parameters('applicationGatewaySubnetId')]"
                       }
                     }
                   }
@@ -394,10 +410,10 @@
                     "properties": {
                       "protocol": "Http",
                       "frontendPort": {
-                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('appGwyName'), 'appGatewayFrontendHttpPort')]"
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('applicationGatewayName'), 'appGatewayFrontendHttpPort')]"
                       },
                       "frontendIPConfiguration": {
-                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('appGwyName'), 'appGatewayFrontendIp')]"
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('applicationGatewayName'), 'appGatewayFrontendIp')]"
                       }
                     }
                   }
@@ -416,18 +432,18 @@
                     "name": "rule1",
                     "properties": {
                       "httpListener": {
-                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('appGwyName'), 'appGatewayHttpListener')]"
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('applicationGatewayName'), 'appGatewayHttpListener')]"
                       },
                       "backendAddressPool": {
-                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('appGwyName'), 'appGatewayBackendPool')]"
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('applicationGatewayName'), 'appGatewayBackendPool')]"
                       },
                       "backendHttpSettings": {
-                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('appGwyName'), 'appGatewayBackendHttpSettings')]"
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('applicationGatewayName'), 'appGatewayBackendHttpSettings')]"
                       }
                     }
                   }
                 ],
-                "webApplicationFirewallConfiguration": "[if(equals(parameters('appGwySKU'), 'WAF_v2'), variables('webApplicationFirewallConfiguration'), json('null'))]"
+                "webApplicationFirewallConfiguration": "[if(equals(parameters('applicationGatewaySKU'), 'WAF_v2'), variables('webApplicationFirewallConfiguration'), json('null'))]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
@@ -437,15 +453,27 @@
           "outputs": {
             "applicationGatewayId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Network/applicationGateways', variables('appGwyName'))]"
+              "value": "[resourceId('Microsoft.Network/applicationGateways', variables('applicationGatewayName'))]"
             },
-            "appGwyName": {
+            "applicationGatewayName": {
               "type": "string",
-              "value": "[variables('appGwyName')]"
+              "value": "[variables('applicationGatewayName')]"
             },
-            "appGwyPublicIpResourceId": {
+            "applicationGatewayPublicIpResourceId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+            },
+            "managedIdentityClientId": {
+              "type": "string",
+              "value": "[reference(variables('uamId')).clientId]"
+            },
+            "managedIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(variables('uamId')).principalId]"
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "value": "[variables('uamId')]"
             }
           }
         }
@@ -522,14 +550,17 @@
           "tags": {
             "value": "[parameters('tags')]"
           },
-          "appGwySubnetAddressPrefix": {
+          "applicationGatewaySubnetAddressPrefix": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2019-10-01').outputs.subnets.value[0].properties.addressPrefix]"
           },
-          "appGwySubnetName": {
+          "applicationGatewaySubnetName": {
             "value": "[parameters('subnets')[0].name]"
           },
-          "appGwyId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+          "applicationGatewayId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+          },
+          "adminGroupObjectID": {
+            "value": "[parameters('adminGroupObjectID')]"
           },
           "addOns": {
             "value": {
@@ -542,7 +573,12 @@
               "ingressAPplicationGateway": {
                 "enabled": true,
                 "config": {
-                  "applicationGatewayId": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+                  "applicationGatewayId": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy'), '2019-10-01').outputs.applicationGatewayId.value]"
+                },
+                "identity": {
+                  "clientId": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy'), '2019-10-01').outputs.managedIdentityClientId.value]",
+                  "objectId": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy'), '2019-10-01').outputs.managedIdentityPrincipalId.value]",
+                  "resourceId": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy'), '2019-10-01').outputs.managedIdentityId.value]"
                 }
               },
               "httpApplicationRouting": {
@@ -568,6 +604,9 @@
               },
               "defaultValue": "aks"
             },
+            "adminGroupObjectID": {
+              "type": "string"
+            },
             "aksAgentOsDiskSizeGB": {
               "type": "int",
               "minValue": 30,
@@ -580,13 +619,13 @@
             "addOns": {
               "type": "object"
             },
-            "appGwyId": {
+            "applicationGatewayId": {
               "type": "string"
             },
-            "appGwySubnetName": {
+            "applicationGatewaySubnetName": {
               "type": "string"
             },
-            "appGwySubnetAddressPrefix": {
+            "applicationGatewaySubnetAddressPrefix": {
               "type": "string"
             },
             "tags": {
@@ -778,6 +817,14 @@
                   "dnsServiceIP": "[parameters('aksDnsServiceIP')]",
                   "dockerBridgeCidr": "[parameters('aksDockerBridgeCIDR')]",
                   "loadBalancerSku": "standard"
+                },
+                "aadProfile": {
+                  "managed": true,
+                  "enableAzureRBAC": true,
+                  "tenantID": "[subscription().tenantId]",
+                  "adminGroupObjectIDs": [
+                    "[parameters('adminGroupObjectID')]"
+                  ]
                 }
               }
             }
@@ -803,7 +850,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'appGwyDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'applicationGatewayDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'wksDeploy')]"
       ]
@@ -813,7 +860,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.1.62928",
-      "templateHash": "11796197759991247681"
+      "templateHash": "13157985238809625750"
     }
   }
 }

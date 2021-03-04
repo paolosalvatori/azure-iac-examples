@@ -1,22 +1,24 @@
-param appGwySKU string {
+param applicationGatewaySKU string {
   allowed: [
     'Standard_v2'
     'WAF_v2'
   ]
   default: 'WAF_v2'
 }
-param appGwySubnetId string
+param applicationGatewaySubnetId string
 param tags object
 param suffix string
 
-var publicIpName = 'appgwy-vip-${suffix}'
-var appGwyName = 'appgwy-${suffix}'
+var publicIpName = 'applicationGateway-vip-${suffix}'
+var applicationGatewayName = 'applicationGateway-${suffix}'
+var uamIdName = 'applicationGatewayUmId'
+var uamId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', uamIdName)
 var webApplicationFirewallConfiguration = {
   enabled: 'true'
   firewallMode: 'Detection'
 }
 
-resource appGwyPublicIp 'Microsoft.Network/publicIPAddresses@2018-08-01' = {
+resource applicationGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2018-08-01' = {
   name: publicIpName
   location: resourceGroup().location
   sku: {
@@ -28,16 +30,26 @@ resource appGwyPublicIp 'Microsoft.Network/publicIPAddresses@2018-08-01' = {
   }
 }
 
-resource appGwy 'Microsoft.Network/applicationGateways@2018-08-01' = {
-  name: appGwyName
+resource userDefinedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   location: resourceGroup().location
-  tags: {
-    'managed-by-k8s-ingress': 'true'
+  name: uamIdName
+  tags: tags
+}
+
+resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' = {
+  name: applicationGatewayName
+  location: resourceGroup().location
+  tags: tags
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${uamId}': {}
+    }
   }
   properties: {
     sku: {
-      name: appGwySKU
-      tier: appGwySKU
+      name: applicationGatewaySKU
+      tier: applicationGatewaySKU
       capacity: 2
     }
     gatewayIPConfigurations: [
@@ -45,7 +57,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2018-08-01' = {
         name: 'appGatewayIpConfig'
         properties: {
           subnet: {
-            id: appGwySubnetId
+            id: applicationGatewaySubnetId
           }
         }
       }
@@ -55,7 +67,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2018-08-01' = {
         name: 'appGatewayFrontendIP'
         properties: {
           publicIPAddress: {
-            id: appGwyPublicIp.id
+            id: applicationGatewayPublicIp.id
           }
         }
       }
@@ -88,10 +100,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2018-08-01' = {
         properties: {
           protocol: 'Http'
           frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'appGatewayFrontendHttpPort')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', applicationGatewayName, 'appGatewayFrontendHttpPort')
           }
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'appGatewayFrontendIp')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'appGatewayFrontendIp')
           }
         }
       }
@@ -110,21 +122,24 @@ resource appGwy 'Microsoft.Network/applicationGateways@2018-08-01' = {
         name: 'rule1'
         properties: {
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'appGatewayHttpListener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'appGatewayHttpListener')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'appGatewayBackendPool')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'appGatewayBackendPool')
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'appGatewayBackendHttpSettings')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'appGatewayBackendHttpSettings')
           }
         }
       }
     ]
-    webApplicationFirewallConfiguration: ((appGwySKU == 'WAF_v2') ? webApplicationFirewallConfiguration : json('null'))
+    webApplicationFirewallConfiguration: ((applicationGatewaySKU == 'WAF_v2') ? webApplicationFirewallConfiguration : json('null'))
   }
 }
 
-output applicationGatewayId string = appGwy.id
-output appGwyName string = appGwy.name
-output appGwyPublicIpResourceId string = appGwyPublicIp.id
+output applicationGatewayId string = applicationGateway.id
+output applicationGatewayName string = applicationGateway.name
+output applicationGatewayPublicIpResourceId string = applicationGatewayPublicIp.id
+output managedIdentityClientId string = reference(uamId).clientId
+output managedIdentityPrincipalId string = reference(uamId).principalId
+output managedIdentityId string = uamId

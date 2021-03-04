@@ -4,6 +4,9 @@ param aksDnsPrefix string {
   }
   default: 'aks'
 }
+
+param adminGroupObjectID string
+
 param aksAgentOsDiskSizeGB int {
   minValue: 30
   maxValue: 1023
@@ -15,11 +18,11 @@ param aksAgentOsDiskSizeGB int {
 
 param addOns object
 
-param appGwyId string
+param applicationGatewayId string
 
-param appGwySubnetName string
+param applicationGatewaySubnetName string
 
-param appGwySubnetAddressPrefix string
+param applicationGatewaySubnetAddressPrefix string
 
 param tags object
 
@@ -102,22 +105,11 @@ param aksEnableRBAC bool {
 }
 
 var storageAccountName = 'stor${substring(uniqueString(resourceGroup().id), 0, 10)}'
-//var identityName = 'appgwContrIdentity-${suffix}'
 var aksClusterName = '${suffix}-aks'
-//var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
 var aksClusterId = aksClusterName_resource.id
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2018-07-01' = {
-  name: storageAccountName
-  location: resourceGroup().location
-  tags: {
-    displayName: storageAccountName
-  }
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-}
+//var identityName = 'appgwContrIdentity-${suffix}'
+//var identityId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)
 
 resource aksClusterName_resource 'Microsoft.ContainerService/managedClusters@2020-12-01' = {
   name: aksClusterName
@@ -182,12 +174,20 @@ resource aksClusterName_resource 'Microsoft.ContainerService/managedClusters@202
       dockerBridgeCidr: aksDockerBridgeCIDR
       loadBalancerSku: 'standard'
     }
+    aadProfile: {
+      managed: true
+      enableAzureRBAC: true
+      tenantID: subscription().tenantId
+      adminGroupObjectIDs: [
+        adminGroupObjectID
+      ]
+    }
   }
 }
 
 output aksName string = aksClusterName
 output aksControlPlaneFQDN string = reference('Microsoft.ContainerService/managedClusters/${aksClusterName}').fqdn
-// output applicationGatewayIdentityResourceId string = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', identityName)
-// output applicationGatewayIdentityClientId string = reference(identityId, '2015-08-31-PREVIEW').clientId
+//output applicationGatewayIdentityResourceId string = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/', identityName)
+//output applicationGatewayIdentityClientId string = reference(identityId, '2015-08-31-PREVIEW').clientId
 output aksApiServerUri string = '${reference(aksClusterId, '2018-03-31').fqdn}:443'
 output aksClusterName string = aksClusterName
