@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsZoneName": {
+      "type": "string"
+    },
+    "hostName": {
+      "type": "string"
+    },
+    "AppGatewayFrontEndIpAddress": {
+      "type": "string"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Network/dnsZones/A",
+      "apiVersion": "2018-05-01",
+      "name": "[format('{0}/{1}', parameters('dnsZoneName'), parameters('hostName'))]",
+      "properties": {
+        "TTL": 3600,
+        "ARecords": [
+          {
+            "ipv4Address": "[parameters('AppGatewayFrontEndIpAddress')]"
+          }
+        ]
+      },
+      "dependsOn": []
+    }
+  ],
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.3.1.62928",
+      "templateHash": "10456810541153137696"
+    }
+  }
+}
