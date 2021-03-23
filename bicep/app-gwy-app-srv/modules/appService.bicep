@@ -4,6 +4,7 @@ param sku string = 'P1V2'
 param containerImageName string
 param location string = resourceGroup().location
 param containerPort string
+param subnetId string
 
 var appServicePlanName = toLower('${prefix}-asp')
 var webSiteName = toLower('${prefix}-app')
@@ -32,6 +33,16 @@ resource appService 'Microsoft.Web/sites@2020-06-01' = {
         {
           name: 'WEBSITES_PORT'
           value: containerPort
+        }
+      ]
+      ipSecurityRestrictions: [
+        {
+          vnetSubnetResourceId: subnetId
+          action: 'Allow'
+          tag: 'Default'
+          priority: 1000
+          name: 'ApplicationGatewaySubnet'
+          description: 'Isolate traffic to subnet containing Azure Application Gateway'
         }
       ]
     }

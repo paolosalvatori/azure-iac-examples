@@ -1,12 +1,13 @@
 param prefix string
 param pfxCertificate string
-param pfxCertificatePassword string
 param adminUserObjectId string
 param containerPort string
 param containerImageName string
 param dnsZoneName string
 param hostName string
 param appServicePlanSku string
+param subnets array
+param vnetAddressPrefix string
 
 var namingPrefix = '${prefix}-${uniqueString(resourceGroup().id)}'
 
@@ -15,9 +16,19 @@ resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIden
   name: 'appGwyUserManagedId'
 }
 
-module appService './modules/appService.bicep' = {
+module vnetModule './modules/vnet.bicep' = {
+  name: 'vnet'
+  params: {
+    prefix: namingPrefix
+    subnets: subnets
+    vnetAddressPrefix: vnetAddressPrefix
+  }
+}
+
+module appServiceModule './modules/appService.bicep' = {
   name: 'deployAppService'
   params: {
+    subnetId: vnetModule.outputs.appGatewaySubnetId
     containerPort: containerPort
     prefix: namingPrefix
     containerImageName: containerImageName
@@ -25,7 +36,7 @@ module appService './modules/appService.bicep' = {
   }
 }
 
-module keyVault './modules/keyVault.bicep' = {
+module keyVaultModule './modules/keyVault.bicep' = {
   name: 'deployKeyVault'
   params: {
     adminUserObjectId: adminUserObjectId
@@ -41,12 +52,12 @@ module appGatewayModule './modules/appGateway.bicep' = {
     userAssignedManagedIdentityId: userAssignedManagedIdentity.id
     prefix: namingPrefix
     gatewaySku: 'WAF_v2'
-    webAppHostName: appService.outputs.webAppHostName
-    pfxCertSecretId: keyVault.outputs.secretUri
-    pfxCertPassword: pfxCertificatePassword
+    subnetId: vnetModule.outputs.appGatewaySubnetId
+    webAppHostName: appServiceModule.outputs.webAppHostName
+    pfxCertSecretId: keyVaultModule.outputs.secretUri
     probePath: '/blockchain'
     frontEndHostName: '${hostName}.${dnsZoneName}'
   }
 }
 
-output AppGatewayFrontEndIpAddress string = appGatewayModule.outputs.AppGatewayFrontEndIpAddress
+output appGatewayFrontEndIpAddress string = appGatewayModule.outputs.appGatewayFrontEndIpAddress

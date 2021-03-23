@@ -8,7 +8,7 @@
     "hostName": {
       "type": "string"
     },
-    "AppGatewayFrontEndIpAddress": {
+    "appGatewayFrontEndIpAddress": {
       "type": "string"
     }
   },
@@ -22,7 +22,7 @@
         "TTL": 3600,
         "ARecords": [
           {
-            "ipv4Address": "[parameters('AppGatewayFrontEndIpAddress')]"
+            "ipv4Address": "[parameters('appGatewayFrontEndIpAddress')]"
           }
         ]
       },

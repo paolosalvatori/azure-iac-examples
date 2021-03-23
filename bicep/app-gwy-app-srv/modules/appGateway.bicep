@@ -2,18 +2,14 @@ param prefix string
 param frontEndHostName string
 param userAssignedManagedIdentityId string
 param webAppHostName string
-param virtualNetworkName string = '${prefix}-vnet'
-param vnetAddressPrefix string = '10.0.0.0/16'
-param subnetName string = 'ApplicationGatewaySubnet'
-param subnetPrefix string = '10.0.0.0/24'
 param applicationGatewayName string = '${prefix}-appgwy'
 param minCapacity int = 2
 param maxCapacity int = 10
 param frontendHttpsPort int = 443
 param backendHttpsPort int = 443
 param pfxCertSecretId string
-param pfxCertPassword string
 param probePath string
+param subnetId string
 @allowed([
   'Standard_v2'
   'WAF_v2'
@@ -32,27 +28,8 @@ param backendAddresses array = [
 ]
 
 var appGwPublicIpName = '${applicationGatewayName}-pip'
+var wafPolicyName = '${applicationGatewayName}-waf-policy'
 var certName = 'app-ssl-cert'
-
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
-  name: virtualNetworkName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        vnetAddressPrefix
-      ]
-    }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          addressPrefix: subnetPrefix
-        }
-      }
-    ]
-  }
-}
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   name: appGwPublicIpName
@@ -62,6 +39,29 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
   properties: {
     publicIPAllocationMethod: 'Static'
+  }
+}
+
+resource applicationGatewayWafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2020-08-01' = {
+  name: wafPolicyName
+  location: resourceGroup().location
+  properties: {
+    managedRules: {
+      exclusions: []
+      managedRuleSets: [
+        {
+          ruleSetType: 'OWASP'
+          ruleSetVersion: '3.1'
+        }
+      ]
+    }
+    policySettings: {
+      fileUploadLimitInMb: 20
+      maxRequestBodySizeInKb: 128
+      mode: 'Prevention'
+      requestBodyCheck: true
+      state: 'Enabled'
+    }
   }
 }
 
@@ -78,6 +78,9 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
     sku: {
       name: gatewaySku
       tier: gatewaySku
+    }
+    firewallPolicy: {
+      id: applicationGatewayWafPolicy.id
     }
     autoscaleConfiguration: {
       minCapacity: minCapacity
@@ -96,7 +99,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
         name: 'ipConfig'
         properties: {
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnetName)
+            id: subnetId
           }
         }
       }
@@ -198,5 +201,5 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
   }
 }
 
-output AppGatewayFrontEndIpAddressId string = publicIP.id
-output AppGatewayFrontEndIpAddress string = publicIP.properties.ipAddress
+output appGatewayFrontEndIpAddressId string = publicIP.id
+output appGatewayFrontEndIpAddress string = publicIP.properties.ipAddress

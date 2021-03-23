@@ -8,9 +8,6 @@
     "pfxCertificate": {
       "type": "string"
     },
-    "pfxCertificatePassword": {
-      "type": "string"
-    },
     "adminUserObjectId": {
       "type": "string"
     },
@@ -28,6 +25,12 @@
     },
     "appServicePlanSku": {
       "type": "string"
+    },
+    "subnets": {
+      "type": "array"
+    },
+    "vnetAddressPrefix": {
+      "type": "string"
     }
   },
   "functions": [],
@@ -44,6 +47,88 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
+      "name": "vnet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "prefix": {
+            "value": "[variables('namingPrefix')]"
+          },
+          "subnets": {
+            "value": "[parameters('subnets')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "prefix": {
+              "type": "string"
+            },
+            "vnetAddressPrefix": {
+              "type": "string"
+            },
+            "subnets": {
+              "type": "array"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "virtualNetworkName": "[format('{0}-vnet', parameters('prefix'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-06-01",
+              "name": "[variables('virtualNetworkName')]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "subnets",
+                    "count": "[length(parameters('subnets'))]",
+                    "input": {
+                      "name": "[parameters('subnets')[copyIndex('subnets')].name]",
+                      "properties": {
+                        "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                        "serviceEndpoints": [
+                          {
+                            "locations": [
+                              "*"
+                            ],
+                            "service": "[parameters('subnets')[copyIndex('subnets')].serviceEndpoint]"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressPrefix')]"
+                  ]
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "appGatewaySubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))).subnets[0].id]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
       "name": "deployAppService",
       "properties": {
         "expressionEvaluationOptions": {
@@ -51,6 +136,9 @@
         },
         "mode": "Incremental",
         "parameters": {
+          "subnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2019-10-01').outputs.appGatewaySubnetId.value]"
+          },
           "containerPort": {
             "value": "[parameters('containerPort')]"
           },
@@ -88,6 +176,9 @@
             },
             "containerPort": {
               "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
             }
           },
           "functions": [],
@@ -124,6 +215,16 @@
                       "name": "WEBSITES_PORT",
                       "value": "[parameters('containerPort')]"
                     }
+                  ],
+                  "ipSecurityRestrictions": [
+                    {
+                      "vnetSubnetResourceId": "[parameters('subnetId')]",
+                      "action": "Allow",
+                      "tag": "Default",
+                      "priority": 1000,
+                      "name": "ApplicationGatewaySubnet",
+                      "description": "Isolate traffic to subnet containing Azure Application Gateway"
+                    }
                   ]
                 }
               },
@@ -139,7 +240,10 @@
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -280,14 +384,14 @@
           "gatewaySku": {
             "value": "WAF_v2"
           },
+          "subnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet'), '2019-10-01').outputs.appGatewaySubnetId.value]"
+          },
           "webAppHostName": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployAppService'), '2019-10-01').outputs.webAppHostName.value]"
           },
           "pfxCertSecretId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployKeyVault'), '2019-10-01').outputs.secretUri.value]"
-          },
-          "pfxCertPassword": {
-            "value": "[parameters('pfxCertificatePassword')]"
           },
           "probePath": {
             "value": "/blockchain"
@@ -312,22 +416,6 @@
             "webAppHostName": {
               "type": "string"
             },
-            "virtualNetworkName": {
-              "type": "string",
-              "defaultValue": "[format('{0}-vnet', parameters('prefix'))]"
-            },
-            "vnetAddressPrefix": {
-              "type": "string",
-              "defaultValue": "10.0.0.0/16"
-            },
-            "subnetName": {
-              "type": "string",
-              "defaultValue": "ApplicationGatewaySubnet"
-            },
-            "subnetPrefix": {
-              "type": "string",
-              "defaultValue": "10.0.0.0/24"
-            },
             "applicationGatewayName": {
               "type": "string",
               "defaultValue": "[format('{0}-appgwy', parameters('prefix'))]"
@@ -351,10 +439,10 @@
             "pfxCertSecretId": {
               "type": "string"
             },
-            "pfxCertPassword": {
+            "probePath": {
               "type": "string"
             },
-            "probePath": {
+            "subnetId": {
               "type": "string"
             },
             "gatewaySku": {
@@ -388,30 +476,10 @@
           "functions": [],
           "variables": {
             "appGwPublicIpName": "[format('{0}-pip', parameters('applicationGatewayName'))]",
+            "wafPolicyName": "[format('{0}-waf-policy', parameters('applicationGatewayName'))]",
             "certName": "app-ssl-cert"
           },
           "resources": [
-            {
-              "type": "Microsoft.Network/virtualNetworks",
-              "apiVersion": "2020-06-01",
-              "name": "[parameters('virtualNetworkName')]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "addressSpace": {
-                  "addressPrefixes": [
-                    "[parameters('vnetAddressPrefix')]"
-                  ]
-                },
-                "subnets": [
-                  {
-                    "name": "[parameters('subnetName')]",
-                    "properties": {
-                      "addressPrefix": "[parameters('subnetPrefix')]"
-                    }
-                  }
-                ]
-              }
-            },
             {
               "type": "Microsoft.Network/publicIPAddresses",
               "apiVersion": "2020-06-01",
@@ -422,6 +490,30 @@
               },
               "properties": {
                 "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+              "apiVersion": "2020-08-01",
+              "name": "[variables('wafPolicyName')]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "managedRules": {
+                  "exclusions": [],
+                  "managedRuleSets": [
+                    {
+                      "ruleSetType": "OWASP",
+                      "ruleSetVersion": "3.1"
+                    }
+                  ]
+                },
+                "policySettings": {
+                  "fileUploadLimitInMb": 20,
+                  "maxRequestBodySizeInKb": 128,
+                  "mode": "Prevention",
+                  "requestBodyCheck": true,
+                  "state": "Enabled"
+                }
               }
             },
             {
@@ -440,6 +532,9 @@
                   "name": "[parameters('gatewaySku')]",
                   "tier": "[parameters('gatewaySku')]"
                 },
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+                },
                 "autoscaleConfiguration": {
                   "minCapacity": "[parameters('minCapacity')]",
                   "maxCapacity": "[parameters('maxCapacity')]"
@@ -457,7 +552,7 @@
                     "name": "ipConfig",
                     "properties": {
                       "subnet": {
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                        "id": "[parameters('subnetId')]"
                       }
                     }
                   }
@@ -558,17 +653,17 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+                "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies', variables('wafPolicyName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))]"
               ]
             }
           ],
           "outputs": {
-            "AppGatewayFrontEndIpAddressId": {
+            "appGatewayFrontEndIpAddressId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))]"
             },
-            "AppGatewayFrontEndIpAddress": {
+            "appGatewayFrontEndIpAddress": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('appGwPublicIpName'))).ipAddress]"
             }
@@ -578,21 +673,22 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'deployAppService')]",
         "[resourceId('Microsoft.Resources/deployments', 'deployKeyVault')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'appGwyUserManagedId')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'appGwyUserManagedId')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnet')]"
       ]
     }
   ],
   "outputs": {
-    "AppGatewayFrontEndIpAddress": {
+    "appGatewayFrontEndIpAddress": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.AppGatewayFrontEndIpAddress.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appGwyDeploy'), '2019-10-01').outputs.appGatewayFrontEndIpAddress.value]"
     }
   },
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.3.1.62928",
-      "templateHash": "1157730848838906851"
+      "templateHash": "4370815492403293422"
     }
   }
 }

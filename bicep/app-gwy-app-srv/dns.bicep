@@ -1,6 +1,6 @@
 param dnsZoneName string
 param hostName string
-param AppGatewayFrontEndIpAddress string
+param appGatewayFrontEndIpAddress string
 
 resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
   name: dnsZoneName
@@ -12,7 +12,7 @@ resource dnsARecord 'Microsoft.Network/dnsZones/A@2018-05-01' = {
     TTL: 3600
     ARecords: [
       {
-        ipv4Address: AppGatewayFrontEndIpAddress
+        ipv4Address: appGatewayFrontEndIpAddress
       }
     ]
   }
