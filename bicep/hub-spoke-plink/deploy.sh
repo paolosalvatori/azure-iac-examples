@@ -1,0 +1,40 @@
+# vars
+HUB_RG_NAME='test-hub-rg'
+SPOKE_RG_NAME='test-spoke-rg'
+LOCATION='australiaeast'
+
+# transpile Bicep to ARM
+bicep build ./hub.bicep
+bicep build ./spoke.bicep
+
+# hub deployment
+az group create --name $HUB_RG_NAME --location $LOCATION
+
+az deployment group create \
+    --name HubDeployment \
+	--template-file ./hub.json \
+	--resource-group $HUB_RG_NAME
+
+HUB_VNET_ID=$(az deployment group show \
+  --name HubDeployment \
+  --resource-group $HUB_RG_NAME \
+  --query properties.outputs.vnetId.value -o tsv)
+
+HUB_VNET_NAME=$(az deployment group show \
+  --name HubDeployment \
+  --resource-group $HUB_RG_NAME \
+  --query properties.outputs.vnetName.value -o tsv)
+
+# spoke deployment
+az group create --name $SPOKE_RG_NAME --location $LOCATION
+
+az deployment group create \
+	--name SpokeDeployment \
+	--template-file ./spoke.json \
+	--resource-group $SPOKE_RG_NAME \
+	--parameters mySqlAdminUserName='dbadmin' \
+	--parameters mySqlAdminPassword='M1cr0soft1234567890' \
+	--parameters hubVnetId=$HUB_VNET_ID \
+	--parameters hubVnetName=$HUB_VNET_NAME \
+	--parameters hubVnetResourceGroup=$HUB_RG_NAME \
+	--parameters containerName='nginx:alpine'
