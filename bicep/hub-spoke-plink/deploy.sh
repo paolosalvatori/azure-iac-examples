@@ -37,4 +37,4 @@ az deployment group create \
 	--parameters hubVnetId=$HUB_VNET_ID \
 	--parameters hubVnetName=$HUB_VNET_NAME \
 	--parameters hubVnetResourceGroup=$HUB_RG_NAME \
-	--parameters containerName='nginx:alpine'
+	--parameters containerName='belstarr/go-web-api:v1.0'

@@ -46,7 +46,6 @@ param spokeSubnets array = [
 param skuName string = 'P1v2'
 param mySqlAdminUserName string
 param mySqlAdminPassword string
-param linuxFxVersion string = 'PHP|7.4'
 param containerName string
 param hubVnetId string
 param hubVnetName string
