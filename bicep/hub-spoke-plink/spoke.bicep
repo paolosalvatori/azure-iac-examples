@@ -89,7 +89,7 @@ resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeeri
   }
 }
 
-module vnetPeeringFromHub './modules/vnetPeering.bicep' = {
+module vnetPeeringFromHubModule './modules/vnetPeering.bicep' = {
   name: 'hubVnetPeeringDeployment'
   scope: resourceGroup(hubVnetResourceGroup)
   dependsOn: [
