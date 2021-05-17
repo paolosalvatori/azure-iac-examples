@@ -94,7 +94,7 @@ stages:
     jobs:
 
       - job: deploySpokeInfra
-        displayName: 'deploy spoke infrastructure'
+        displayName: 'deploy spoke'
         strategy:
           matrix: $[ variables.targets ]
         steps:
