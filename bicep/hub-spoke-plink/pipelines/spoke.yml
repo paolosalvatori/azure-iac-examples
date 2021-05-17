@@ -130,6 +130,6 @@ stages:
                   --parameters mySqlAdminPassword=$(mySqlAdminPassword) `
                   --parameters hubVnetId=$(hubVnetId) `
                   --parameters hubVnetName=$(hubVnetName) `
-                  --parameters hubVnetResourceGroup=$(hubVnetResourceGroup) `
+                  --parameters hubVnetResourceGroup=$(hubResourceGroup) `
                   --parameters containerName=$(containerName)
     
