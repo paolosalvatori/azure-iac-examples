@@ -34,7 +34,7 @@ variables:
         'dbSubnetCIDR': '10.1.1.0/24',
         'appSvcSubnetCIDR': '10.1.2.0/24',
         'containerName': 'belstarr/go-web-api:v1.0'
-      }
+      },
       customer-1-spoke:
       {
         'resourceGroupName': 'customer-1-spoke-rg',
@@ -47,7 +47,7 @@ variables:
         'dbSubnetCIDR': '10.2.1.0/24',
         'appSvcSubnetCIDR': '10.2.2.0/24',
         'containerName': 'belstarr/go-web-api:v1.0'
-      }
+      },
       customer-2-spoke:
       {
         'resourceGroupName': 'customer-2-spoke-rg',
