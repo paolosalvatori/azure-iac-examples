@@ -1,5 +1,6 @@
 // App Service (containers) + Regional Vnet Integration + limit access by X-AZFD-ID header
 
+param hubVnetPeeringDeploymentName string = 'hubVnetPeeringDeployment-${utcNow()}'
 param spokeVnetName string
 param plinkSubnetCIDR string
 param dbSubnetCIDR string
@@ -74,7 +75,7 @@ module spokeVnetModule './modules/vnet.bicep' = {
 }
 
 resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2020-08-01' = {
-  name: '${spokeVnetName}/peering-to-hub-vnet'
+  name: '${spokeVnetName}/peering-to-${spokeVnetName}'
   dependsOn: [
     spokeVnetModule
   ]
@@ -90,7 +91,7 @@ resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeeri
 }
 
 module vnetPeeringFromHubModule './modules/vnetPeering.bicep' = {
-  name: 'hubVnetPeeringDeployment'
+  name: hubVnetPeeringDeploymentName
   scope: resourceGroup(hubVnetResourceGroup)
   dependsOn: [
     spokeVnetModule
