@@ -169,7 +169,7 @@ module mySqlFlexServerModule 'modules/mysql-flex-server.bicep' = {
     location: resourceGroup().location
     administratorLogin: 'dbadmin'
     administratorLoginPassword: 'M1cr0soft1234567890'
-    subnetArmResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetPeeringToSpoke.outputs.vnetName, spokeVnetModule.outputs.subnetArray[1].name)
+    subnetArmResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetPeeringToSpoke.outputs.vnetName, vnetPeeringToSpoke.outputs.subnetArray[1].name)
     suffix: suffix
   }
 }
