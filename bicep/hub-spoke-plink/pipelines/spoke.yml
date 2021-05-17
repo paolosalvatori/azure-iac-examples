@@ -26,7 +26,7 @@ variables:
       {
         'resourceGroupName': 'int-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
-        'hubVnet': 'hub-vnet',
+        'hubVnetName': 'hub-vnet',
         'hubVnetId': '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet',
         'spokeVnetName': 'int-spoke-vnet',
         'spokeVnetAddressPrefix': '10.1.0.0/16',
@@ -39,7 +39,7 @@ variables:
       {
         'resourceGroupName': 'customer-1-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
-        'hubVnet': 'hub-vnet',
+        'hubVnetName': 'hub-vnet',
         'hubVnetId': '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet',
         'spokeVnetName': 'customer-1-spoke-vnet',
         'spokeVnetAddressPrefix': '10.2.0.0/16',
@@ -52,7 +52,7 @@ variables:
       {
         'resourceGroupName': 'customer-2-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
-        'hubVnet': 'hub-vnet',
+        'hubVnetName': 'hub-vnet',
         'hubVnetId': '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet',
         'spokeVnetName': 'customer-2-spoke-vnet',
         'spokeVnetAddressPrefix': '10.3.0.0/16',
