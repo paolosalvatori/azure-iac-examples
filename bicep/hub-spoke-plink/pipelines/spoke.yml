@@ -11,6 +11,7 @@ trigger:
       - bicep/hub-spoke-plink/pipelines
       - bicep/hub-spoke-plink/modules
       - bicep/hub-spoke-plink/README.md
+
 variables:
   serviceCxn: 'internal_azure_subscription'
   hubResourceGroupName: 'test-hub-rg'
@@ -59,10 +60,12 @@ variables:
       }
     }
 
+pool:
+  vmImage: 'ubuntu-latest'    
+
 stages:
   - stage: build
     displayName: 'compile bicep to ARM template'
-    pool: 'ubuntu-latest'
     jobs:
       - job: compileBicepToARM
         steps:
@@ -91,7 +94,6 @@ stages:
 
   - stage: deploy
     displayName: 'deploy spoke infrastructure'
-    pool: 'ubuntu-latest'
     jobs:
 
       - job: deploySpokeInfra
