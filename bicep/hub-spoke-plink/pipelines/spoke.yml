@@ -116,16 +116,15 @@ stages:
               inlineScript: |
                 az group create --name $(resourceGroupName) --location $(location)
 
-                az deployment group create \
-                  --name $[ variables.targets ] \
-                  --tags '{"owner": "me"}'
-                  --template-file $(Pipeline.Workspace)/templates/spoke.json \
-                  --resource-group $(resourceGroupName) \
-                  --parameters spokeVnetName=$(spokeVnetName)
-                  --parameters mySqlAdminUserName=$(mySqlAdminUserName) \
-                  --parameters mySqlAdminPassword=$(mySqlAdminPassword) \
-                  --parameters hubVnetId=$(hubVnetId) \
-                  --parameters hubVnetName=$(hubVnetName) \
-                  --parameters hubVnetResourceGroup=$(hubVnetResourceGroup) \
+                az deployment group create `
+                  --name $[ variables.targets ] `
+                  --template-file $(Pipeline.Workspace)/templates/spoke.json `
+                  --resource-group $(resourceGroupName) `
+                  --parameters spokeVnetName=$(spokeVnetName) `
+                  --parameters mySqlAdminUserName=$(mySqlAdminUserName) `
+                  --parameters mySqlAdminPassword=$(mySqlAdminPassword) `
+                  --parameters hubVnetId=$(hubVnetId) `
+                  --parameters hubVnetName=$(hubVnetName) `
+                  --parameters hubVnetResourceGroup=$(hubVnetResourceGroup) `
                   --parameters containerName=$(containerName)
     
