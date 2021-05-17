@@ -97,6 +97,7 @@ module vnetPeeringFromHubModule './modules/vnetPeering.bicep' = {
     spokeVnetModule
   ]
   params: {
+    remoteVnetName: spokeVnetModule.outputs.vnetName
     remoteVnetId: spokeVnetModule.outputs.id
     parentVnetName: hubVnetName
     useRemoteGateways: false
