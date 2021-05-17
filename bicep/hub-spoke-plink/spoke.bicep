@@ -63,7 +63,7 @@ var mySqlPrivateDNSZoneName = 'mysql.database.azure.com'
 var serverFarmName = 'app-svc-${suffix}'
 
 // vnet + subnets
-module spokeVnetModule './modules/vnet.bicep' = {
+module vnetPeeringToSpoke './modules/vnet.bicep' = {
   name: spokeVnetName
   params: {
     tags: tags
@@ -76,7 +76,7 @@ module spokeVnetModule './modules/vnet.bicep' = {
 resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2020-08-01' = {
   name: '${spokeVnetName}/peering-to-hub-vnet'
   dependsOn: [
-    spokeVnetModule
+    vnetPeeringToSpoke
   ]
   properties: {
     allowForwardedTraffic: true
@@ -93,10 +93,10 @@ module vnetPeeringFromHub './modules/vnetPeering.bicep' = {
   name: 'hubVnetPeeringDeployment'
   scope: resourceGroup(hubVnetResourceGroup)
   dependsOn: [
-    spokeVnetModule
+    vnetPeeringToSpoke
   ]
   params: {
-    remoteVnetId: spokeVnetModule.outputs.id
+    remoteVnetId: vnetPeeringToSpoke.outputs.id
     parentVnetName: hubVnetName
     useRemoteGateways: false
   }
@@ -127,7 +127,7 @@ resource blobPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
   name: 'blobPrivateEndpoint'
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', spokeVnetModule.outputs.vnetName, spokeVnetModule.outputs.subnetArray[0].name)
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetPeeringToSpoke.outputs.vnetName, vnetPeeringToSpoke.outputs.subnetArray[0].name)
     }
     privateLinkServiceConnections: [
       {
@@ -157,7 +157,7 @@ resource virtualNetworkStorageDnsZoneLink 'Microsoft.Network/privateDnsZones/vir
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: spokeVnetModule.outputs.id
+      id: vnetPeeringToSpoke.outputs.id
     }
   }
 }
@@ -169,7 +169,7 @@ module mySqlFlexServerModule 'modules/mysql-flex-server.bicep' = {
     location: resourceGroup().location
     administratorLogin: 'dbadmin'
     administratorLoginPassword: 'M1cr0soft1234567890'
-    subnetArmResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', spokeVnetModule.outputs.vnetName, spokeVnetModule.outputs.subnetArray[1].name)
+    subnetArmResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetPeeringToSpoke.outputs.vnetName, spokeVnetModule.outputs.subnetArray[1].name)
     suffix: suffix
   }
 }
@@ -200,7 +200,7 @@ resource virtualNetworkMySqlDnsZoneLink 'Microsoft.Network/privateDnsZones/virtu
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: spokeVnetModule.outputs.id
+      id: vnetPeeringToSpoke.outputs.id
     }
   }
 }
@@ -246,12 +246,12 @@ resource webApp1AppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
 resource webApp1NetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
   name: '${webApp1.name}/VirtualNetwork'
   properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', spokeVnetModule.outputs.vnetName, spokeVnetModule.outputs.subnetArray[2].name)
+    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetPeeringToSpoke.outputs.vnetName, vnetPeeringToSpoke.outputs.subnetArray[2].name)
   }
 }
 
-output vnetName string = spokeVnetModule.outputs.vnetName
-output vnetId string = spokeVnetModule.outputs.id
+output vnetName string = vnetPeeringToSpoke.outputs.vnetName
+output vnetId string = vnetPeeringToSpoke.outputs.id
 output storageDnsZoneId string = blobPrivateEndpointDnsZone.id
 output webAppName string = webApp1.name
 output webAppHostName string = webApp1.properties.defaultHostName

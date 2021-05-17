@@ -8,7 +8,7 @@ resource parentVnet 'Microsoft.Network/virtualNetworks@2020-08-01' existing = {
 
 resource vnetPeer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2020-08-01' = {
   parent: parentVnet
-  name: 'peering-to-spoke-vnet'
+  name: 'peering-to-${parentVnet}'
   properties: {
     allowForwardedTraffic: true
     allowGatewayTransit: true
