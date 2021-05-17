@@ -22,7 +22,7 @@ variables:
   mySqlAdminPassword: 'M1cr0soft1234567890'
   targets: >
     {
-      internal-spoke:
+      'internal-spoke':
       {
         'resourceGroupName': 'int-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
@@ -35,7 +35,7 @@ variables:
         'appSvcSubnetCIDR': '10.1.2.0/24',
         'containerName': 'belstarr/go-web-api:v1.0'
       },
-      customer-1-spoke:
+      'customer-1-spoke':
       {
         'resourceGroupName': 'customer-1-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
@@ -48,7 +48,7 @@ variables:
         'appSvcSubnetCIDR': '10.2.2.0/24',
         'containerName': 'belstarr/go-web-api:v1.0'
       },
-      customer-2-spoke:
+      'customer-2-spoke':
       {
         'resourceGroupName': 'customer-2-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
