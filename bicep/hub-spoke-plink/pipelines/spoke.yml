@@ -24,6 +24,7 @@ variables:
     {
       'internal-spoke':
       {
+        'deployment': 'internal-spoke',
         'resourceGroupName': 'int-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
         'hubVnetName': 'hub-vnet',
@@ -37,6 +38,7 @@ variables:
       },
       'customer-1-spoke':
       {
+        'deployment': 'customer-1-spoke',
         'resourceGroupName': 'customer-1-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
         'hubVnetName': 'hub-vnet',
@@ -50,6 +52,7 @@ variables:
       },
       'customer-2-spoke':
       {
+        'deployment': 'customer-2-spoke',
         'resourceGroupName': 'customer-2-spoke-rg',
         'hubResourceGroup': 'test-hub-rg',
         'hubVnetName': 'hub-vnet',
@@ -122,7 +125,7 @@ stages:
                 az group create --name $(resourceGroupName) --location $(location)
 
                 az deployment group create `
-                  --name $[ variables.targets ] `
+                  --name $(deployment) `
                   --template-file $(Pipeline.Workspace)/templates/spoke.json `
                   --resource-group $(resourceGroupName) `
                   --parameters spokeVnetName=$(spokeVnetName) `
