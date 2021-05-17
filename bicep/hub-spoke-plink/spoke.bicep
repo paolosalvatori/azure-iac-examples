@@ -1,8 +1,10 @@
 // App Service (containers) + Regional Vnet Integration + limit access by X-AZFD-ID header
-// Azure Front Door -> App Service PIP
 
-param spokeVnetName string = 'spoke-vnet'
-param spokeVnetAddressPrefix string = '10.1.0.0/16'
+param spokeVnetName string
+param plinkSubnetCIDR string
+param dbSubnetCIDR string
+param appSvcSubnetCIDR string
+param spokeVnetAddressPrefix string
 param tags object = {
   costcenter: '1234567890'
   environment: 'dev'
@@ -10,12 +12,12 @@ param tags object = {
 param spokeSubnets array = [
   {
     name: 'PrivateLink-Subnet'
-    addressPrefix: '10.1.0.0/24'
+    addressPrefix: plinkSubnetCIDR
     delegations: []
   }
   {
     name: 'Database-Subnet'
-    addressPrefix: '10.1.1.0/24'
+    addressPrefix: dbSubnetCIDR
     delegations: [
       {
         name: 'delegation'
@@ -27,7 +29,7 @@ param spokeSubnets array = [
   }
   {
     name: 'AppService-Subnet'
-    addressPrefix: '10.1.2.0/24'
+    addressPrefix: appSvcSubnetCIDR
     delegations: [
       {
         name: 'delegation'
@@ -51,8 +53,8 @@ param hubVnetId string
 param hubVnetName string
 param hubVnetResourceGroup string
 
-var siteName = 'my-app-${suffix}'
 var suffix = uniqueString(resourceGroup().id)
+var siteName = 'my-app-${suffix}'
 var storageName = 'stor${suffix}'
 var mySqlServerName = 'mysql-flexserver-${suffix}'
 var storagePrivateDNSZoneName = 'privatelink.blob.core.windows.net'
@@ -251,3 +253,5 @@ resource webApp1NetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
 output vnetName string = spokeVnetModule.outputs.vnetName
 output vnetId string = spokeVnetModule.outputs.id
 output storageDnsZoneId string = blobPrivateEndpointDnsZone.id
+output webAppName string = webApp1.name
+output webAppHostName string = webApp1.properties.defaultHostName

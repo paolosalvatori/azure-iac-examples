@@ -1,0 +1,119 @@
+### spoke.yml ###
+variables:
+  serviceCxn: 'azure-internal-subscription'
+  hubResourceGroupName: 'test-hub-rg'
+  hubVnetName: 'hub-vnet'
+  hubVnetId: '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet'
+  location: 'australiaeast'
+  mySqlAdminUserName: 'dbadmin'
+  mySqlAdminPassword: 'M1cr0soft1234567890'
+  targets: >
+    {
+      internal-spoke:
+      {
+        resourceGroupName: 'int-spoke-rg'
+        hubResourceGroup: $(hubResourceGroupName)
+        hubVnet: $(hubVnetName)
+        spokeVnetName: 'int-spoke-vnet'
+        spokeVnetAddressPrefix: '10.1.0.0/16'
+        plinkSubnetCIDR: '10.1.0.0/24'
+        dbSubnetCIDR: '10.1.1.0/24'
+        appSvcSubnetCIDR: '10.1.2.0/24'
+        containerName: 'belstarr/go-web-api:v1.0'
+      }
+      customer-1-spoke:
+      {
+        resourceGroupName: 'customer-1-spoke-rg'
+        hubResourceGroup: $(hubResourceGroupName)
+        hubVnet: $(hubVnetName)
+        spokeVnetName: 'customer-1-spoke-vnet'
+        spokeVnetAddressPrefix: '10.2.0.0/16'
+        plinkSubnetCIDR: '10.2.0.0/24'
+        dbSubnetCIDR: '10.2.1.0/24'
+        appSvcSubnetCIDR: '10.2.2.0/24'
+        containerName: 'belstarr/go-web-api:v1.0'
+      }
+      customer-2-spoke:
+      {
+        resourceGroupName: 'customer-2-spoke-rg'
+        hubResourceGroup: $(hubResourceGroupName)
+        hubVnet: $(hubVnetName)
+        spokeVnetName: 'customer-2-spoke-vnet'
+        spokeVnetAddressPrefix: '10.3.0.0/16'
+        plinkSubnetCIDR: '10.3.0.0/24'
+        dbSubnetCIDR: '10.3.1.0/24'
+        appSvcSubnetCIDR: '10.3.2.0/24'
+        containerName: 'belstarr/go-web-api:v1.0'
+      }
+    }
+
+stages:
+  - stage: build
+    displayName: 'compile bicep to ARM template'
+    pool: 'ubuntu-latest'
+    jobs:
+      - job: compileBicepToARM
+        steps:
+
+          - task: AzureCLI@2
+            displayName: 'compile Bicep to ARM template'
+            inputs:
+              azureSubscription: $(serviceCxn)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                bicep build ../spoke.bicep
+
+          - task: CopyFiles@2
+            displayName: 'copy ARM template file to staging directory'
+            inputs:
+              SourceFolder: $(Build.SourcesDirectory)/bicep/hub-spoke-plink
+              Contents: 'spoke.json'
+              TargetFolder: $(Build.ArtifactStagingDirectory)/templates
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'publish ARM template artifacts'
+            inputs:
+              ArtifactName: 'templates'
+              PathtoPublish: $(Build.ArtifactStagingDirectory)/templates
+
+  - stage: deploy
+    displayName: 'deploy spoke infrastructure'
+    pool: 'ubuntu-latest'
+    jobs:
+
+      - job: deploySpokeInfra
+        displayName: 'deploy spoke infrastructure'
+        strategy:
+          matrix: $[ variables.targets ]
+        steps:
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'download compiled ARM template'
+            inputs:
+              buildType: 'current'
+              downloadType: 'Single'
+              downloadPath: '$(Pipeline.Workspace)'
+              artifactName: 'templates'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(serviceCxn)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                az group create --name $(resourceGroupName) --location $(location)
+
+                az deployment group create \
+                  --name $[ variables.targets ] \
+                  --tags '{"owner": "me"}'
+                  --template-file $(Pipeline.Workspace)/templates/spoke.json \
+                  --resource-group $(resourceGroupName) \
+                  --parameters spokeVnetName=$(spokeVnetName)
+                  --parameters mySqlAdminUserName=$(mySqlAdminUserName) \
+                  --parameters mySqlAdminPassword=$(mySqlAdminPassword) \
+                  --parameters hubVnetId=$(hubVnetId) \
+                  --parameters hubVnetName=$(hubVnetName) \
+                  --parameters hubVnetResourceGroup=$(hubVnetResourceGroup) \
+                  --parameters containerName=$(containerName)
+    

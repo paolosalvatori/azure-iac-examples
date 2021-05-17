@@ -1,0 +1,164 @@
+trigger:
+- main
+
+variables:
+  - group: '<variable group name that contains appname>'
+  - name: location
+    value: 'australiaeast'
+  - name: resourceGroupName
+    value: '<azure target resource group name>'
+  - name: filePath
+    value: '$(Build.SourcesDirectory)/challenges/02-ADO/Student/Resources/Bicep/'
+  - name: fileName
+    value: 'main'
+  - name: azureSvcConnection
+    value: '<name of Azure Service Connection created as a prerequisite>'
+  - name: subscriptionId
+    value: '<azure subscription GUID>'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build_ARM_Template
+    steps:
+    - task: PowerShell@2
+      displayName: 'Clone and Install BICEP'
+      inputs:
+        filePath: '$(Build.SourcesDirectory)/challenges/02-ADO/Student/Resources/scripts/install_Bicep.ps1'
+        arguments: '-installPath "$(Build.BinariesDirectory)/bicep"'
+
+    - task: PowerShell@2
+      displayName: 'Build the ARM Template from the BICEP file'
+      inputs:
+        targetType: 'inline'
+        script: '$(Build.BinariesDirectory)/bicep/bicep.exe build ${{ variables.filePath }}${{ variables.fileName }}.bicep'
+    
+    - task: CopyFiles@2
+      displayName: 'Copy ARM Template files to Staging directory'
+      inputs:
+        SourceFolder: '${{ variables.filePath }}'
+        Contents: '${{ variables.fileName }}.json'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)/templates'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish ARM Templates'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/templates'
+        ArtifactName: 'templates'
+
+- stage: dev
+  displayName: dev
+  jobs:
+  - job: iac_dev
+    displayName: Infrastructure Deployment dev
+    variables:
+      webappname: $(System.StageName)$(appname)
+    steps:
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download compiled ARM template'
+      inputs:
+        buildType: 'current'
+        downloadType: 'Single'
+        downloadPath: '$(Pipeline.Workspace)'
+        artifactName: 'templates'
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      inputs:
+        targetFiles: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        useLegacyPattern: false
+        enableTelemetry: true
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: $(azureSvcConnection)
+        subscriptionId: $(subscriptionId)
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(resourceGroupName)
+        location: $(location)
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        deploymentMode: 'Incremental'
+
+- stage: test
+  displayName: test
+  jobs:
+  - job: iac_test
+    displayName: Infrastructure Deployment test
+    variables:
+      webappname: $(System.StageName)$(appname)
+    steps:
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download compiled ARM template'
+      inputs:
+        buildType: 'current'
+        downloadType: 'Single'
+        downloadPath: '$(Pipeline.Workspace)'
+        artifactName: 'templates'
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      inputs:
+        targetFiles: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        useLegacyPattern: false
+        enableTelemetry: true
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: $(azureSvcConnection)
+        subscriptionId: $(subscriptionId)
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(resourceGroupName)
+        location: $(location)
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        deploymentMode: 'Incremental'
+        
+- stage: prod
+  displayName: prod
+  jobs:
+  - job: iac_prod
+    displayName: Infrastructure Deployment prod
+    variables:
+      webappname: $(System.StageName)$(appname)
+    steps:
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download compiled ARM template'
+      inputs:
+        buildType: 'current'
+        downloadType: 'Single'
+        downloadPath: '$(Pipeline.Workspace)'
+        artifactName: 'templates'
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      inputs:
+        targetFiles: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        encoding: 'auto'
+        writeBOM: true
+        actionOnMissing: 'warn'
+        keepToken: false
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        useLegacyPattern: false
+        enableTelemetry: true
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: $(azureSvcConnection)
+        subscriptionId: $(subscriptionId)
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(resourceGroupName)
+        location: $(location)
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Pipeline.Workspace)/templates/${{ variables.fileName }}.json'
+        deploymentMode: 'Incremental'
