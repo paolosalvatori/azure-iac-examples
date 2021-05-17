@@ -75,7 +75,7 @@ module spokeVnetModule './modules/vnet.bicep' = {
 }
 
 resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2020-08-01' = {
-  name: '${spokeVnetName}/peering-to-${spokeVnetName}'
+  name: '${spokeVnetName}/peering-to-${hubVnetName}'
   dependsOn: [
     spokeVnetModule
   ]
