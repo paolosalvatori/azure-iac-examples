@@ -12,7 +12,7 @@ trigger:
       - bicep/hub-spoke-plink/modules
       - bicep/hub-spoke-plink/README.md
 variables:
-  serviceCxn: 'azure-internal-subscription'
+  serviceCxn: 'internal_azure_subscription'
   hubResourceGroupName: 'test-hub-rg'
   hubVnetName: 'hub-vnet'
   hubVnetId: '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet'
