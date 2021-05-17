@@ -134,5 +134,8 @@ stages:
                   --parameters hubVnetId=$(hubVnetId) `
                   --parameters hubVnetName=$(hubVnetName) `
                   --parameters hubVnetResourceGroup=$(hubResourceGroup) `
-                  --parameters containerName=$(containerName)
-    
+                  --parameters containerName=$(containerName) `
+                  --parameters spokeVnetAddressPrefix=$(spokeVnetAddressPrefix) `
+                  --parameter appSvcSubnetCIDR=$(appSvcSubnetCIDR) `
+                  --parameter dbSubnetCIDR=$(dbSubnetCIDR) `
+                  --parameter plinkSubnetCIDR=$(plinkSubnetCIDR)
