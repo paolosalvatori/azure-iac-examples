@@ -77,7 +77,7 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                bicep build ../spoke.bicep
+                az bicep build ../spoke.bicep
 
           - task: CopyFiles@2
             displayName: 'copy ARM template file to staging directory'
