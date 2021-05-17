@@ -1,4 +1,16 @@
 ### spoke.yml ###
+trigger:
+  branches:
+    include:
+      - main
+      - master
+  paths:
+    include:
+      - bicep/hub-spoke-plink
+    exclude:
+      - bicep/hub-spoke-plink/pipelines
+      - bicep/hub-spoke-plink/modules
+      - bicep/hub-spoke-plink/README.md
 variables:
   serviceCxn: 'azure-internal-subscription'
   hubResourceGroupName: 'test-hub-rg'
