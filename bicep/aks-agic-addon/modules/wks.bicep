@@ -1,12 +1,10 @@
 param name string
 param location string
-param suffix string
+param prefix string
 param tags object
-param retentionInDays int {
-  default: 30
-}
+param retentionInDays int = 30
 
-var workspaceName = '${name}-${uniqueString(resourceGroup().id)}'
+var workspaceName = '${prefix}-${uniqueString(resourceGroup().id)}-wks'
 
 resource azureMonitorWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   location: location

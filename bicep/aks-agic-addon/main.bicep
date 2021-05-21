@@ -1,32 +1,21 @@
-param location string {
-  allowed: [
-    'australiaeast'
-    'australiasoutheast'
-  ]
-}
-
+@ allowed([
+'australiaeast'
+'australiasoutheast'
+])
+param location string
 param adminGroupObjectID string
-
 param tags object
-
 param prefix string
-
-param suffix string
-
-param aksVersion string {
-  default: '1.19.6'
-}
-
-param vmSKU string
-
+param aksVersion string = '1.19.9'
+param vmSku string = 'Standard_F8s_v2'
 param addressPrefix string
-
 param subnets array
+param sshPublicKey string
 
-module wks 'wks.bicep' = {
+module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
   params: {
-    suffix: suffix
+    prefix: prefix
     tags: tags
     location: location
     name: 'wks'
@@ -34,10 +23,10 @@ module wks 'wks.bicep' = {
   }
 }
 
-module vnet 'vnet.bicep' = {
+module vnet './modules/vnet.bicep' = {
   name: 'vnetDeploy'
   params: {
-    suffix: suffix
+    prefix: prefix
     tags: tags
     addressPrefix: addressPrefix
     location: location
@@ -45,15 +34,15 @@ module vnet 'vnet.bicep' = {
   }
 }
 
-module acr 'acr.bicep' = {
+module acr './modules/acr.bicep' = {
   name: 'acrDeploy'
   params: {
-    suffix: suffix
+    prefix: prefix
     tags: tags
   }
 }
 
-module applicationGateway 'appGwy.bicep' = {
+module applicationGateway './modules/appGwy.bicep' = {
   name: 'applicationGatewayDeploy'
   dependsOn: [
     vnet
@@ -61,13 +50,13 @@ module applicationGateway 'appGwy.bicep' = {
   ]
   params: {
     applicationGatewaySKU: 'WAF_v2'
-    applicationGatewaySubnetId: vnet.outputs.subnets[0].id
-    suffix: suffix
+    applicationGatewaySubnetId: vnet.outputs.subnets[2].id
+    prefix: prefix
     tags: tags
   }
 }
 
-module aks 'aks.bicep' = {
+module aks './modules/aks.bicep' = {
   name: 'aksDeploy'
   dependsOn: [
     vnet
@@ -75,7 +64,7 @@ module aks 'aks.bicep' = {
     applicationGateway
   ]
   params: {
-    suffix: suffix
+    prefix: prefix
     aksDnsPrefix: prefix
     aksAgentOsDiskSizeGB: 60
     aksDnsServiceIP: '10.100.0.10'
@@ -83,19 +72,23 @@ module aks 'aks.bicep' = {
     aksEnableRBAC: true
     aksMaxNodeCount: 10
     aksMinNodeCount: 1
-    aksNodeCount: 3
-    aksNodeVMSize: vmSKU
+    aksNodeCount: 2
+    aksNodeVMSize: vmSku
     aksServiceCIDR: '10.100.0.0/16'
-    aksSubnetId:  vnet.outputs.subnets[1].id
+    aksSystemSubnetId: vnet.outputs.subnets[0].id
+    aksUserSubnetId: vnet.outputs.subnets[1].id
     aksVersion: aksVersion
     enableAutoScaling: true
     enableHttpApplicationRouting: false
-    maxPods: 30
+    maxPods: 110
     networkPlugin: 'azure'
     enablePodSecurityPolicy: false
     tags: tags
-    applicationGatewaySubnetAddressPrefix: vnet.outputs.subnets[0].properties.addressPrefix
-    applicationGatewaySubnetName: subnets[0].name
+    enablePrivateCluster: false
+    linuxAdminUserName: 'localadmin'
+    sshPublicKey: sshPublicKey
+    applicationGatewaySubnetAddressPrefix: vnet.outputs.subnets[2].properties.addressPrefix
+    applicationGatewaySubnetName: subnets[2].name
     applicationGatewayId: applicationGateway.outputs.applicationGatewayId
     adminGroupObjectID: adminGroupObjectID
     addOns: {
@@ -105,16 +98,17 @@ module aks 'aks.bicep' = {
           version: 'v2'
         }
       }
-      ingressAPplicationGateway: {
+      ingressApplicationGateway: {
         enabled: true
         config: {
           applicationGatewayId: applicationGateway.outputs.applicationGatewayId
+          applicationGatewayWatchNamespace: 'project1,project2,default'
         }
         identity: {
-              clientId: applicationGateway.outputs.managedIdentityClientId
-              objectId: applicationGateway.outputs.managedIdentityPrincipalId
-              resourceId: applicationGateway.outputs.managedIdentityId
-            }
+          clientId: applicationGateway.outputs.managedIdentityClientId
+          objectId: applicationGateway.outputs.managedIdentityPrincipalId
+          resourceId: applicationGateway.outputs.managedIdentityId
+        }
       }
       httpApplicationRouting: {
         enabled: false
@@ -128,3 +122,18 @@ module aks 'aks.bicep' = {
     }
   }
 }
+
+/* resource appGwContributorRoleAssignmentName 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(concat(resourceGroup().id, applicationGateway.name, applicationGateway.name))
+  properties: {
+    roleDefinitionId: contributorRoleId
+    principalId: reference(aksClusterId, '2020-12-01', 'Full').properties.addonProfiles.ingressApplicationGateway.identity.objectId
+    principalType: 'ServicePrincipal'
+    scope: resourceGroup().id
+  }
+  dependsOn: [
+    aksClusterId
+    applicationGatewayId
+  ]
+}
+ */

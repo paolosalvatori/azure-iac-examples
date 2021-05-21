@@ -1,10 +1,9 @@
-
-$rgName = 'aks-demo-rg'
+$resourceGroupName = 'aks-agic-rg'
 $location = 'australiaeast'
 
-bicep build ./main.bicep
+az bicep build --file ./main.bicep
 
-$rg = New-AzResourceGroup -Name $rgName -Location $location -Force
+$rg = New-AzResourceGroup -Name $resourceGroupName -Location $location -Force
 
 $deployment = New-AzResourceGroupDeployment `
 	-ResourceGroupName $rg.ResourceGroupName `

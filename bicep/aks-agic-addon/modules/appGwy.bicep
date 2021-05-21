@@ -1,18 +1,21 @@
-param applicationGatewaySKU string {
-  allowed: [
-    'Standard_v2'
-    'WAF_v2'
-  ]
-  default: 'WAF_v2'
-}
+@allowed([
+  'Standard_v2'
+  'WAF_v2'
+])
+param applicationGatewaySKU string = 'WAF_v2'
 param applicationGatewaySubnetId string
 param tags object
-param suffix string
+param prefix string
 
-var publicIpName = 'applicationGateway-vip-${suffix}'
-var applicationGatewayName = 'applicationGateway-${suffix}'
-var uamIdName = 'applicationGatewayUmId'
+var publicIpName = '${prefix}-appgwy-vip'
+var applicationGatewayName = '${prefix}-appgwy'
+var readerRoleDefinitionName = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+var contributorRoleDefinitionName = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var uamIdName = '${prefix}-appgwy-mid'
 var uamId = resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', uamIdName)
+var contributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionName)
+var readerRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', readerRoleDefinitionName)
 var webApplicationFirewallConfiguration = {
   enabled: 'true'
   firewallMode: 'Detection'

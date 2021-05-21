@@ -1,10 +1,10 @@
 param location string
-param suffix string
+param prefix string
 param addressPrefix string
 param subnets array
 param tags object
 
-var vnetName = '${suffix}-vnet'
+var vnetName = '${prefix}-vnet'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   location: location
