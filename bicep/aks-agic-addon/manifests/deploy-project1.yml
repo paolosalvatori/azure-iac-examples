@@ -228,6 +228,6 @@ spec:
         pathType: "Prefix"
         backend:
           service:
-            name: project1-app2-blue-service
+            name: project1-app2-green-service
             port:
               number: 80
