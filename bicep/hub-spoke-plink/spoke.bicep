@@ -252,7 +252,7 @@ resource virtualNetworkAppSvcDnsZoneLink 'Microsoft.Network/privateDnsZones/virt
 }
 
 resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
-  name: '${appSvcPrivateEndpointDnsZone}/dnsGroup1'
+  name: '${appSvcPrivateEndpointDnsZone.name}/dnsGroup1'
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -266,7 +266,7 @@ resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDn
 }
 
 resource blobStoragePrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
-  name: '${blobPrivateEndpointDnsZone}/dnsGroup2'
+  name: '${blobPrivateEndpointDnsZone.name}/dnsGroup2'
   properties: {
     privateDnsZoneConfigs: [
       {
