@@ -17,9 +17,9 @@ variables:
   location: 'australiaeast'
   mySqlAdminUserName: 'dbadmin'
   mySqlAdminPassword: 'M1cr0soft1234567890'
-  #hubResourceGroupName: 'test-hub-rg'
-  #hubVnetName: 'hub-vnet'
+  hubResourceGroupName: 'test-hub-rg'
   hubDeploymentName: 'hubDeployment'
+  #hubVnetName: 'hub-vnet'
   #hubVnetId: '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet'
   targets: >
     {
