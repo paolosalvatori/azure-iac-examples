@@ -17,8 +17,9 @@ variables:
   location: 'australiaeast'
   mySqlAdminUserName: 'dbadmin'
   mySqlAdminPassword: 'M1cr0soft1234567890'
-  hubResourceGroup: 'test-hub-rg'
+  hubResourceGroupName: 'test-hub-rg'
   hubVnetName: 'hub-vnet'
+  hubDeploymentName: 'hubDeployment'
   hubVnetId: '/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/test-hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet'
   targets: >
     {
@@ -75,12 +76,13 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 az bicep build --file ./bicep/hub-spoke-plink/spoke.bicep
+                az bicep build --file ./bicep/hub-spoke-plink/frontDoor.bicep
 
           - task: CopyFiles@2
             displayName: 'copy ARM template file to staging directory'
             inputs:
               SourceFolder: $(Build.SourcesDirectory)/bicep/hub-spoke-plink
-              Contents: 'spoke.json'
+              Contents: '*.json'
               TargetFolder: $(Build.ArtifactStagingDirectory)/templates
 
           - task: PublishBuildArtifacts@1
@@ -115,6 +117,8 @@ stages:
               inlineScript: |
                 az group create --name $(resourceGroupName) --location $(location)
 
+                $hubDeployment = az group deployment show --name $(hubDeploymentName) | ConvertFrom-Json
+
                 az deployment group create `
                   --name $(deployment) `
                   --template-file $(Pipeline.Workspace)/templates/spoke.json `
@@ -122,11 +126,43 @@ stages:
                   --parameters spokeVnetName=$(spokeVnetName) `
                   --parameters mySqlAdminUserName=$(mySqlAdminUserName) `
                   --parameters mySqlAdminPassword=$(mySqlAdminPassword) `
-                  --parameters hubVnetId=$(hubVnetId) `
-                  --parameters hubVnetName=$(hubVnetName) `
-                  --parameters hubVnetResourceGroup=$(hubResourceGroup) `
+                  --parameters hubVnetId=$hubDeployment.Outputs.vnetId `
+                  --parameters hubVnetName=$hubDeployment.Outputs.vnetName `
+                  --parameters hubVnetResourceGroup=$hubDeployment.ResourceGroupName `
                   --parameters containerName=$(containerName) `
                   --parameters spokeVnetAddressPrefix=$(spokeVnetAddressPrefix) `
                   --parameter appSvcSubnetCIDR=$(appSvcSubnetCIDR) `
                   --parameter dbSubnetCIDR=$(dbSubnetCIDR) `
                   --parameter plinkSubnetCIDR=$(plinkSubnetCIDR)
+
+          - task: AzureCLI@2
+            displayName: 'add web app to Front door configuration'
+            inputs:
+              azureSubscription: $(serviceCxn)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $hubDeployment = az group deployment show --name $(hubDeploymentName) | ConvertFrom-Json
+                $spokeDeployment = az group deployment show --name $(deployment) | ConvertFrom-Json
+
+                az deployment group create `
+                --name $(deployment)-frontdoor `
+                --template-file ./frontDoor.json `
+                --resource-group $hubDeployment.ResourceGroupName `
+                --parameters backendAddress=$spokeDeployment.Outputs.webAppHostName
+
+          - task: AzureCLI@2
+            displayName: 'add frontDoor ID to web app access restriction'
+            inputs:
+              azureSubscription: $(serviceCxn)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $frontDoorDeployment = az group deployment show --name $(deployment)-frontdoor | ConvertFrom-Json
+                
+                az webapp config access-restriction add `
+                  --resource-group $spokeDeployment.ResourceGroupName `
+                  --name $spokeDeployment.webAppName `
+                  --priority 400 `
+                  --service-tag AzureFrontDoor.Backend `
+                  --http-header x-azure-fdid=$frontDoorDeployment.Outputs.FrontDoorId
