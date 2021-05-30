@@ -117,7 +117,7 @@ stages:
               inlineScript: |
                 az group create --name $(resourceGroupName) --location $(location)
 
-                $hubDeployment = az group deployment show --name $(hubDeploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
+                $hubDeployment = az deployment group show --name $(hubDeploymentName) --resource-group $(hubResourceGroupName) | ConvertFrom-Json
 
                 az deployment group create `
                   --name $(deploymentName) `
@@ -142,8 +142,8 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $hubDeployment = az group deployment show --name $(hubDeploymentName) --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
-                $spokeDeployment = az group deployment show --name $(deploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
+                $hubDeployment = az deployment group show --name $(hubDeploymentName) --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
+                $spokeDeployment = az deployment group show --name $(deploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
 
                 az deployment group create `
                 --name $(deploymentName)-frontdoor `
@@ -158,7 +158,7 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $frontDoorDeployment = az group deployment show --name $(deploymentName)-frontdoor --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
+                $frontDoorDeployment = az deployment group show --name $(deploymentName)-frontdoor --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
                 
                 az webapp config access-restriction add `
                   --resource-group $spokeDeployment.ResourceGroupName `
