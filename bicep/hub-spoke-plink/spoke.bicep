@@ -140,7 +140,7 @@ resource serverFarm 'Microsoft.Web/serverfarms@2020-12-01' = {
   }
 }
 
-resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp 'Microsoft.Web/sites@2020-06-01' = {
   name: siteName
   location: resourceGroup().location
   kind: 'app,linux,container'
@@ -152,8 +152,8 @@ resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource webApp1AppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${webApp1.name}/appsettings'
+resource webAppAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+  name: '${webApp.name}/appsettings'
   properties: {
     'WEBSITE_DNS_SERVER': '168.63.129.16'
     'WEBSITE_VNET_ROUTE_ALL': '1'
@@ -162,8 +162,8 @@ resource webApp1AppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-resource webApp1NetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
-  name: '${webApp1.name}/VirtualNetwork'
+resource webAppNetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
+  name: '${webApp.name}/VirtualNetwork'
   properties: {
     subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', spokeVnetModule.outputs.vnetName, spokeVnetModule.outputs.subnetArray[2].name)
   }
@@ -203,7 +203,7 @@ resource appSvcPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' =
       {
         name: 'appSvcConnection'
         properties: {
-          privateLinkServiceId: webApp1.name
+          privateLinkServiceId: webApp.id
           groupIds: [
             'sites'
           ]
@@ -325,6 +325,6 @@ resource virtualNetworkMySqlDnsZoneLink 'Microsoft.Network/privateDnsZones/virtu
 output vnetName string = spokeVnetModule.outputs.vnetName
 output vnetId string = spokeVnetModule.outputs.id
 output storageDnsZoneId string = blobPrivateEndpointDnsZone.id
-output webAppName string = webApp1.name
-output webAppHostName string = webApp1.properties.defaultHostName
+output webAppName string = webApp.name
+output webAppHostName string = webApp.properties.defaultHostName
 output webAppPrivateEndpointIpAddress string = appSvcPrivateEndpoint.properties.networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress

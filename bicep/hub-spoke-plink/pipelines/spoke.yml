@@ -126,9 +126,9 @@ stages:
                   --parameters spokeVnetName=$(spokeVnetName) `
                   --parameters mySqlAdminUserName=$(mySqlAdminUserName) `
                   --parameters mySqlAdminPassword=$(mySqlAdminPassword) `
-                  --parameters hubVnetId=$($hubDeployment.properties.outputs.vnetId) `
-                  --parameters hubVnetName=$($hubDeployment.properties.outputs.vnetName) `
-                  --parameters hubVnetResourceGroup=$hubDeployment.resourceGroup `
+                  --parameters hubVnetId=$($hubDeployment.properties.outputs.vnetId.value) `
+                  --parameters hubVnetName=$($hubDeployment.properties.outputs.vnetName.value) `
+                  --parameters hubVnetResourceGroup=$($hubDeployment.resourceGroup) `
                   --parameters containerName=$(containerName) `
                   --parameters spokeVnetAddressPrefix=$(spokeVnetAddressPrefix) `
                   --parameter appSvcSubnetCIDR=$(appSvcSubnetCIDR) `
