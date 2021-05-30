@@ -12,7 +12,7 @@ bicep build ./frontDoor.bicep
 az group create --name $HUB_RG_NAME --location $LOCATION
 
 az deployment group create \
-    --name HubDeployment \
+  --name HubDeployment \
 	--template-file ./hub.json \
 	--resource-group $HUB_RG_NAME
 

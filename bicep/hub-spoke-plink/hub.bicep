@@ -76,7 +76,7 @@ resource acrPrivateEndpointDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01
   properties: {}
 }
 
-resource virtualNetworkKVDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+resource acrPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${acrPrivateEndpointDnsZone.name}/${acrPrivateEndpointDnsZone.name}-link'
   location: 'global'
   properties: {
