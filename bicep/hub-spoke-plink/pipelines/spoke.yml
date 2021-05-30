@@ -110,6 +110,7 @@ stages:
               artifactName: 'templates'
 
           - task: AzureCLI@2
+            displayName: 'deploy spoke infrastructure'
             inputs:
               azureSubscription: $(serviceCxn)
               scriptType: pscore
