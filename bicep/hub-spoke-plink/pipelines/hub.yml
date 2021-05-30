@@ -56,7 +56,7 @@ stages:
     jobs:
 
       - job: deployHubInfra
-        displayName: 'deploy spoke'
+        displayName: 'deploy hub'
         steps:
 
           - task: DownloadBuildArtifacts@0

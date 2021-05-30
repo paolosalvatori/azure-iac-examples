@@ -25,7 +25,7 @@ variables:
     {
       'internal-spoke':
       {
-        'deployment': 'internal-spoke',
+        'deploymentName': 'internal-spoke',
         'resourceGroupName': 'int-spoke-rg',
         'spokeVnetName': 'int-spoke-vnet',
         'spokeVnetAddressPrefix': '10.1.0.0/16',
@@ -36,7 +36,7 @@ variables:
       },
       'customer-1-spoke':
       {
-        'deployment': 'customer-1-spoke',
+        'deploymentName': 'customer-1-spoke',
         'resourceGroupName': 'customer-1-spoke-rg',
         'spokeVnetName': 'customer-1-spoke-vnet',
         'spokeVnetAddressPrefix': '10.2.0.0/16',
@@ -47,7 +47,7 @@ variables:
       },
       'customer-2-spoke':
       {
-        'deployment': 'customer-2-spoke',
+        'deploymentName': 'customer-2-spoke',
         'resourceGroupName': 'customer-2-spoke-rg',
         'spokeVnetName': 'customer-2-spoke-vnet',
         'spokeVnetAddressPrefix': '10.3.0.0/16',
@@ -117,10 +117,10 @@ stages:
               inlineScript: |
                 az group create --name $(resourceGroupName) --location $(location)
 
-                $hubDeployment = az group deployment show --name $(hubDeploymentName) | ConvertFrom-Json
+                $hubDeployment = az group deployment show --name $(hubDeploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
 
                 az deployment group create `
-                  --name $(deployment) `
+                  --name $(deploymentName) `
                   --template-file $(Pipeline.Workspace)/templates/spoke.json `
                   --resource-group $(resourceGroupName) `
                   --parameters spokeVnetName=$(spokeVnetName) `
@@ -142,11 +142,11 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $hubDeployment = az group deployment show --name $(hubDeploymentName) | ConvertFrom-Json
-                $spokeDeployment = az group deployment show --name $(deployment) | ConvertFrom-Json
+                $hubDeployment = az group deployment show --name $(hubDeploymentName) --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
+                $spokeDeployment = az group deployment show --name $(deploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
 
                 az deployment group create `
-                --name $(deployment)-frontdoor `
+                --name $(deploymentName)-frontdoor `
                 --template-file ./frontDoor.json `
                 --resource-group $hubDeployment.ResourceGroupName `
                 --parameters backendAddress=$spokeDeployment.Outputs.webAppHostName
@@ -158,7 +158,7 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $frontDoorDeployment = az group deployment show --name $(deployment)-frontdoor | ConvertFrom-Json
+                $frontDoorDeployment = az group deployment show --name $(deploymentName)-frontdoor --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
                 
                 az webapp config access-restriction add `
                   --resource-group $spokeDeployment.ResourceGroupName `
@@ -166,3 +166,5 @@ stages:
                   --priority 400 `
                   --service-tag AzureFrontDoor.Backend `
                   --http-header x-azure-fdid=$frontDoorDeployment.Outputs.FrontDoorId
+
+# TODO: link ACR private DNS zone with new spoke vnet
