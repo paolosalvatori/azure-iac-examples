@@ -128,7 +128,7 @@ stages:
                   --parameters mySqlAdminPassword=$(mySqlAdminPassword) `
                   --parameters hubVnetId=$hubDeployment.Outputs.vnetId `
                   --parameters hubVnetName=$hubDeployment.Outputs.vnetName `
-                  --parameters hubVnetResourceGroup=$hubDeployment.ResourceGroupName `
+                  --parameters hubVnetResourceGroup=$hubDeployment.ResourceGroup `
                   --parameters containerName=$(containerName) `
                   --parameters spokeVnetAddressPrefix=$(spokeVnetAddressPrefix) `
                   --parameter appSvcSubnetCIDR=$(appSvcSubnetCIDR) `
@@ -142,13 +142,13 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $hubDeployment = az deployment group show --name $(hubDeploymentName) --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
+                $hubDeployment = az deployment group show --name $(hubDeploymentName) --resource-group $hubDeployment.ResourceGroup | ConvertFrom-Json
                 $spokeDeployment = az deployment group show --name $(deploymentName) --resource-group $(resourceGroupName) | ConvertFrom-Json
 
                 az deployment group create `
                 --name $(deploymentName)-frontdoor `
                 --template-file ./frontDoor.json `
-                --resource-group $hubDeployment.ResourceGroupName `
+                --resource-group $hubDeployment.ResourceGroup `
                 --parameters backendAddress=$spokeDeployment.Outputs.webAppHostName
 
           - task: AzureCLI@2
@@ -158,10 +158,10 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $frontDoorDeployment = az deployment group show --name $(deploymentName)-frontdoor --resource-group $hubDeployment.ResourceGroupName | ConvertFrom-Json
+                $frontDoorDeployment = az deployment group show --name $(deploymentName)-frontdoor --resource-group $hubDeployment.ResourceGroup | ConvertFrom-Json
                 
                 az webapp config access-restriction add `
-                  --resource-group $spokeDeployment.ResourceGroupName `
+                  --resource-group $spokeDeployment.ResourceGroup `
                   --name $spokeDeployment.webAppName `
                   --priority 400 `
                   --service-tag AzureFrontDoor.Backend `
