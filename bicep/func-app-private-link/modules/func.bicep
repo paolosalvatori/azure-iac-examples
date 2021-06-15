@@ -66,10 +66,6 @@ resource funcApp 'Microsoft.Web/sites@2021-01-01' = {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
           value: reference('microsoft.insights/components/${appInsightsName}', '2015-05-01').InstrumentationKey
         }
-        /*         {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: reference('microsoft.insights/components/${appInsightsName}', '2015-05-01').ConnectionString
-        } */
         {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${funcStorageAccount.name};AccountKey=${listKeys(funcStorageAccount.id, '2019-06-01').keys[0].value};'
