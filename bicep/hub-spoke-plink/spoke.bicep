@@ -301,21 +301,22 @@ resource mySqlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
   tags: tags
   name: mySqlPrivateDNSZoneName
-  properties: {}
+  properties: {
+  }
 }
 
-/* resource mySqlPrivateDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+resource mySqlPrivateDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: mySqlServerName
   parent: mySqlPrivateDnsZone
   properties: {
     aRecords: [
       {
-        ipv4Address: mySqlFlexServerModule.outputs.mySqlServerIpAddress
+        ipv4Address: mySqlFlexServerModule.outputs.
       }
     ]
   }
 }
- */
+
 resource virtualNetworkMySqlDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${mySqlPrivateDnsZone.name}/${mySqlPrivateDnsZone.name}-link'
   tags: tags
@@ -333,4 +334,4 @@ output vnetId string = spokeVnetModule.outputs.id
 output storageDnsZoneId string = blobPrivateEndpointDnsZone.id
 output webAppName string = webApp.name
 output webAppHostName string = webApp.properties.defaultHostName
-output webAppPrivateEndpointIpAddress string = appSvcPrivateEndpoint.properties.networkInterfaces[0].properties.ipConfigurations[0].properties.privateIPAddress
+output webAppPrivateEndpointIpAddress string = appSvcPrivateEndpoint.properties.customDnsConfigs[0].ipAddresses[0]
