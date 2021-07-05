@@ -1,8 +1,7 @@
-param administratorLogin string = 'dbadmin'
+param mySqlAdminUserName string = 'dbadmin'
 
 @secure()
-param administratorLoginPassword string
-param serverName string
+param mySqlAdminPassword string
 param location string
 param suffix string
 param serverEdition string = 'GeneralPurpose'
@@ -24,6 +23,7 @@ param vmName string = 'Standard_D2ds_v4'
 param publicNetworkAccess string = 'Disabled'
 param storageIops int = 100
 
+var serverName = 'mysqlflex${suffix}'
 var firewallRuleName = '${serverName}-fw-rules'
 
 resource mySqlFlexServer 'Microsoft.DBforMySQL/flexibleServers@2020-07-01-privatepreview' = {
@@ -31,8 +31,8 @@ resource mySqlFlexServer 'Microsoft.DBforMySQL/flexibleServers@2020-07-01-privat
   name: serverName
   properties: {
     version: version
-    administratorLogin: administratorLogin
-    administratorLoginPassword: administratorLoginPassword
+    mySqlAdminUserName: mySqlAdminUserName
+    mySqlAdminPassword: mySqlAdminPassword
     publicNetworkAccess: publicNetworkAccess
     DelegatedSubnetArguments: {
       subnetArmResourceId: subnetArmResourceId

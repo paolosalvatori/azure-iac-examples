@@ -31,7 +31,7 @@ param aksMinNodeCount int = 1
 @description('The minimum number of agent nodes for the cluster.')
 param aksMaxNodeCount int = 10
 
-@description( 'The size of the Virtual Machine.')
+@description('The size of the Virtual Machine.')
 param aksNodeVMSize string = 'Standard_D4s_v3'
 
 @description('The version of Kubernetes.')
@@ -43,33 +43,29 @@ param aksServiceCIDR string = '10.100.0.0/16'
 @description('Containers DNS server IP address.')
 param aksDnsServiceIP string = '10.100.0.10'
 
-@description( 'A CIDR notation IP for Docker bridge.')
+@description('A CIDR notation IP for Docker bridge.')
 param aksDockerBridgeCIDR string = '172.17.0.1/16'
 
 @description('Enable RBAC on the AKS cluster.')
 param aksEnableRBAC bool = true
 
+param logAnalyticsWorkspaceId string
 param enableAutoScaling bool = true
 param aksSystemSubnetId string
 param aksUserSubnetId string
 param prefix string
 param adminGroupObjectID string
 param addOns object
-param applicationGatewayId string
-param applicationGatewaySubnetName string
-param applicationGatewaySubnetAddressPrefix string
 param tags object
 param enablePodSecurityPolicy bool = false
-param enableHttpApplicationRouting bool = false
 param enablePrivateCluster bool = false
 param linuxAdminUserName string = 'localadmin'
 param sshPublicKey string
 
-var storageAccountName = 'stor${substring(uniqueString(resourceGroup().id), 0, 10)}'
 var aksClusterName = '${prefix}-aks'
-var aksClusterId = aksClusterName_resource.id
+var aksClusterId = aksCluster.id
 
-resource aksClusterName_resource 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
   name: aksClusterName
   location: resourceGroup().location
   identity: {
@@ -156,7 +152,84 @@ resource aksClusterName_resource 'Microsoft.ContainerService/managedClusters@202
   }
 }
 
+resource aksDiagnostics 'Microsoft.Insights/diagnosticSettings@2017-05-01-preview' = {
+  scope: aksCluster
+  name: 'aksDiagnosticSettings'
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'kube-apiserver'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'kube-audit'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'kube-audit-admin'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'kube-controller-manager'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'kube-scheduler'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'cluster-autoscaler'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+      {
+        category: 'guard'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          days: 7
+          enabled: true
+        }
+      }
+    ]
+  }
+}
+
 output aksName string = aksClusterName
 output aksControlPlaneFQDN string = reference('Microsoft.ContainerService/managedClusters/${aksClusterName}').fqdn
 output aksApiServerUri string = '${reference(aksClusterId, '2018-03-31').fqdn}:443'
 output aksClusterName string = aksClusterName
+output ingressApplicationGatewayObjectId string = aksCluster.properties.addonProfiles.ingressApplicationGateway.identity.objectId

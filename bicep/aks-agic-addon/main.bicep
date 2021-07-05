@@ -1,6 +1,6 @@
-@ allowed([
-'australiaeast'
-'australiasoutheast'
+@allowed([
+  'australiaeast'
+  'australiasoutheast'
 ])
 param location string
 param adminGroupObjectID string
@@ -12,13 +12,15 @@ param addressPrefix string
 param subnets array
 param sshPublicKey string
 
+var readerRoleId = resourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
+var contributorRoleId = resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+
 module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
   params: {
     prefix: prefix
     tags: tags
     location: location
-    name: 'wks'
     retentionInDays: 30
   }
 }
@@ -51,6 +53,7 @@ module applicationGateway './modules/appGwy.bicep' = {
   params: {
     applicationGatewaySKU: 'WAF_v2'
     applicationGatewaySubnetId: vnet.outputs.subnets[2].id
+    logAnalyticsWorkspaceId: wks.outputs.workspaceId
     prefix: prefix
     tags: tags
   }
@@ -65,6 +68,7 @@ module aks './modules/aks.bicep' = {
   ]
   params: {
     prefix: prefix
+    logAnalyticsWorkspaceId: wks.outputs.workspaceId
     aksDnsPrefix: prefix
     aksAgentOsDiskSizeGB: 60
     aksDnsServiceIP: '10.100.0.10'
@@ -79,7 +83,6 @@ module aks './modules/aks.bicep' = {
     aksUserSubnetId: vnet.outputs.subnets[1].id
     aksVersion: aksVersion
     enableAutoScaling: true
-    enableHttpApplicationRouting: false
     maxPods: 110
     networkPlugin: 'azure'
     enablePodSecurityPolicy: false
@@ -87,9 +90,6 @@ module aks './modules/aks.bicep' = {
     enablePrivateCluster: false
     linuxAdminUserName: 'localadmin'
     sshPublicKey: sshPublicKey
-    applicationGatewaySubnetAddressPrefix: vnet.outputs.subnets[2].properties.addressPrefix
-    applicationGatewaySubnetName: subnets[2].name
-    applicationGatewayId: applicationGateway.outputs.applicationGatewayId
     adminGroupObjectID: adminGroupObjectID
     addOns: {
       azurepolicy: {
@@ -104,14 +104,6 @@ module aks './modules/aks.bicep' = {
           applicationGatewayId: applicationGateway.outputs.applicationGatewayId
           applicationGatewayWatchNamespace: 'project1,project2,default'
         }
-        identity: {
-          clientId: applicationGateway.outputs.managedIdentityClientId
-          objectId: applicationGateway.outputs.managedIdentityPrincipalId
-          resourceId: applicationGateway.outputs.managedIdentityId
-        }
-      }
-      httpApplicationRouting: {
-        enabled: false
       }
       omsagent: {
         enabled: true
@@ -123,17 +115,26 @@ module aks './modules/aks.bicep' = {
   }
 }
 
-/* resource appGwContributorRoleAssignmentName 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(concat(resourceGroup().id, applicationGateway.name, applicationGateway.name))
+resource appGwy 'Microsoft.Network/applicationGateways@2020-06-01' existing = {
+  name: '${prefix}-appgwy'
+}
+
+resource applicationGatewayIngressReaderRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(resourceGroup().id, applicationGateway.name, applicationGateway.name, readerRoleId)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: readerRoleId
+    principalId: aks.outputs.ingressApplicationGatewayObjectId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource applicationGatewayIngressContributorRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(resourceGroup().id, applicationGateway.name, applicationGateway.name, contributorRoleId)
+  scope: appGwy
   properties: {
     roleDefinitionId: contributorRoleId
-    principalId: reference(aksClusterId, '2020-12-01', 'Full').properties.addonProfiles.ingressApplicationGateway.identity.objectId
+    principalId: aks.outputs.ingressApplicationGatewayObjectId
     principalType: 'ServicePrincipal'
-    scope: resourceGroup().id
   }
-  dependsOn: [
-    aksClusterId
-    applicationGatewayId
-  ]
 }
- */

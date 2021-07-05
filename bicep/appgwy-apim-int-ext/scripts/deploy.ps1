@@ -1,7 +1,8 @@
 $password = ""
-$location = 'australiaeast'
+$location = 'westus2'
 $rgName = "apim-app-gwy-$location-rg"
 $certArr = @()
+$cloudInitData = $(Get-Content ./cloud-init.txt -Raw)
 
 foreach ($pfxCert in $(Get-ChildItem -Path ../certs -Filter *.pfx)) {
     $flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
@@ -24,7 +25,8 @@ New-AzResourceGroupDeployment `
     -TemplateFile ../main.json `
     -TemplateParameterFile ../main.parameters.json `
     -Location $location `
-    -Secrets $certArr
+    -Secrets $certArr `
+    -CustomData $cloudInitData
 
 <# $deployment = Get-AzResourceGroupDeployment -ResourceGroupName $rg.ResourceGroupName -Name 'apim-app-gwy-test-deploy'
 $appGwyId = $deployment.Outputs.appGwyId.value

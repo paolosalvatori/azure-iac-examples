@@ -7,9 +7,10 @@ param userObjectId string
 param location string
 param secrets array
 param externalDnsResourceGroupName string = 'external-dns-zones-rg'
+param customData string
 
 var suffix = uniqueString(resourceGroup().id)
-var keyVaultName = 'kv-${suffix}'
+var keyVaultName = 'kvlt-${suffix}'
 var separatedAddressprefix = split(virtualNetworks[0].subnets[3].addressPrefix, '.')
 var azFirewallPrivateIpAddress = '${separatedAddressprefix[0]}.${separatedAddressprefix[1]}.${separatedAddressprefix[2]}.4'
 
@@ -111,19 +112,19 @@ module bastionModule './modules/bastion.bicep' = {
   }
 }
 
-module vmModule './modules/winvm.bicep' = {
+module vmModule './modules/linuxvm.bicep' = {
   dependsOn: [
     bastionModule
   ]
   name: 'vmDeployment'
   params: {
+    customData: customData
     adminPassword: 'M1cr0soft1234567890'
     adminUserName: 'localadmin'
     location: location
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[2].id
     suffix: suffix
     vmSize: 'Standard_D2_v3'
-    windowsOSVersion: '2019-Datacenter'
   }
 }
 
@@ -140,19 +141,20 @@ module vmModule './modules/winvm.bicep' = {
   }
 } */
 
-module funcAppModule './modules/func.bicep' = {
+module funcAppModule './modules/funcapp.bicep' = {
   name: 'funcAppModule'
   params: {
+    location: location
     appSvcPrivateDNSZoneName: 'azurewebsites.net'
     hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
-    location: location
-    privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
     spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
-    sku: 'ElasticPremium'
-    skuCode: 'EP1'
+    vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[4].id
+    privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
+    planSku: 'ElasticPremium'
+    planSkuCode: 'EP1'
+    planKind: 'elastic'
     suffix: suffix
     tags: tags
-    vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[4].id
   }
 }
 

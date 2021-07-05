@@ -1,11 +1,11 @@
 // App Service (containers) + Regional Vnet Integration + limit access by X-AZFD-ID header
 
+param mySqlAdminUserName string = 'dbadmin'
+param mySqlAdminPassword string
 param hubVnetPeeringDeploymentName string = 'hubVnetPeeringDeployment-${utcNow()}'
-param spokeVnetName string
-param plinkSubnetCIDR string
-param dbSubnetCIDR string
-param appSvcSubnetCIDR string
-param spokeVnetAddressPrefix string
+param spokeVnetName string = 'spoke-vnet'
+param spokeVnetAddressPrefix string = '10.1.0.0/16'
+
 param tags object = {
   costcenter: '1234567890'
   environment: 'dev'
@@ -13,12 +13,12 @@ param tags object = {
 param spokeSubnets array = [
   {
     name: 'PrivateLink-Subnet'
-    addressPrefix: plinkSubnetCIDR
+    addressPrefix: '10.1.0.0/24'
     delegations: []
   }
   {
     name: 'Database-Subnet'
-    addressPrefix: dbSubnetCIDR
+    addressPrefix: '10.1.1.0/24'
     delegations: [
       {
         name: 'delegation'
@@ -30,7 +30,7 @@ param spokeSubnets array = [
   }
   {
     name: 'AppService-Subnet'
-    addressPrefix: appSvcSubnetCIDR
+    addressPrefix: '10.1.2.0/24'
     delegations: [
       {
         name: 'delegation'
@@ -47,8 +47,6 @@ param spokeSubnets array = [
   'P3v2'
 ])
 param skuName string = 'P1v2'
-param mySqlAdminUserName string
-param mySqlAdminPassword string
 param containerName string
 param hubVnetId string
 param hubVnetName string
@@ -57,10 +55,8 @@ param hubVnetResourceGroup string
 var suffix = uniqueString(resourceGroup().id)
 var siteName = 'my-app-${suffix}'
 var storageName = 'stor${suffix}'
-var mySqlServerName = 'mysql-flexserver-${suffix}'
 var storagePrivateDNSZoneName = 'privatelink.blob.core.windows.net'
 var appSvcPrivateDNSZoneName = 'azurewebsites.windows.net'
-var mySQLFlexServerName = 'mysqlflex${suffix}'
 var mySqlPrivateDNSZoneName = 'mysql.database.azure.com'
 var serverFarmName = 'app-svc-${suffix}'
 
@@ -288,10 +284,9 @@ resource blobStoragePrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/priv
 module mySqlFlexServerModule 'modules/mysql-flex-server.bicep' = {
   name: 'mySqlFlexServerDeployment'
   params: {
-    serverName: mySqlServerName
     location: resourceGroup().location
-    administratorLogin: 'dbadmin'
-    administratorLoginPassword: 'M1cr0soft1234567890'
+    mySqlAdminUserName: mySqlAdminUserName
+    mySqlAdminPassword: mySqlAdminPassword
     subnetArmResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', spokeVnetModule.outputs.vnetName, spokeVnetModule.outputs.subnetArray[1].name)
     suffix: suffix
   }
@@ -305,7 +300,7 @@ resource mySqlPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   }
 }
 
-resource mySqlPrivateDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+/* resource mySqlPrivateDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: mySqlServerName
   parent: mySqlPrivateDnsZone
   properties: {
@@ -315,7 +310,7 @@ resource mySqlPrivateDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' 
       }
     ]
   }
-}
+} */
 
 resource virtualNetworkMySqlDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${mySqlPrivateDnsZone.name}/${mySqlPrivateDnsZone.name}-link'
