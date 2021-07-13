@@ -4,6 +4,8 @@ $rgName = "apim-appgwy-func-$location-rg"
 $certArr = @()
 $cloudInitData = $(Get-Content ./cloud-init.txt -Raw)
 
+# https://github.com/MicrosoftDocs/azure-docs/issues/61561
+
 foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
     $pfx = Get-PfxData -FilePath $pfxCert.Fullname -Password $password
     Export-PfxCertificate -CryptoAlgorithmOption TripleDES_SHA1 -Password $password -PfxData $pfx
