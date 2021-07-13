@@ -2,8 +2,10 @@ param apimSku object = {
   name: 'Developer'
   capacity: 1
 }
-param portalHostName string = 'portal.kainiindustries.net'
+//param portalHostName string = 'portal.kainiindustries.net'
 param gatewayHostName string = 'api.kainiindustries.net'
+//param portalCertificatePassword string
+param apiCertificatePassword string
 param subnetId string
 param keyVaultUri string
 param keyVaultName string
@@ -19,23 +21,25 @@ var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
 var apimServiceIdentityResourceId = '${apim.id}/providers/Microsoft.ManagedIdentity/Identities/default'
 var hostNameConfigurations = [
-  {
+/*   {
     type: 'Portal'
-    keyVaultId: '${keyVaultUri}secrets/portal'
+    keyVaultId: '${keyVaultUri}secrets/apimportal'
     defaultSslBinding: false
     hostName: portalHostName
     negotiateClientCertificate: false
-  }
+    certificatePassword: portalCertificatePassword
+  } */
   {
     type: 'Proxy'
-    keyVaultId: '${keyVaultUri}secrets/api'
-    defaultSslBinding: false
+    keyVaultId: '${keyVaultUri}secrets/apimapi'
+    defaultSslBinding: true
     hostName: gatewayHostName
     negotiateClientCertificate: true
+    certificatePassword: apiCertificatePassword
   }
 ]
 
-resource apim 'Microsoft.ApiManagement/service@2018-06-01-preview' = {
+resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   name: apimName
   location: location
   sku: apimSku
@@ -75,6 +79,11 @@ resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-p
         permissions: {
           secrets: [
             'get'
+            'list'
+          ]
+          certificates: [
+           'get'
+           'list'  
           ]
         }
       }
@@ -241,7 +250,7 @@ resource apimGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   }
 }
 
-resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+/* resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
   name: 'portal'
   properties: {
@@ -252,7 +261,7 @@ resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = 
     ]
     ttl: 3600
   }
-}
+} */
 
 resource ApimHubVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${apimPrivateDnsZone.name}/${apimPrivateDnsZone.name}-hub-link'

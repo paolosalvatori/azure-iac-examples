@@ -1,12 +1,11 @@
 param apiHostName string
-param portalHostName string
+//param portalHostName string
 param domainName string
 param virtualNetworks array
 param tags object
 param userObjectId string
 param location string
 param secrets array
-param externalDnsResourceGroupName string = 'external-dns-zones-rg'
 param customData string
 
 var suffix = uniqueString(resourceGroup().id)
@@ -32,6 +31,55 @@ resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' 
     value: secret.CertValue
   }
 }]
+
+resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  dependsOn: keyVaultSecrets
+  location: location
+  name: 'scriptUserAssignedManagedIdentity'
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+  dependsOn: [
+    userAssignedManagedIdentity
+  ]
+  name: guid(resourceGroup().id, userAssignedManagedIdentity.name, subscription().subscriptionId)
+  scope: resourceGroup()
+  properties: {
+    principalId: userAssignedManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: 'Reader'
+  }
+}
+
+resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-preview' = {
+  dependsOn: [
+    roleAssignment
+  ]
+  name: '${keyVaultName}/add'
+  properties: {
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: userAssignedManagedIdentity.properties.principalId
+        permissions: {
+          certificates: [
+            'get'
+            'list'
+            'create'
+            'import'
+            'getissuers'
+            'listissuers'
+            'update'
+            'setissuers'
+            'restore'
+            'recover'
+            'backup'
+          ]
+        }
+      }
+    ]
+  }
+}
 
 module networkSecurityGroupModule './modules/nsg.bicep' = {
   name: 'nsgDeployment'
@@ -112,13 +160,29 @@ module bastionModule './modules/bastion.bicep' = {
   }
 }
 
-module vmModule './modules/linuxvm.bicep' = {
+module linuxVmModule './modules/linuxvm.bicep' = {
   dependsOn: [
     bastionModule
   ]
-  name: 'vmDeployment'
+  name: 'linuxVmDeployment'
   params: {
     customData: customData
+    adminPassword: 'M1cr0soft1234567890'
+    adminUserName: 'localadmin'
+    location: location
+    subnetId: hubVirtualNetworkModule.outputs.subnetRefs[2].id
+    suffix: suffix
+    vmSize: 'Standard_D2_v3'
+  }
+}
+
+module wimVmModule './modules/winvm.bicep' = {
+  dependsOn: [
+    bastionModule
+  ]
+  name: 'winVmDeployment'
+  params: {
+    windowsOSVersion: '2016-Datacenter'
     adminPassword: 'M1cr0soft1234567890'
     adminUserName: 'localadmin'
     location: location
@@ -145,7 +209,6 @@ module funcAppModule './modules/funcapp.bicep' = {
   name: 'funcAppModule'
   params: {
     location: location
-    appSvcPrivateDNSZoneName: 'azurewebsites.net'
     hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
     spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
     vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[4].id
@@ -155,6 +218,21 @@ module funcAppModule './modules/funcapp.bicep' = {
     planKind: 'elastic'
     suffix: suffix
     tags: tags
+  }
+}
+
+module keyVaultCertUploadScriptModule './modules/script.bicep' = {
+  dependsOn: [
+    keyVaultName_add
+  ]
+  name: 'keyVaultCertDeployment'
+  params: {
+    userAssignedIdentity: userAssignedManagedIdentity.id
+    certificateBase64String: secrets[0].CertValue
+    certificatePassword: secrets[0].CertPassword
+    keyVaultName: keyVaultModule.outputs.keyVaultName
+    location: location
+    certificateName: secrets[0].CertName
   }
 }
 
@@ -176,7 +254,9 @@ module apiManagementModule './modules/apim.bicep' = {
     }
     deployCertificates: false
     gatewayHostName: '${apiHostName}.${domainName}'
-    portalHostName: '${portalHostName}.${domainName}'
+    //portalHostName: '${portalHostName}.${domainName}'
+    apiCertificatePassword: secrets[0].CertPassword
+    //portalCertificatePassword: certPassword
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
     keyVaultName: keyVaultModule.outputs.keyVaultName
     keyVaultUri: keyVaultModule.outputs.keyVaultUri
@@ -201,7 +281,9 @@ module apiManagementUpdateModule './modules/apim.bicep' = {
     }
     deployCertificates: true
     gatewayHostName: '${apiHostName}.${domainName}'
-    portalHostName: '${portalHostName}.${domainName}'
+    //portalHostName: '${portalHostName}.${domainName}'
+    apiCertificatePassword: secrets[0].CertPassword
+    //portalCertificatePassword: certPassword
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
     keyVaultName: keyVaultModule.outputs.keyVaultName
     keyVaultUri: keyVaultModule.outputs.keyVaultUri
@@ -217,10 +299,12 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
   name: 'applicationGatewayDeployment'
   params: {
     suffix: suffix
+    apimGatewaySslCertPassword: secrets[0].CertPassword
+    //apimPortalSslCertPassword: certPassword
     apiHostName: '${apiHostName}.${domainName}'
-    portalHostName: '${portalHostName}.${domainName}'
-    apimGatewaySslCert: existingKeyVault.getSecret('api')
-    apimPortalSslCert: existingKeyVault.getSecret('portal')
+    //portalHostName: '${portalHostName}.${domainName}'
+    apimGatewaySslCert: existingKeyVault.getSecret('apimapi')
+    //apimPortalSslCert: existingKeyVault.getSecret('apimportal')
     frontEndPort: 443
     gatewaySku: {
       name: 'WAF_v2'
@@ -252,7 +336,7 @@ module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   }
 } */
 
-module mySqlFlexServer './modules/mysql-flex-server.bicep' = {
+/* module mySqlFlexServer './modules/mysql-flex-server.bicep' = {
   name: 'mySqlFlexServer'
   params: {
     administratorLogin: 'dbadmin'
@@ -265,6 +349,6 @@ module mySqlFlexServer './modules/mysql-flex-server.bicep' = {
     tags: tags
   }
 }
-
+ */
 output appGwyName string = applicationGatewayModule.outputs.appGwyName
 output appGwyId string = applicationGatewayModule.outputs.appGwyId

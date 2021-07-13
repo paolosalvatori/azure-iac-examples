@@ -11,9 +11,6 @@
         "apiHostName": {
             "value": "api"
         },
-        "portalHostName": {
-            "value": "portal"
-        },
         "domainName": {
             "value": "kainiindustries.net"
         },

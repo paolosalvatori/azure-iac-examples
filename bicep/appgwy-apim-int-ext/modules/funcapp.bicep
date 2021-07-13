@@ -1,7 +1,6 @@
 param location string
 param vnetIntegrationSubnetId string
 param privateEndpointSubnetId string
-param appSvcPrivateDNSZoneName string = 'azurewebsites.net'
 param hubVnetId string
 param spokeVnetId string
 param suffix string
@@ -12,6 +11,7 @@ param planSkuCode string = 'EP1'
 param planSku string = 'ElasticPremium'
 param planKind string = 'elastic'
 
+var appSvcPrivateDNSZoneName = 'azurewebsites.net'
 var hostingPlanName = 'ep-${suffix}'
 var funcAppName = 'func-app-${suffix}'
 var appInsightsName = 'app-insights-${suffix}'

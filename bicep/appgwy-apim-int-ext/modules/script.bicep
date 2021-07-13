@@ -2,8 +2,9 @@ param location string
 param timeStamp string = utcNow()
 param keyVaultName string
 param userAssignedIdentity string
-param apiCertBase64 string
-param portalCertBase64 string
+param certificateName string
+param certificateBase64String string
+param certificatePassword string
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'deploymentScriptResource'
@@ -24,17 +25,22 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: keyVaultName
       }
       {
-        name: 'apiCert'
-        secureValue: apiCertBase64
+        name: 'certificateName'
+        value: certificateName
       }
       {
-        name: 'portalCert'
-        secureValue: portalCertBase64
+        name: 'certificateBase64String'
+        secureValue: certificateBase64String
+      }
+      {
+        name: 'certificatePassword'
+        secureValue: certificatePassword
       }
     ]
     forceUpdateTag: timeStamp
     timeout: 'PT1H'
     retentionInterval: 'P1D'
-    scriptContent: '$apiSecret = ConvertTo-SecureString -String $env:apiCert -AsPlainText –Force;$portalSecret = ConvertTo-SecureString -String $env:portalCert -AsPlainText –Force;Set-AzKeyVaultSecret -VaultName $env:keyVaultName -Name "apicert" -SecretValue $apiSecret -ContentType "application/x-pkcs12";Set-AzKeyVaultSecret -VaultName $env:keyVaultName -Name "portalcert" -SecretValue $portalSecret -ContentType $secretContentType'
+    scriptContent: 'Import-AzKeyVaultCertificate -VaultName $env:keyVaultName -Name $env:certificateName -Password $env:certificatePassword -CertificateString $env:certificateBase64String'
+    //scriptContent: '$apiSecret = ConvertTo-SecureString -String $env:apiCert -AsPlainText –Force;$portalSecret = ConvertTo-SecureString -String $env:portalCert -AsPlainText –Force;Set-AzKeyVaultSecret -VaultName $env:keyVaultName -Name "apicert" -SecretValue $apiSecret -ContentType "application/x-pkcs12";Set-AzKeyVaultSecret -VaultName $env:keyVaultName -Name "portalcert" -SecretValue $portalSecret -ContentType $secretContentType'
   }
 }

@@ -8,16 +8,22 @@ param gatewaySku object = {
 
 param subnetId string
 
-@secure()
+/* @secure()
 param apimPortalSslCert string
-
+ */
 @secure()
-param apimGatewaySslCert string
+param apimGatewaySslCert string 
+
+/* @secure()
+param apimPortalSslCertPassword string
+ */
+@secure()
+param apimGatewaySslCertPassword string
 
 param frontEndPort int = 443
 param requestTimeOut int = 180
 param apiHostName string = 'api.kainiindustries.net'
-param portalHostName string = 'portal.kainiindustries.net'
+//param portalHostName string = 'portal.kainiindustries.net'
 
 var pipName_var = 'appgwy-pip-${suffix}'
 var appGwyName = 'appgwy-${suffix}'
@@ -59,16 +65,16 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'apim-gateway-cert'
         properties: {
           data: apimGatewaySslCert
-          password: ''
+          password: apimGatewaySslCertPassword
         }
       }
-      {
+/*       {
         name: 'apim-portal-cert'
         properties: {
           data: apimPortalSslCert
-          password: ''
+          password: apimPortalSslCertPassword
         }
-      }
+      } */
     ]
     authenticationCertificates: []
     frontendIPConfigurations: [
@@ -101,7 +107,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           ]
         }
       }
-      {
+/*       {
         name: 'apim-portal-backend'
         properties: {
           backendAddresses: [
@@ -110,7 +116,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
             }
           ]
         }
-      }
+      } */
       {
         name: 'sinkpool'
         properties: {
@@ -132,7 +138,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
         }
       }
-      {
+      /* {
         name: 'apim-portal-poolsetting'
         properties: {
           port: frontEndPort
@@ -144,7 +150,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-portal-probe')
           }
         }
-      }
+      } */
     ]
     httpListeners: [
       {
@@ -165,7 +171,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           customErrorConfigurations: []
         }
       }
-      {
+      /* {
         name: 'apim-portal-listener'
         properties: {
           frontendIPConfiguration: {
@@ -182,7 +188,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           requireServerNameIndication: true
           customErrorConfigurations: []
         }
-      }
+      } */
     ]
     urlPathMaps: [
       {
@@ -214,7 +220,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
       }
     ]
     requestRoutingRules: [
-      {
+      /* {
         name: 'apim-portal-rule'
         properties: {
           ruleType: 'Basic'
@@ -228,7 +234,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-portal-poolsetting')
           }
         }
-      }
+      } */
       {
         name: 'apim-gateway-external-rule'
         properties: {
@@ -257,7 +263,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           match: {}
         }
       }
-      {
+      /* {
         name: 'apim-portal-probe'
         properties: {
           protocol: 'Https'
@@ -270,7 +276,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           minServers: 0
           match: {}
         }
-      }
+      } */
     ]
     rewriteRuleSets: []
     redirectConfigurations: []
