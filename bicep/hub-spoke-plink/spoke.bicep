@@ -5,6 +5,9 @@ param mySqlAdminPassword string
 param hubVnetPeeringDeploymentName string = 'hubVnetPeeringDeployment-${utcNow()}'
 param spokeVnetName string = 'spoke-vnet'
 param spokeVnetAddressPrefix string = '10.1.0.0/16'
+param dockerRegistryUrl string
+param acrUserName string
+param acrPassword string 
 
 param tags object = {
   costcenter: '1234567890'
@@ -87,7 +90,7 @@ resource vnetPeeringToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeeri
   }
 }
 
-module vnetPeeringFromHubModule './modules/vnetPeering.bicep' = {
+module vnetPeeringFromHubModule './modules/peering.bicep' = {
   name: hubVnetPeeringDeploymentName
   scope: resourceGroup(hubVnetResourceGroup)
   dependsOn: [
@@ -154,7 +157,10 @@ resource webAppAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     'WEBSITE_DNS_SERVER': '168.63.129.16'
     'WEBSITE_VNET_ROUTE_ALL': '1'
     'WEBSITES_ENABLE_APP_SERVICE_STORAGE': false
-    'DOCKER_REGISTRY_SERVER_URL': 'https://index.docker.io/v1'
+    'DOCKER_REGISTRY_SERVER_URL': dockerRegistryUrl //'https://index.docker.io/v1'
+    'DOCKER_REGISTRY_SERVER_USERNAME': acrUserName
+    'DOCKER_REGISTRY_SERVER_PASSWORD': acrPassword
+    'WEBSITE_PULL_IMAGE_OVER_VNET': true
   }
 }
 
@@ -281,7 +287,7 @@ resource blobStoragePrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/priv
   }
 }
 
-module mySqlFlexServerModule 'modules/mysql-flex-server.bicep' = {
+module mySqlFlexServerModule 'modules/mysqlFlexServer.bicep' = {
   name: 'mySqlFlexServerDeployment'
   params: {
     location: resourceGroup().location

@@ -1,6 +1,8 @@
 param virtualNetworks array
 param tags object
 param location string
+param vmAdminUserName string = 'localadmin'
+param vmAdminPassword string 
 
 var suffix = uniqueString(resourceGroup().id)
 
@@ -32,8 +34,8 @@ module vmModule './modules/winvm.bicep' = {
   ]
   name: 'vmDeployment'
   params: {
-    adminPassword: 'M1cr0soft1234567890'
-    adminUserName: 'localadmin'
+    adminPassword: vmAdminPassword
+    adminUserName: vmAdminUserName
     location: location
     subnetId: virtualNetworkModule.outputs.subnetRefs[3].id
     suffix: suffix

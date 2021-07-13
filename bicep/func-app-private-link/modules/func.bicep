@@ -10,8 +10,8 @@ param linuxFxVersion string = ''
 param tags object
 
 var hostingPlanName = 'ep-${suffix}'
-var funcAppName = 'func-app-${suffix}'
-var appInsightsName = 'app-insights-${suffix}'
+var funcAppName = 'func-${suffix}'
+var appInsightsName = 'ai-${suffix}'
 var funcStorageAccountName = 'funcstor${suffix}'
 var fileShareName = 'myfunctionfiles'
 
@@ -46,6 +46,7 @@ resource funcApp 'Microsoft.Web/sites@2021-01-01' = {
   dependsOn: [
     appInsights
     hostingPlan
+    funcStorageAccount
   ]
   name: funcAppName
   kind: 'functionapp,linux'
@@ -191,7 +192,7 @@ resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
     networkAcls: {
       bypass: 'AzureServices'
       virtualNetworkRules: [
-        {
+/*         {
           action: 'Allow'
           id: subnets[0].id
         }
@@ -206,7 +207,7 @@ resource funcStorageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
         {
           action: 'Allow'
           id: subnets[3].id
-        }
+        } */
       ]
       ipRules: []
       defaultAction: 'Deny'

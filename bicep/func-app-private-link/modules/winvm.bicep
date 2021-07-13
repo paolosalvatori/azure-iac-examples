@@ -19,7 +19,7 @@ param windowsOSVersion string = '2019-Datacenter'
 
 var vmName = 'win-vm-${suffix}'
 var nicName = 'win-vm-nic-1-${suffix}'
-var computerName = 'winvm1' //${substring(suffix, 0, 6)}'
+var computerName = 'winvm1'
 
 resource vmNic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   location: location

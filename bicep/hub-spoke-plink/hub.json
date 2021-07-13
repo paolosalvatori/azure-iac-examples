@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.3.255.40792",
-      "templateHash": "11943591054004024252"
+      "templateHash": "14481916367317931001"
     }
   },
   "parameters": {
@@ -220,6 +220,18 @@
     "dnsZoneId": {
       "type": "string",
       "value": "[resourceId('Microsoft.Network/privateDnsZones', variables('acrPrivateDNSZoneName'))]"
+    },
+    "acrLoginServer": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))).loginServer]"
+    },
+    "acrPassword": {
+      "type": "string",
+      "value": "[listCredentials(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName')), '2020-11-01-preview').passwords[0].value]"
+    },
+    "acrName": {
+      "type": "string",
+      "value": "[variables('acrName')]"
     }
   }
 }

@@ -1,6 +1,7 @@
 
 param hubVnetName string = 'hub-vnet'
 param hubVnetAddressPrefix string = '10.0.0.0/16'
+param myExternalIp string
 param tags object = {
   costcentre: '1234567890'
   environment: 'dev'
@@ -42,9 +43,14 @@ resource acr 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
   }
   properties: {
     adminUserEnabled: true
-    publicNetworkAccess: 'Disabled'
     networkRuleSet: {
       defaultAction: 'Deny'
+      ipRules: [
+        {
+          action: 'Allow'
+          value: '${myExternalIp}/32'
+        }
+      ]
     }
   }
 }
@@ -90,3 +96,6 @@ resource acrPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwork
 output vnetName string = hubVnetModule.outputs.vnetName
 output vnetId string = hubVnetModule.outputs.id
 output dnsZoneId string = acrPrivateEndpointDnsZone.id
+output acrLoginServer string = acr.properties.loginServer
+output acrPassword string = (listCredentials(acr.id, acr.apiVersion)).passwords[0].value
+output acrName string = acr.name

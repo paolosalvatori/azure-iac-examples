@@ -1,4 +1,4 @@
-PASSWORD=M1cr0soft123
+PASSWORD=''
 
 # generate app gateway self-signed certificate
 openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout ../certs/appgwy.private.key -out ../certs/appgwy.crt \

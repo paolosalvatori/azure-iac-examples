@@ -32,7 +32,7 @@ resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' 
   }
 }]
 
-resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+/* resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   dependsOn: keyVaultSecrets
   location: location
   name: 'scriptUserAssignedManagedIdentity'
@@ -79,7 +79,7 @@ resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-p
       }
     ]
   }
-}
+} */
 
 module networkSecurityGroupModule './modules/nsg.bicep' = {
   name: 'nsgDeployment'
@@ -221,7 +221,7 @@ module funcAppModule './modules/funcapp.bicep' = {
   }
 }
 
-module keyVaultCertUploadScriptModule './modules/script.bicep' = {
+/* module keyVaultCertUploadScriptModule './modules/script.bicep' = {
   dependsOn: [
     keyVaultName_add
   ]
@@ -234,7 +234,7 @@ module keyVaultCertUploadScriptModule './modules/script.bicep' = {
     location: location
     certificateName: secrets[0].CertName
   }
-}
+} */
 
 module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
