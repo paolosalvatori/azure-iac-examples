@@ -3,16 +3,18 @@ param apiHostName string
 param domainName string
 param virtualNetworks array
 param tags object
-param userObjectId string
+//param userObjectId string
 param location string
-param secrets array
-param customData string
+param cert object
+param rootCert object
+//param customData string
 
 var suffix = uniqueString(resourceGroup().id)
-var keyVaultName = 'kvlt-${suffix}'
+//var keyVaultName = 'kvlt-${suffix}'
 var separatedAddressprefix = split(virtualNetworks[0].subnets[3].addressPrefix, '.')
 var azFirewallPrivateIpAddress = '${separatedAddressprefix[0]}.${separatedAddressprefix[1]}.${separatedAddressprefix[2]}.4'
 
+/* 
 module keyVaultModule './modules/keyvault.bicep' = {
   name: 'keyVaultDeployment'
   params: {
@@ -31,7 +33,7 @@ resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' 
     value: secret.CertValue
   }
 }]
-
+ */
 /* resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   dependsOn: keyVaultSecrets
   location: location
@@ -160,7 +162,7 @@ module bastionModule './modules/bastion.bicep' = {
   }
 }
 
-module linuxVmModule './modules/linuxvm.bicep' = {
+/* module linuxVmModule './modules/linuxvm.bicep' = {
   dependsOn: [
     bastionModule
   ]
@@ -174,7 +176,7 @@ module linuxVmModule './modules/linuxvm.bicep' = {
     suffix: suffix
     vmSize: 'Standard_D2_v3'
   }
-}
+} */
 
 module wimVmModule './modules/winvm.bicep' = {
   dependsOn: [
@@ -236,7 +238,7 @@ module funcAppModule './modules/funcapp.bicep' = {
   }
 } */
 
-module apiManagementModule './modules/apim.bicep' = {
+/* module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
     azureFirewallModule
   ]
@@ -255,6 +257,7 @@ module apiManagementModule './modules/apim.bicep' = {
     deployCertificates: false
     gatewayHostName: '${apiHostName}.${domainName}'
     //portalHostName: '${portalHostName}.${domainName}'
+    apiCertificate: secrets[0].CertValue
     apiCertificatePassword: secrets[0].CertPassword
     //portalCertificatePassword: certPassword
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
@@ -262,12 +265,12 @@ module apiManagementModule './modules/apim.bicep' = {
     keyVaultUri: keyVaultModule.outputs.keyVaultUri
   }
 }
-
-module apiManagementUpdateModule './modules/apim.bicep' = {
+ */
+module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
-    apiManagementModule
+    azureFirewallModule
   ]
-  name: 'apimDeploymentUpdate'
+  name: 'apimDeployment'
   params: {
     tags: tags
     location: location
@@ -282,28 +285,31 @@ module apiManagementUpdateModule './modules/apim.bicep' = {
     deployCertificates: true
     gatewayHostName: '${apiHostName}.${domainName}'
     //portalHostName: '${portalHostName}.${domainName}'
-    apiCertificatePassword: secrets[0].CertPassword
+    apiCertificate: cert.CertValue
+    apiCertificatePassword: cert.CertPassword
     //portalCertificatePassword: certPassword
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
-    keyVaultName: keyVaultModule.outputs.keyVaultName
-    keyVaultUri: keyVaultModule.outputs.keyVaultUri
+    //keyVaultName: keyVaultModule.outputs.keyVaultName
+    //keyVaultUri: keyVaultModule.outputs.keyVaultUri
   }
 }
 
-resource existingKeyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' existing = {
+/* resource existingKeyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' existing = {
   name: keyVaultName
   scope: resourceGroup()
-}
+} */
 
 module applicationGatewayModule './modules/appgateway.bicep' = {
   name: 'applicationGatewayDeployment'
   params: {
     suffix: suffix
-    apimGatewaySslCertPassword: secrets[0].CertPassword
+    apimGatewaySslCertPassword: cert.CertPassword
     //apimPortalSslCertPassword: certPassword
     apiHostName: '${apiHostName}.${domainName}'
+    rootSslCert: rootCert.CertValue
+    rootSslCertPassword: rootCert.CertPassword
     //portalHostName: '${portalHostName}.${domainName}'
-    apimGatewaySslCert: existingKeyVault.getSecret('apimapi')
+    apimGatewaySslCert: cert.CertValue // existingKeyVault.getSecret('apimapi')
     //apimPortalSslCert: existingKeyVault.getSecret('apimportal')
     frontEndPort: 443
     gatewaySku: {

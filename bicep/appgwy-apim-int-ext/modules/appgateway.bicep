@@ -20,6 +20,12 @@ param apimPortalSslCertPassword string
 @secure()
 param apimGatewaySslCertPassword string
 
+@secure()
+param rootSslCert string
+
+@secure()
+param rootSslCertPassword string
+
 param frontEndPort int = 443
 param requestTimeOut int = 180
 param apiHostName string = 'api.kainiindustries.net'
@@ -50,6 +56,14 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
   location: resourceGroup().location
   properties: {
     sku: gatewaySku
+    trustedRootCertificates: [
+      {
+        name: 'root-cert'
+        properties: {
+          data: rootSslCert
+        }
+      }
+    ]
     gatewayIPConfigurations: [
       {
         name: 'gateway-ip'
@@ -131,8 +145,13 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           port: frontEndPort
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
+          pickHostNameFromBackendAddress: true
           requestTimeout: requestTimeOut
+          trustedRootCertificates: [
+            {
+              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'root-cert')
+            }
+          ]
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-gateway-probe')
           }

@@ -6,9 +6,10 @@ param apimSku object = {
 param gatewayHostName string = 'api.kainiindustries.net'
 //param portalCertificatePassword string
 param apiCertificatePassword string
+param apiCertificate string
 param subnetId string
-param keyVaultUri string
-param keyVaultName string
+//param keyVaultUri string
+//param keyVaultName string
 param location string
 param deployCertificates bool = false
 param tags object
@@ -19,7 +20,7 @@ param webAppUrl string
 
 var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
-var apimServiceIdentityResourceId = '${apim.id}/providers/Microsoft.ManagedIdentity/Identities/default'
+//var apimServiceIdentityResourceId = '${apim.id}/providers/Microsoft.ManagedIdentity/Identities/default'
 var hostNameConfigurations = [
 /*   {
     type: 'Portal'
@@ -31,10 +32,11 @@ var hostNameConfigurations = [
   } */
   {
     type: 'Proxy'
-    keyVaultId: '${keyVaultUri}secrets/apimapi'
+    //keyVaultId: '${keyVaultUri}secrets/apimapi'
+    encodedCertificate: apiCertificate
     defaultSslBinding: true
     hostName: gatewayHostName
-    negotiateClientCertificate: true
+    negotiateClientCertificate: false
     certificatePassword: apiCertificatePassword
   }
 ]
@@ -69,7 +71,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   dependsOn: []
 }
 
-resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-preview' = {
+/* resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-preview' = {
   name: '${keyVaultName}/add'
   properties: {
     accessPolicies: [
@@ -90,7 +92,7 @@ resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-p
     ]
   }
 }
-
+ */
 resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-preview' = {
   name: '${apimName}/myProduct'
   properties: {
