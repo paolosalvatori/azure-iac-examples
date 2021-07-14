@@ -22,7 +22,7 @@ var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
 //var apimServiceIdentityResourceId = '${apim.id}/providers/Microsoft.ManagedIdentity/Identities/default'
 var hostNameConfigurations = [
-/*   {
+  /*   {
     type: 'Portal'
     keyVaultId: '${keyVaultUri}secrets/apimportal'
     defaultSslBinding: false
@@ -92,7 +92,8 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
     ]
   }
 }
- */
+*/
+
 resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-preview' = {
   name: '${apimName}/myProduct'
   properties: {
@@ -109,13 +110,13 @@ resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-previe
 
 resource apimExternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
   parent: apim
-  name: 'external-report-api'
+  name: 'external-api'
   properties: {
-    displayName: 'External Report API'
+    displayName: 'External API'
     subscriptionRequired: false
     apiRevision: '1'
-    serviceUrl: '${webAppUrl}/api/v1/report'
-    path: 'external/report'
+    serviceUrl: '${webAppUrl}/api/external'
+    path: 'external'
     protocols: [
       'https'
     ]
@@ -124,13 +125,13 @@ resource apimExternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-previe
 
 resource apimInternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
   parent: apim
-  name: 'internal-train-api'
+  name: 'internal-api'
   properties: {
-    displayName: 'Internal Train API'
+    displayName: 'Internal API'
     subscriptionRequired: false
     apiRevision: '1'
-    serviceUrl: '${webAppUrl}/api/v1/train'
-    path: 'internal/train'
+    serviceUrl: '${webAppUrl}/api/internal'
+    path: 'internal'
     protocols: [
       'https'
     ]
@@ -141,26 +142,35 @@ resource apimExternalApiTest 'Microsoft.ApiManagement/service/apis/operations@20
   parent: apimExternalApi
   name: 'external-test-call'
   properties: {
-    displayName: 'External Report API test call'
-    method: 'GET'
+    displayName: 'External API test call'
+    method: 'POST'
     urlTemplate: '/'
     templateParameters: []
     request: {
+      queryParameters: [
+        {
+          name: 'name'
+          type: 'string'
+          values: [
+            'myname'
+          ]
+        }
+      ]
       headers: []
       representations: []
     }
-/*     responses: [
+    responses: [
       {
         statusCode: 200
         representations: [
           {
             contentType: 'application/json'
-            sample: '{"apitype":"external"}'
+            sample: '{"name":"dave-external"}'
           }
         ]
         headers: []
       }
-    ] */
+    ]
   }
   dependsOn: [
     apim
@@ -171,35 +181,35 @@ resource apimInternalApiTest 'Microsoft.ApiManagement/service/apis/operations@20
   parent: apimInternalApi
   name: 'internal-test-call'
   properties: {
-    displayName: 'Internal Train API test call'
+    displayName: 'Internal API test call'
     method: 'POST'
     urlTemplate: '/'
     templateParameters: []
     request: {
       queryParameters: [
         {
-          name: 'modelName'
+          name: 'name'
           type: 'string'
           values: [
-            'mymodel'
+            'myname'
           ]
         }
       ]
       headers: []
       representations: []
     }
-    /* responses: [
+    responses: [
       {
         statusCode: 200
         representations: [
           {
             contentType: 'application/json'
-            sample: '{"apitype":"internal"}'
+            sample: '{"name":"dave-internal"}'
           }
         ]
         headers: []
       }
-    ] */
+    ]
   }
   dependsOn: [
     apim

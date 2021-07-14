@@ -1,9 +1,6 @@
 $password = 'M1cr0soft123'
 $location = 'westus2'
 $rgName = "apim-appgwy-func-$location-rg"
-$certArr = @()
-$rootCertArr = @()
-$cloudInitData = $(Get-Content ./cloud-init.txt -Raw)
 
 # create certificate chain
 $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
@@ -35,13 +32,15 @@ foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
     }
 }
 
+az bicep build --file ../main.bicep
+
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 
 New-AzResourceGroupDeployment `
     -Name 'apim-app-gwy-test-deploy' `
     -ResourceGroupName $rg.ResourceGroupName `
     -Mode Incremental `
-    -TemplateFile ../main.bicep `
+    -TemplateFile ../main.json `
     -TemplateParameterFile ../main.parameters.json `
     -Location $location `
     -Cert $cert `
