@@ -1,0 +1,15 @@
+MYSQL_USER_NAME=root
+MYSQL_ROOT_PASSWORD=P@ssword123
+MYSQL_DB_NAME=todolist
+
+docker run -d -p 3306:3306 --name mysql \
+-e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD \
+-e MYSQL_USER_NAME=$MYSQL_USER_NAME \
+-e MYSQL_DB_NAME=$MYSQL_DB_NAME \
+mysql
+
+docker exec -it \
+mysql mysql \
+-u$MYSQL_USER_NAME \
+-p$MYSQL_ROOT_PASSWORD \
+-e 'CREATE DATABASE $MYSQL_DB_NAME'

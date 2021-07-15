@@ -2,63 +2,6 @@
     {
         "type": "Microsoft.ApiManagement/service/apis",
         "apiVersion": "2021-01-01-preview",
-        "name": "api-mgmt-4k6erlo5uhbkg/echo-api",
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', 'api-mgmt-4k6erlo5uhbkg')]"
-        ],
-        "properties": {
-            "displayName": "Echo API",
-            "apiRevision": "1",
-            "subscriptionRequired": true,
-            "serviceUrl": "http://echoapi.cloudapp.net/api",
-            "path": "echo",
-            "protocols": [
-                "https"
-            ],
-            "isCurrent": true
-        }
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/apis",
-        "apiVersion": "2021-01-01-preview",
-        "name": "api-mgmt-4k6erlo5uhbkg/external-api",
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', 'api-mgmt-4k6erlo5uhbkg')]"
-        ],
-        "properties": {
-            "displayName": "External API",
-            "apiRevision": "1",
-            "subscriptionRequired": false,
-            "serviceUrl": "https://func-app-4k6erlo5uhbkg.azurewebsites.net/api/external",
-            "path": "external",
-            "protocols": [
-                "https"
-            ],
-            "isCurrent": true
-        }
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/apis",
-        "apiVersion": "2021-01-01-preview",
-        "name": "api-mgmt-4k6erlo5uhbkg/internal-api",
-        "dependsOn": [
-            "[resourceId('Microsoft.ApiManagement/service', 'api-mgmt-4k6erlo5uhbkg')]"
-        ],
-        "properties": {
-            "displayName": "Internal API",
-            "apiRevision": "1",
-            "subscriptionRequired": false,
-            "serviceUrl": "https://func-app-4k6erlo5uhbkg.azurewebsites.net/api/internal",
-            "path": "internal",
-            "protocols": [
-                "https"
-            ],
-            "isCurrent": true
-        }
-    },
-    {
-        "type": "Microsoft.ApiManagement/service/apis",
-        "apiVersion": "2021-01-01-preview",
         "name": "api-mgmt-4k6erlo5uhbkg/todo-api",
         "dependsOn": [
             "[resourceId('Microsoft.ApiManagement/service', 'api-mgmt-4k6erlo5uhbkg')]"
