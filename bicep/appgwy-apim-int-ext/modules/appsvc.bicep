@@ -62,7 +62,7 @@ resource webAppNetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
   }
 }
 
-resource appSvcPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+/* resource appSvcPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
   location: resourceGroup().location
   tags: tags
   name: 'appSvcPrivateEndpoint'
@@ -130,7 +130,7 @@ resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDn
       }
     ]
   }
-}
+} */
 
 output webAppName string = webApp.name
 output webAppUrl string = webApp.properties.defaultHostName

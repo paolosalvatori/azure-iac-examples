@@ -37,6 +37,12 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "func",
+            "command": "host start",
+            "problemMatcher": "$func-watch",
+            "isBackground": true
         }
     ]
 }

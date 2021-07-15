@@ -32,7 +32,7 @@ foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
     }
 }
 
-az bicep build --file ../main.bicep
+# az bicep build --file ../main.bicep
 
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 
@@ -40,7 +40,7 @@ New-AzResourceGroupDeployment `
     -Name 'apim-app-gwy-test-deploy' `
     -ResourceGroupName $rg.ResourceGroupName `
     -Mode Incremental `
-    -TemplateFile ../main.json `
+    -TemplateFile ../main.bicep `
     -TemplateParameterFile ../main.parameters.json `
     -Location $location `
     -Cert $cert `
