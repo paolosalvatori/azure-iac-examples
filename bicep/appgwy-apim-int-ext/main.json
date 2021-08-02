@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.63.48766",
-      "templateHash": "3265713663844205082"
+      "templateHash": "8362101998611155788"
     }
   },
   "parameters": {
@@ -1762,7 +1762,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.63.48766",
-              "templateHash": "8815044728978636304"
+              "templateHash": "10795039992902712367"
             }
           },
           "parameters": {
@@ -2052,6 +2052,10 @@
             "apimDnsName": {
               "type": "array",
               "value": "[split(replace(reference(resourceId('Microsoft.ApiManagement/service', variables('apimName'))).gatewayUrl, 'https://', ''), '.')]"
+            },
+            "apimName": {
+              "type": "string",
+              "value": "[variables('apimName')]"
             }
           }
         }
@@ -2061,6 +2065,242 @@
         "[resourceId('Microsoft.Resources/deployments', 'funcAppModule')]",
         "[resourceId('Microsoft.Resources/deployments', 'hubVNetDeployment')]",
         "[resourceId('Microsoft.Resources/deployments', 'spokeVNetDeployment')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "apiDeployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apimName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'apimDeployment'), '2019-10-01').outputs.apimName.value]"
+          },
+          "apiName": {
+            "value": "todo-api"
+          },
+          "functionUri": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'funcAppModule'), '2019-10-01').outputs.funcAppUrl.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.63.48766",
+              "templateHash": "4559967012356427056"
+            }
+          },
+          "parameters": {
+            "apimName": {
+              "type": "string"
+            },
+            "apiName": {
+              "type": "string"
+            },
+            "functionUri": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "apiSchemaGuid": "[guid(resourceGroup().id)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service/apis",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "[parameters('apimName')]",
+                "apiRevision": "1",
+                "description": "Example Todo API Definition",
+                "subscriptionRequired": true,
+                "serviceUrl": "[parameters('functionUri')]",
+                "protocols": [
+                  "https"
+                ],
+                "isCurrent": true,
+                "path": ""
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/schemas",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/{2}', parameters('apimName'), parameters('apiName'), variables('apiSchemaGuid'))]",
+              "properties": {
+                "contentType": "application/vnd.oai.openapi.components+json",
+                "document": {}
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/delete-api-deleteitem-1', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "/api/deleteItem/1 - DELETE",
+                "method": "DELETE",
+                "urlTemplate": "/api/deleteItem/1",
+                "templateParameters": [],
+                "description": "Auto generated using Swagger Inspector",
+                "responses": [
+                  {
+                    "statusCode": 200,
+                    "description": "Auto generated using Swagger Inspector",
+                    "representations": [
+                      {
+                        "contentType": "application/json",
+                        "schemaId": "[variables('apiSchemaGuid')]",
+                        "typeName": "ApiDeleteItem1Delete200ApplicationJsonResponse"
+                      }
+                    ],
+                    "headers": []
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/get-api-getcompleteditems', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "/api/getCompletedItems - GET",
+                "method": "GET",
+                "urlTemplate": "/api/getCompletedItems",
+                "templateParameters": [],
+                "description": "Auto generated using Swagger Inspector",
+                "responses": [
+                  {
+                    "statusCode": 200,
+                    "description": "Auto generated using Swagger Inspector",
+                    "representations": [
+                      {
+                        "contentType": "application/json",
+                        "schemaId": "[variables('apiSchemaGuid')]",
+                        "typeName": "ApiGetCompletedItemsGet200ApplicationJsonResponse"
+                      }
+                    ],
+                    "headers": []
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/get-api-getincompleteitems', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "/api/getIncompleteItems - GET",
+                "method": "GET",
+                "urlTemplate": "/api/getIncompleteItems",
+                "templateParameters": [],
+                "description": "Auto generated using Swagger Inspector",
+                "responses": [
+                  {
+                    "statusCode": 200,
+                    "description": "Auto generated using Swagger Inspector",
+                    "representations": [
+                      {
+                        "contentType": "application/json",
+                        "schemaId": "[variables('apiSchemaGuid')]",
+                        "typeName": "ApiGetIncompleteItemsGet200ApplicationJsonResponse"
+                      }
+                    ],
+                    "headers": []
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/post-api-createitem', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "/api/createItem - POST",
+                "method": "POST",
+                "urlTemplate": "/api/createItem",
+                "templateParameters": [],
+                "description": "Auto generated using Swagger Inspector",
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "description",
+                      "type": "string",
+                      "values": [],
+                      "schemaId": "[variables('apiSchemaGuid')]",
+                      "typeName": "ApiCreateItemPostRequest"
+                    }
+                  ],
+                  "headers": [],
+                  "representations": []
+                },
+                "responses": [
+                  {
+                    "statusCode": 200,
+                    "description": "Auto generated using Swagger Inspector",
+                    "representations": [
+                      {
+                        "contentType": "application/json",
+                        "schemaId": "[variables('apiSchemaGuid')]",
+                        "typeName": "ApiCreateItemPost200ApplicationJsonResponse"
+                      }
+                    ],
+                    "headers": []
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/apis/operations",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[format('{0}/{1}/post-api-updateitem-1', parameters('apimName'), parameters('apiName'))]",
+              "properties": {
+                "displayName": "/api/updateItem/1 - POST",
+                "method": "POST",
+                "urlTemplate": "/api/updateItem/1",
+                "templateParameters": [],
+                "description": "Auto generated using Swagger Inspector",
+                "request": {
+                  "queryParameters": [
+                    {
+                      "name": "completed",
+                      "type": "boolean",
+                      "values": [],
+                      "schemaId": "[variables('apiSchemaGuid')]",
+                      "typeName": "ApiUpdateItem2PostRequest"
+                    }
+                  ],
+                  "headers": [],
+                  "representations": []
+                },
+                "responses": [
+                  {
+                    "statusCode": 200,
+                    "description": "Auto generated using Swagger Inspector",
+                    "representations": [
+                      {
+                        "contentType": "application/json",
+                        "schemaId": "[variables('apiSchemaGuid')]",
+                        "typeName": "ApiUpdateItem2Post200ApplicationJsonResponse"
+                      }
+                    ],
+                    "headers": []
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'apimDeployment')]",
+        "[resourceId('Microsoft.Resources/deployments', 'funcAppModule')]"
       ]
     },
     {

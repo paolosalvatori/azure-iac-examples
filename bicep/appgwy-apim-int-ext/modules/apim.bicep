@@ -301,3 +301,4 @@ resource ApimSpokeVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones/v
 
 output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]
 output apimDnsName array = split(replace(apim.properties.gatewayUrl, 'https://', ''), '.')
+output apimName string = apim.name 

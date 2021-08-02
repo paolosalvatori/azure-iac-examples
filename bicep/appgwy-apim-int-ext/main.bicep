@@ -294,6 +294,18 @@ module apiManagementModule './modules/apim.bicep' = {
   }
 }
 
+module apiModule './modules/api.bicep' = {
+  dependsOn: [
+    apiManagementModule
+  ]
+  name: 'apiDeployment'
+  params: {
+    apimName: apiManagementModule.outputs.apimName
+    apiName: 'todo-api'
+    functionUri: funcAppModule.outputs.funcAppUrl
+  }
+}
+
 /* resource existingKeyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' existing = {
   name: keyVaultName
   scope: resourceGroup()
