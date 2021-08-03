@@ -246,7 +246,7 @@ param maxPods int = 30
 param aksNodeVMSize string = 'Standard_F2'
 
 @description('The version of Kubernetes.')
-param aksVersion string = '1.16.9'
+param aksVersion string
 param aksSubnetRef string
 param suffix string
 

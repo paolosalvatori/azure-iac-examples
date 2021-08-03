@@ -22,7 +22,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-03-01' = {
   }
 }
 
-resource firewall 'Microsoft.Network/azureFirewalls@2018-11-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
   name: firewallName
   location: location
   properties: {
@@ -242,8 +242,8 @@ resource firewall 'Microsoft.Network/azureFirewalls@2018-11-01' = {
     ]
   }
 }
-
-resource firewallName_microsoft_insights_fwdiagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2017-05-01-preview' = {
+/* 
+resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2021-03-01' = {
   scope: firewall
   name: '${firewallName}/microsoft.insights/fwdiagnostics'
   properties: {
@@ -269,6 +269,6 @@ resource firewallName_microsoft_insights_fwdiagnostics 'Microsoft.Network/azureF
   dependsOn: [
     firewall
   ]
-}
+} */
 
 output firewallPublicIpAddress string = publicIP.properties.ipAddress

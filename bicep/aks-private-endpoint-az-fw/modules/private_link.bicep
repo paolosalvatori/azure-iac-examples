@@ -28,7 +28,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2019-04-01' = {
       {
         name: privateEndpointConnectionName
         properties: {
-          privateLinkServiceId: resourceId(resourceType, resourceName)
+          privateLinkServiceId: resourceId(resourceType, '${resourceName}-${suffix}')
           groupIds: [
             groupType
           ]

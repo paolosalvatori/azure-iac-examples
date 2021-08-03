@@ -1,8 +1,7 @@
-@description('The name of the SQL logical server.')
-param serverName string = uniqueString('sql', resourceGroup().id)
-
 @description('The name of the SQL Database.')
 param sqlDBName string = 'SampleDB'
+
+param suffix string
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -13,6 +12,8 @@ param administratorLogin string
 @description('The administrator password of the SQL logical server.')
 @secure()
 param administratorLoginPassword string
+
+var serverName = 'sql-${suffix}'
 
 resource sqlServer 'Microsoft.Sql/servers@2020-02-02-preview' = {
   name: serverName

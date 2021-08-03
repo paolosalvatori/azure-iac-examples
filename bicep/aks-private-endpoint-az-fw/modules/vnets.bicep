@@ -13,7 +13,7 @@ var subnets = [for i in range(0, length(vNet.subnets)): {
     privateEndpointNetworkPolicies: ((vNet.subnets[i].privateEndpointNetworkPolicies == json('null')) ? json('null') : vNet.subnets[i].privateEndpointNetworkPolicies)
     privateLinkServiceNetworkPolicies: ((vNet.subnets[i].privateLinkServiceNetworkPolicies == json('null')) ? json('null') : vNet.subnets[i].privateLinkServiceNetworkPolicies)
   }
-  id: resourceId('Microsoft.Network/virtualNetworks/subnets/', '${vNet.name}', vNet.subnets[i].name)
+  id: resourceId('Microsoft.Network/virtualNetworks/subnets/', '${vNet.name}-${suffix}', vNet.subnets[i].name)
 }]
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-11-01' = {
@@ -29,5 +29,5 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2018-11-01' = {
 }
 
 output subnetRefs array = subnets
-output vnetRef string = vNet.id
-output vnetName string = '${virtualNetwork.name}-${suffix}'
+output vnetRef string = virtualNetwork.id
+output vnetName string = '${vNet.name}-${suffix}'

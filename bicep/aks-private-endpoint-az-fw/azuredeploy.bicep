@@ -1,9 +1,3 @@
-@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param artifactsLocation string = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-aks-private-endpoint-firewall/'
-
-@description('The sasToken required to access artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
-param artifactsLocationSasToken string = ''
-
 @description('deployment location')
 param location string = resourceGroup().location
 
@@ -29,6 +23,7 @@ param aksMaxPodCount int = 50
 param sshPublicKey string
 
 @description('SQL DB server admin password')
+@secure()
 param dbAdminPassword string
 
 @description('Array of AAD principal ObjectIds')
@@ -103,7 +98,7 @@ module module_vm './modules/vm.bicep' = {
     ubuntuOSVersion: '18.04-LTS'
     vmSize: 'Standard_B2s'
     subnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[1].id
-    customData: '#include\n${artifactsLocation}/cloudinit.txt${artifactsLocationSasToken}'
+    // customData: '#include\n${artifactsLocation}/cloudinit.txt${artifactsLocationSasToken}'
   }
   dependsOn: [
     module_peering
@@ -155,7 +150,7 @@ module module_privateDnsLink './modules/private-dns-link.bicep' = {
 module module_sqldb './modules/sql.bicep' = if (true) {
   name: 'module-sqldb'
   params: {
-    serverName: uniqueString('sql', resourceGroup().id)
+    suffix: suffix
     sqlDBName: 'SampleDB'
     location: resourceGroup().location
     administratorLogin: 'dbadmin'

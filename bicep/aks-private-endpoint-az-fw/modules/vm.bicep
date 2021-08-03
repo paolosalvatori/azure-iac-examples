@@ -5,7 +5,7 @@ param location string
 param suffix string
 
 @description('The name of you Virtual Machine.')
-param vmName string = 'simpleLinuxVM'
+param name string
 
 @description('Username for the Virtual Machine.')
 param adminUsername string
@@ -35,11 +35,13 @@ param vmSize string = 'Standard_B2s'
 @description('Resource Id of the subnet in the virtual network')
 param subnetRef string = 'Subnet'
 
-@description('URI to cloudinit.txt file')
+/* @description('URI to cloudinit.txt file')
 param customData string
+ */
 
-var networkInterfaceName = '${vmName}-nic-${suffix}'
-var nsgName = '${vmName}-nsg-${suffix}'
+var vmName = '${name}-${suffix}'
+var networkInterfaceName = '${name}-nic-${suffix}'
+var nsgName = '${name}-nsg-${suffix}'
 var osDiskType = 'Standard_LRS'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
@@ -125,7 +127,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2019-03-01' = {
       ]
     }
     osProfile: {
-      computerName: vmName
+      computerName: name
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
