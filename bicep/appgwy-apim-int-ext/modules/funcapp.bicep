@@ -444,5 +444,5 @@ resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDn
   }
 }
 
-output funcAppUrl string = funcApp.properties.defaultHostName
+output funcAppUrl string = 'https://${funcApp.properties.defaultHostName}'
 output funcAppName string = funcApp.name

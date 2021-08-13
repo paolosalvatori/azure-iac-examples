@@ -5,9 +5,6 @@
         "location": {
             "value": "australiaeast"
         },
-        "apiHostName": {
-            "value": "api"
-        },
         "domainName": {
             "value": "kainiindustries.net"
         },

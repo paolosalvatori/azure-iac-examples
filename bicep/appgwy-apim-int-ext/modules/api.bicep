@@ -10,13 +10,13 @@ resource api 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
     displayName: apimName
     apiRevision: '1'
     description: 'Example Todo API Definition'
-    subscriptionRequired: true
+    subscriptionRequired: false
     serviceUrl: functionUri
     protocols: [
       'https'
     ]
     isCurrent: true
-    path: ''
+    path: 'external'
   }
 }
 

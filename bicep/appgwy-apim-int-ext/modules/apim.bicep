@@ -2,37 +2,24 @@ param apimSku object = {
   name: 'Developer'
   capacity: 1
 }
-//param portalHostName string = 'portal.kainiindustries.net'
-param gatewayHostName string = 'api.kainiindustries.net'
-//param portalCertificatePassword string
+param gatewayHostName string = 'apim.internal'
 param apiCertificatePassword string
 param apiCertificate string
 param subnetId string
-//param keyVaultUri string
-//param keyVaultName string
 param location string
 param deployCertificates bool = false
 param tags object
-param apimPrivateDnsZoneName string
+param privateDnsZoneName string
 param hubVnetId string
 param spokeVnetId string
-param webAppUrl string
+param workspaceId string
+param retentionInDays int = 30
 
 var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
-//var apimServiceIdentityResourceId = '${apim.id}/providers/Microsoft.ManagedIdentity/Identities/default'
 var hostNameConfigurations = [
-  /*   {
-    type: 'Portal'
-    keyVaultId: '${keyVaultUri}secrets/apimportal'
-    defaultSslBinding: false
-    hostName: portalHostName
-    negotiateClientCertificate: false
-    certificatePassword: portalCertificatePassword
-  } */
   {
     type: 'Proxy'
-    //keyVaultId: '${keyVaultUri}secrets/apimapi'
     encodedCertificate: apiCertificate
     defaultSslBinding: true
     hostName: gatewayHostName
@@ -71,29 +58,6 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   dependsOn: []
 }
 
-/* resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-preview' = {
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        tenantId: subscription().tenantId
-        objectId: reference(apimServiceIdentityResourceId, '2015-08-31-PREVIEW', 'Full').properties.principalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-          certificates: [
-           'get'
-           'list'  
-          ]
-        }
-      }
-    ]
-  }
-}
-*/
-
 resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-preview' = {
   name: '${apimName}/myProduct'
   properties: {
@@ -108,6 +72,7 @@ resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-previe
   ]
 }
 
+/* 
 resource apimExternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
   parent: apim
   name: 'external-api'
@@ -121,9 +86,9 @@ resource apimExternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-previe
       'https'
     ]
   }
-}
+} */
 
-resource apimInternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
+/* resource apimInternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
   parent: apim
   name: 'internal-api'
   properties: {
@@ -136,9 +101,9 @@ resource apimInternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-previe
       'https'
     ]
   }
-}
+} */
 
-resource apimExternalApiTest 'Microsoft.ApiManagement/service/apis/operations@2021-01-01-preview' = {
+/* resource apimExternalApiTest 'Microsoft.ApiManagement/service/apis/operations@2021-01-01-preview' = {
   parent: apimExternalApi
   name: 'external-test-call'
   properties: {
@@ -214,44 +179,15 @@ resource apimInternalApiTest 'Microsoft.ApiManagement/service/apis/operations@20
   dependsOn: [
     apim
   ]
-}
+} */
 
-/* resource apimExternalApiTestPolicy 'Microsoft.ApiManagement/service/apis/operations/policies@2018-06-01-preview' = {
-  parent: apimExternalApiTest
-  name: 'policy'
-  properties: {
-    policyContent: '<policies>\r\n  <inbound>\r\n    <base />\r\n    <mock-response status-code="200" content-type="application/json" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>'
-    contentFormat: 'xml'
-  }
-  dependsOn: [
-    apimExternalApi
-    apim
-  ]
-}
-
-resource apimInternalApiTestPolicy 'Microsoft.ApiManagement/service/apis/operations/policies@2018-06-01-preview' = {
-  parent: apimInternalApiTest
-  name: 'policy'
-  properties: {
-    policyContent: '<policies>\r\n  <inbound>\r\n    <base />\r\n    <mock-response status-code="200" content-type="application/json" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>'
-    contentFormat: 'xml'
-  }
-  dependsOn: [
-    apimInternalApi
-    apim
-  ]
-}
- */
-resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  location: 'global'
-  tags: tags
-  name: apimPrivateDnsZoneName
-  properties: {}
+resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: privateDnsZoneName
 }
 
 resource apimGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
-  name: 'api'
+  name: gatewayHostName
   properties: {
     aRecords: [
       {
@@ -299,6 +235,34 @@ resource ApimSpokeVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones/v
   }
 }
 
+resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'apim-diagnostics'
+  scope: apim
+  properties: {
+    logs: [
+      {
+        category: 'GatewayLogs'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    workspaceId: workspaceId
+  }
+}
+
 output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]
 output apimDnsName array = split(replace(apim.properties.gatewayUrl, 'https://', ''), '.')
-output apimName string = apim.name 
+output apimName string = apim.name

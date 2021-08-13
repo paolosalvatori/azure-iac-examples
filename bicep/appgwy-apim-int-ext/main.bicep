@@ -1,87 +1,24 @@
-param apiHostName string
-//param portalHostName string
 param domainName string
 param virtualNetworks array
 param tags object
-//param userObjectId string
 param location string
 param cert object
 param rootCert object
-//param customData string
+param winVmPassword string
+param funcAppPackageUrl string
 
 var suffix = uniqueString(resourceGroup().id)
-//var keyVaultName = 'kvlt-${suffix}'
-var separatedAddressprefix = split(virtualNetworks[0].subnets[3].addressPrefix, '.')
-var azFirewallPrivateIpAddress = '${separatedAddressprefix[0]}.${separatedAddressprefix[1]}.${separatedAddressprefix[2]}.4'
+var azSeparatedAddressprefix = split(virtualNetworks[0].subnets[3].addressPrefix, '.')
+var appGwySeparatedAddressprefix = split(virtualNetworks[0].subnets[0].addressPrefix, '.')
+var azFirewallPrivateIpAddress = '${azSeparatedAddressprefix[0]}.${azSeparatedAddressprefix[1]}.${azSeparatedAddressprefix[2]}.4'
+var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
 
-/* 
-module keyVaultModule './modules/keyvault.bicep' = {
-  name: 'keyVaultDeployment'
+module azMonitorModule './modules/azmon.bicep' = {
+  name: 'azureMonitorDeployment'
   params: {
-    name: keyVaultName
-    keyVaultUserObjectId: userObjectId
-    location: location
-    tenantId: subscription().tenantId
+    suffix: suffix
   }
 }
-
-resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2021-04-01-preview' = [for secret in secrets: {
-  parent: keyVaultModule
-  name: '${keyVaultName}/${secret.CertName}'
-  properties: {
-    contentType: 'application/x-pkcs12'
-    value: secret.CertValue
-  }
-}]
- */
-/* resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  dependsOn: keyVaultSecrets
-  location: location
-  name: 'scriptUserAssignedManagedIdentity'
-}
-
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  dependsOn: [
-    userAssignedManagedIdentity
-  ]
-  name: guid(resourceGroup().id, userAssignedManagedIdentity.name, subscription().subscriptionId)
-  scope: resourceGroup()
-  properties: {
-    principalId: userAssignedManagedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: 'Reader'
-  }
-}
-
-resource keyVaultName_add 'Microsoft.KeyVault/vaults/accessPolicies@2021-04-01-preview' = {
-  dependsOn: [
-    roleAssignment
-  ]
-  name: '${keyVaultName}/add'
-  properties: {
-    accessPolicies: [
-      {
-        tenantId: subscription().tenantId
-        objectId: userAssignedManagedIdentity.properties.principalId
-        permissions: {
-          certificates: [
-            'get'
-            'list'
-            'create'
-            'import'
-            'getissuers'
-            'listissuers'
-            'update'
-            'setissuers'
-            'restore'
-            'recover'
-            'backup'
-          ]
-        }
-      }
-    ]
-  }
-} */
 
 module networkSecurityGroupModule './modules/nsg.bicep' = {
   name: 'nsgDeployment'
@@ -162,30 +99,14 @@ module bastionModule './modules/bastion.bicep' = {
   }
 }
 
-/* module linuxVmModule './modules/linuxvm.bicep' = {
-  dependsOn: [
-    bastionModule
-  ]
-  name: 'linuxVmDeployment'
-  params: {
-    customData: customData
-    adminPassword: 'M1cr0soft1234567890'
-    adminUserName: 'localadmin'
-    location: location
-    subnetId: hubVirtualNetworkModule.outputs.subnetRefs[2].id
-    suffix: suffix
-    vmSize: 'Standard_D2_v3'
-  }
-} */
-
-module wimVmModule './modules/winvm.bicep' = {
+module winVmModule './modules/winvm.bicep' = {
   dependsOn: [
     bastionModule
   ]
   name: 'winVmDeployment'
   params: {
     windowsOSVersion: '2016-Datacenter'
-    adminPassword: 'M1cr0soft1234567890'
+    adminPassword: winVmPassword
     adminUserName: 'localadmin'
     location: location
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[2].id
@@ -194,27 +115,15 @@ module wimVmModule './modules/winvm.bicep' = {
   }
 }
 
-/* module appSvcModule './modules/appsvc.bicep' = {
-  name: 'appSvcDeployment'
-  params: {
-    containerName: 'belstarr/go-web-api:v1.0'
-    hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
-    spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
-    privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
-    vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[2].id
-    skuName: 'P3v2'
-    tags: tags
-  }
-} */
-
-module funcAppModule './modules/funcapp.bicep' = {
-  name: 'funcAppModule'
+module funcAppModule './modules/funcapp1.bicep' = {
+  name: 'funcAppDeployment'
   params: {
     location: location
-    hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
-    spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
+    packageUrl: funcAppPackageUrl
+    //hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
+    //spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
     vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[4].id
-    privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
+    //privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
     planSku: 'ElasticPremium'
     planSkuCode: 'EP1'
     planKind: 'elastic'
@@ -223,74 +132,37 @@ module funcAppModule './modules/funcapp.bicep' = {
   }
 }
 
-/* module keyVaultCertUploadScriptModule './modules/script.bicep' = {
-  dependsOn: [
-    keyVaultName_add
-  ]
-  name: 'keyVaultCertDeployment'
-  params: {
-    userAssignedIdentity: userAssignedManagedIdentity.id
-    certificateBase64String: secrets[0].CertValue
-    certificatePassword: secrets[0].CertPassword
-    keyVaultName: keyVaultModule.outputs.keyVaultName
-    location: location
-    certificateName: secrets[0].CertName
-  }
-} */
-
-/* module apiManagementModule './modules/apim.bicep' = {
-  dependsOn: [
-    azureFirewallModule
-  ]
-  name: 'apimDeployment'
-  params: {
-    tags: tags
-    location: location
-    apimPrivateDnsZoneName: domainName
-    hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
-    spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
-    webAppUrl: 'https://${funcAppModule.outputs.funcAppUrl}'
-    apimSku: {
-      name: 'Developer'
-      capacity: 1
-    }
-    deployCertificates: false
-    gatewayHostName: '${apiHostName}.${domainName}'
-    //portalHostName: '${portalHostName}.${domainName}'
-    apiCertificate: secrets[0].CertValue
-    apiCertificatePassword: secrets[0].CertPassword
-    //portalCertificatePassword: certPassword
-    subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
-    keyVaultName: keyVaultModule.outputs.keyVaultName
-    keyVaultUri: keyVaultModule.outputs.keyVaultUri
-  }
+resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  location: 'global'
+  tags: tags
+  name: domainName
+  properties: {}
 }
- */
+
 module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
+    azMonitorModule
     azureFirewallModule
+    privateDnsZone
   ]
   name: 'apimDeployment'
   params: {
     tags: tags
     location: location
-    apimPrivateDnsZoneName: domainName
+    retentionInDays: 30
+    workspaceId: azMonitorModule.outputs.workspaceId
+    privateDnsZoneName: privateDnsZone.name
     hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
     spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
-    webAppUrl: 'https://${funcAppModule.outputs.funcAppUrl}'
     apimSku: {
       name: 'Developer'
       capacity: 1
     }
     deployCertificates: true
-    gatewayHostName: '${apiHostName}.${domainName}'
-    //portalHostName: '${portalHostName}.${domainName}'
+    gatewayHostName: 'apim.internal.${domainName}'
     apiCertificate: cert.CertValue
     apiCertificatePassword: cert.CertPassword
-    //portalCertificatePassword: certPassword
     subnetId: hubVirtualNetworkModule.outputs.subnetRefs[1].id
-    //keyVaultName: keyVaultModule.outputs.keyVaultName
-    //keyVaultUri: keyVaultModule.outputs.keyVaultUri
   }
 }
 
@@ -306,24 +178,24 @@ module apiModule './modules/api.bicep' = {
   }
 }
 
-/* resource existingKeyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' existing = {
-  name: keyVaultName
-  scope: resourceGroup()
-} */
-
 module applicationGatewayModule './modules/appgateway.bicep' = {
+  dependsOn: [
+    azMonitorModule
+    privateDnsZone
+  ]
   name: 'applicationGatewayDeployment'
   params: {
     suffix: suffix
+    privateDnsZoneName: domainName
+    workspaceId: azMonitorModule.outputs.workspaceId
     apimGatewaySslCertPassword: cert.CertPassword
-    //apimPortalSslCertPassword: certPassword
-    apiHostName: '${apiHostName}.${domainName}'
+    externalApiHostName: 'api.${domainName}'
+    internalApiHostName: 'api.internal.${domainName}'
+    apimHostName: 'apim.internal.${domainName}'
     rootSslCert: rootCert.CertValue
-    rootSslCertPassword: rootCert.CertPassword
-    //portalHostName: '${portalHostName}.${domainName}'
-    apimGatewaySslCert: cert.CertValue // existingKeyVault.getSecret('apimapi')
-    //apimPortalSslCert: existingKeyVault.getSecret('apimportal')
+    apimGatewaySslCert: cert.CertValue
     frontEndPort: 443
+    apimPrivateIpAddress: appGwyPrivateIpAddress
     gatewaySku: {
       name: 'WAF_v2'
       tier: 'WAF_v2'
@@ -344,29 +216,18 @@ module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   }
 }
 
-/* module mySqlServer './modules/mysql.bicep' = {
-  name: 'mySqlDeployment'
+module appGwyPublicDnsRecord 'modules/publicdns.bicep' = {
+  scope: resourceGroup('external-dns-zones-rg')
+  name: 'deployAppGwyPublicDnsRecord'
   params: {
-    administratorLogin: 'dbadmin'
-    administratorLoginPassword: 'P@ssword123'
-    location: location
-    suffix: suffix
-  }
-} */
-
-/* module mySqlFlexServer './modules/mysql-flex-server.bicep' = {
-  name: 'mySqlFlexServer'
-  params: {
-    administratorLogin: 'dbadmin'
-    administratorLoginPassword: 'P@ssword123'
-    mySqlDatabaseName: 'todolist'
-    backupRetentionDays: 7
-    location: location
-    suffix: suffix
-    subnetArmResourceId: spokeVirtualNetworkModule.outputs.subnetRefs[1].id
-    tags: tags
+    zoneName: domainName
+    ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress
+    recordName: 'api'
   }
 }
- */
+
 output appGwyName string = applicationGatewayModule.outputs.appGwyName
 output appGwyId string = applicationGatewayModule.outputs.appGwyId
+output appGwyFqdn string = applicationGatewayModule.outputs.appGwyPublicDnsName
+output appGwyPublicIpAddress string = applicationGatewayModule.outputs.appGwyPublicIpAddress
+output apimPrivateIpAddress string = apiManagementModule.outputs.apimPrivateIpAddress

@@ -1,15 +1,26 @@
 $password = 'M1cr0soft123'
 $location = 'westus2'
-$rgName = "apim-appgwy-func-$location-rg"
+$rgName = "apim-appgwy-cbellee-$location-rg"
+$sans = 'api.kainiindustries.net', 'apim.kainiindustries.net', 'api.internal.kainiindustries.net', 'apim.internal.kainiindustries.net'
+$containerName = 'app'
+$blobName = 'funcapp.zip'
+$packageStorageAccountName = 'cbelleepackagestor579821'
+$winVmPassword = 'M1cr0soft1234567890'
 
 # create certificate chain
 $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
 
-$rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -DnsName 'KainiIndustries CA' -KeyUsage CertSign
-Export-Certificate -Cert $rootcert -FilePath ..\certs\rootCA.cer
+if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
+    Write-Host "Creating new Self-Signed CA Certificate"
+    $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
+}
+Export-Certificate -Cert $rootcert -FilePath ..\certs\rootCert.cer -Force
 
-$sslCert = New-SelfSignedCertificate -certstorelocation 'cert:\LocalMachine\My' -dnsname 'api.kainiindustries.net' -Signer $rootCert
-Export-PfxCertificate -cert $sslCert -FilePath ..\certs\sslCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1
+if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certififcate' }))) {
+    Write-Host "Creating new Self-Signed Client Certificate"
+    $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certififcate'
+}
+Export-PfxCertificate -cert $pfxCert -FilePath ..\certs\clientCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1 -Force
 
 # create Base64 encoded versions of the root & client certificates
 foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
@@ -18,57 +29,67 @@ foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
     $collection.Import($pfxCert.FullName, $password, $flag)
 
     foreach ($cert in $collection) {
+        $cert
         if ($cert.HasPrivateKey) {
             $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12
             $clearBytes = $cert.Export($pkcs12ContentType, $password)
             $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-            $cert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password}
-        } else {
+            $cert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
+        }
+        else {
             $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
             $clearBytes = $cert.Export($cerContentType, $password)
             $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-            $rootCert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password}
+            $rootCert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
         }
     }
 }
 
-<<<<<<< HEAD
-az bicep build --file ../main.bicep
-=======
-$clientAppPassword = '234jk234rjkfg53oi34fonfl4'
-$apiAppPassword = 'BzTFC8hKb5epmHadPbrf57~M~_u9.i11d3'
-
-# create backend Application Registration
-$todoApiApp = az ad app create --display-name todo-api --app-roles ./appRoleManifest.json --password $clientAppPassword | ConvertFrom-Json
-# must be set manually via 'Manifest' json or az rest
-# az ad app update --id $todoApiApp.appId --set accessTokenAcceptedVersion=2
-az ad sp create --id $todoApiApp.appId
-
-# create client Application registration
-$todoApiClientApp = az ad app create --display-name todo-api-client --password $clientAppPassword | ConvertFrom-Json
-# must be set manually via 'Manifest' json or az rest
-# az ad app update --id $todoApiClientApp.appId --set accessTokenAcceptedVersion=2  
-az ad sp create --id $todoApiClientApp.appId
-
-# az ad app permission add --api-permissions 311a71cc-e848-46a1-bdf8-97ff7156d8e6=Scope
-az ad app permission grant --id $todoApiClientApp.appId --api $todoApiApp.appId --scope Api.Caller
-
-$todoApiApp
-$todoApiClientApp
-
-# az bicep build --file ../main.bicep
->>>>>>> 5a46e9df023a6f1b9f6d9b9a11d6f9bbb0615a4b
-
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 
-<# New-AzResourceGroupDeployment `
-    -Name 'apim-app-gwy-test-deploy' `
+# compress funtion app code to .zip file
+Compress-Archive -Path ../api/* -DestinationPath ./$blobName -Update
+
+# create sotrage account & container, then upload the .zip file
+if (!($packageStore=$(Get-AzStorageAccount -ResourceGroupName $rgName -Name $packageStorageAccountName))) {
+$packageStore = New-AzStorageAccount `
+    -ResourceGroupName $rgName `
+    -SkuName 'Standard_LRS' `
+    -Name $packageStorageAccountName `
+    -Location $location `
+    -Kind 'Storagev2' `
+    -AccessTier Hot
+
+New-AzStorageContainer -Name $containerName -Context $packageStore.Context
+}
+
+Set-AzStorageBlobContent `
+    -File ./$blobName `
+    -Container $containerName `
+    -Blob $blobName `
+    -Context $packageStore.Context `
+    -Force
+
+$expiry = (Get-Date).AddHours(2)
+$blobSasUrl = New-AzStorageBlobSASToken `
+    -Container $containerName `
+    -Context $packageStore.Context `
+    -Blob $blobName `
+    -ExpiryTime $expiry `
+    -Permission r `
+    -FullUri
+
+curl -X POST -u cbellee --data-binary @<zipfile> https://{your-sitename}.scm.azurewebsites.net/api/zipdeploy
+
+New-AzResourceGroupDeployment `
+    -Name 'apim-app-gwy-deploy' `
     -ResourceGroupName $rg.ResourceGroupName `
     -Mode Incremental `
-    -TemplateFile ../main.json `
+    -TemplateFile ../main.bicep `
     -TemplateParameterFile ../main.parameters.json `
     -Location $location `
     -Cert $cert `
     -RootCert $rootCert `
+    -WinVmPassword $winVmPassword `
+    -FuncAppPackageUrl $blobSasUrl `
     -Verbose
- #>

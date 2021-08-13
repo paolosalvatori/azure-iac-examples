@@ -1,35 +1,31 @@
 param suffix string
 param skuName string = 'Standard'
+param apimPrivateIpAddress string
 param gatewaySku object = {
   name: 'WAF_v2'
   tier: 'WAF_v2'
   capacity: '1'
 }
 
+param privateDnsZoneName string
+param workspaceId string
+param retentionInDays int = 30
 param subnetId string
 
-/* @secure()
-param apimPortalSslCert string
- */
 @secure()
-param apimGatewaySslCert string 
+param apimGatewaySslCert string
 
-/* @secure()
-param apimPortalSslCertPassword string
- */
 @secure()
 param apimGatewaySslCertPassword string
 
 @secure()
 param rootSslCert string
-
-@secure()
-param rootSslCertPassword string
-
 param frontEndPort int = 443
+param internalFrontendPort int = 8080
 param requestTimeOut int = 180
-param apiHostName string = 'api.kainiindustries.net'
-//param portalHostName string = 'portal.kainiindustries.net'
+param externalApiHostName string
+param internalApiHostName string
+param apimHostName string
 
 var pipName_var = 'appgwy-pip-${suffix}'
 var appGwyName = 'appgwy-${suffix}'
@@ -82,13 +78,21 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           password: apimGatewaySslCertPassword
         }
       }
-/*       {
-        name: 'apim-portal-cert'
+    ]
+    sslProfiles: [
+      {
+        name: 'sslProfile1'
         properties: {
-          data: apimPortalSslCert
-          password: apimPortalSslCertPassword
+          clientAuthConfiguration: {
+            verifyClientCertIssuerDN: true
+          }
+          trustedClientCertificates: [
+            {
+              id: resourceId('Microsoft.Network/applicationGateways/trustedClientCertificates', appGwyName, 'rootCACert')
+            }
+          ]
         }
-      } */
+      }
     ]
     authenticationCertificates: []
     frontendIPConfigurations: [
@@ -101,12 +105,36 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
         }
       }
+      {
+        name: 'internal-frontend'
+        properties: {
+          privateIPAllocationMethod: 'Static'
+          privateIPAddress: apimPrivateIpAddress
+          subnet: {
+            id: subnetId
+          }
+        }
+      }
     ]
     frontendPorts: [
       {
         name: 'frontend-port'
         properties: {
           port: frontEndPort
+        }
+      }
+      {
+        name: 'internal-frontend-port'
+        properties: {
+          port: internalFrontendPort
+        }
+      }
+    ]
+    trustedClientCertificates: [
+      {
+        name: 'rootCACert'
+        properties: {
+          data: rootSslCert
         }
       }
     ]
@@ -116,21 +144,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         properties: {
           backendAddresses: [
             {
-              fqdn: apiHostName
+              fqdn: apimHostName
             }
           ]
         }
       }
-/*       {
-        name: 'apim-portal-backend'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: portalHostName
-            }
-          ]
-        }
-      } */
       {
         name: 'sinkpool'
         properties: {
@@ -145,7 +163,8 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           port: frontEndPort
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: true
+          pickHostNameFromBackendAddress: false
+          hostName: apimHostName
           requestTimeout: requestTimeOut
           trustedRootCertificates: [
             {
@@ -157,19 +176,6 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
         }
       }
-      /* {
-        name: 'apim-portal-poolsetting'
-        properties: {
-          port: frontEndPort
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
-          requestTimeout: requestTimeOut
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-portal-probe')
-          }
-        }
-      } */
     ]
     httpListeners: [
       {
@@ -185,29 +191,32 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
           }
-          hostName: apiHostName
+          sslProfile: {
+            id: resourceId('Microsoft.Network/applicationGateways/sslProfiles', appGwyName, 'sslProfile1')
+          }
+          hostName: externalApiHostName
           requireServerNameIndication: true
           customErrorConfigurations: []
         }
       }
-      /* {
-        name: 'apim-portal-listener'
+      {
+        name: 'internal-apim-gateway-listener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'frontend')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'internal-frontend')
           }
           frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'frontend-port')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'internal-frontend-port')
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-portal-cert')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
           }
-          hostName: portalHostName
+          hostName: internalApiHostName
           requireServerNameIndication: true
           customErrorConfigurations: []
         }
-      } */
+      }
     ]
     urlPathMaps: [
       {
@@ -237,23 +246,35 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           ]
         }
       }
+      {
+        name: 'internal-urlpathmapconfig'
+        properties: {
+          defaultBackendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-backend')
+          }
+          defaultBackendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-poolsetting')
+          }
+          pathRules: [
+            {
+              name: 'internal'
+              properties: {
+                paths: [
+                  '/internal/*'
+                ]
+                backendAddressPool: {
+                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-backend')
+                }
+                backendHttpSettings: {
+                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-poolsetting')
+                }
+              }
+            }
+          ]
+        }
+      }
     ]
     requestRoutingRules: [
-      /* {
-        name: 'apim-portal-rule'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-portal-listener')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-portal-backend')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-portal-poolsetting')
-          }
-        }
-      } */
       {
         name: 'apim-gateway-external-rule'
         properties: {
@@ -266,13 +287,25 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
         }
       }
+      {
+        name: 'apim-gateway-internal-rule'
+        properties: {
+          ruleType: 'PathBasedRouting'
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'internal-apim-gateway-listener')
+          }
+          urlPathMap: {
+            id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', appGwyName, 'internal-urlpathmapconfig')
+          }
+        }
+      }
     ]
     probes: [
       {
         name: 'apim-gateway-probe'
         properties: {
           protocol: 'Https'
-          host: apiHostName
+          host: apimHostName
           path: '/status-0123456789abcdef'
           interval: 30
           timeout: 120
@@ -282,20 +315,6 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           match: {}
         }
       }
-      /* {
-        name: 'apim-portal-probe'
-        properties: {
-          protocol: 'Https'
-          host: portalHostName
-          path: '/signin'
-          interval: 60
-          timeout: 300
-          unhealthyThreshold: 8
-          pickHostNameFromBackendHttpSettings: false
-          minServers: 0
-          match: {}
-        }
-      } */
     ]
     rewriteRuleSets: []
     redirectConfigurations: []
@@ -311,6 +330,67 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
       fileUploadLimitInMb: 100
     }
     customErrorConfigurations: []
+  }
+}
+
+resource appGwyPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+  name: privateDnsZoneName
+}
+
+resource appGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  parent: appGwyPrivateDnsZone
+  name: internalApiHostName
+  properties: {
+    aRecords: [
+      {
+        ipv4Address: appGwy.properties.frontendIPConfigurations[1].properties.privateIPAddress
+      }
+    ]
+    ttl: 3600
+  }
+}
+
+resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'app-gwy-diagnostics'
+  scope: appGwy
+  properties: {
+    logs: [
+      {
+        category: 'ApplicationGatewayAccessLog'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+      {
+        category: 'ApplicationGatewayPerformanceLog'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+      {
+        category: 'ApplicationGatewayFirewallLog'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    workspaceId: workspaceId
   }
 }
 

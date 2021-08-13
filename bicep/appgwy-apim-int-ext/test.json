@@ -1,0 +1,310 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationGateways_appgwy_eidzbqjygqbru_name": {
+            "defaultValue": "appgwy-eidzbqjygqbru",
+            "type": "String"
+        },
+        "virtualNetworks_hub_vnet_eidzbqjygqbru_externalid": {
+            "defaultValue": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/apim-appgwy-cbellee-westus2-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet-eidzbqjygqbru",
+            "type": "String"
+        },
+        "publicIPAddresses_appgwy_pip_eidzbqjygqbru_externalid": {
+            "defaultValue": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/apim-appgwy-cbellee-westus2-rg/providers/Microsoft.Network/publicIPAddresses/appgwy-pip-eidzbqjygqbru",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/applicationGateways",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('applicationGateways_appgwy_eidzbqjygqbru_name')]",
+            "location": "westus2",
+            "properties": {
+                "sku": {
+                    "name": "WAF_v2",
+                    "tier": "WAF_v2",
+                    "capacity": 1
+                },
+                "gatewayIPConfigurations": [
+                    {
+                        "name": "gateway-ip",
+                        "properties": {
+                            "subnet": {
+                                "id": "[concat(parameters('virtualNetworks_hub_vnet_eidzbqjygqbru_externalid'), '/subnets/AppGwySubnet')]"
+                            }
+                        }
+                    }
+                ],
+                "sslCertificates": [
+                    {
+                        "name": "apim-gateway-cert",
+                        "properties": {}
+                    }
+                ],
+                "trustedRootCertificates": [
+                    {
+                        "name": "root-cert",
+                        "properties": {
+                            "data": "MIIDSzCCAjOgAwIBAgIQTMUDN0KwvYtAzZ2orDPVljANBgkqhkiG9w0BAQsFADAgMR4wHAYDVQQEDBVLYWluaUluZHVzdHJpZXNSb290Q0EwHhcNMjEwODEyMDQ1OTEyWhcNMjIwODEyMDUxOTEyWjAgMR4wHAYDVQQEDBVLYWluaUluZHVzdHJpZXNSb290Q0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/1t3oWqtax1V2K9UTVgm5MGhMX46Ua0G7I6/GZ/5yo8FWAxrwGihrGJX3LzX1oJrOKw5V3+uEdHrmnqm/wcpczPsPUjU/OitIOocjhssz+yDs5vQYAv/A1gf51XXZYoFyTprEvzO5ntl543UaEMis74TCVfq0duzUscouuvQvEq8aUvLXKJPjHJQIoW444KglId8275Q1cOSEM7tBfn8nKdR1w5iavzVXnRIfth81yDcRwULWlnahTYyRdZiXADr66DzCQMR8IfmHgA9ETzG//EB459TkMDaXOiobwcN5s0zzuvHGLXp6LHKPuAQ1xSYFmsqP7LwuTjBsuEBSBLoNAgMBAAGjgYAwfjAOBgNVHQ8BAf8EBAMCAYYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMB0GA1UdEQQWMBSCEkthaW5pSW5kdXN0cmllcyBDQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTf1UmbtmBb59/8yTbPgkn/FaeGzzANBgkqhkiG9w0BAQsFAAOCAQEAg/M3/SvkxRUpe9bBoNgYgbbIKQPLcWHAbxbhgmrm1I5xQW+fK/eWkKoLgdbefAalVMHYqpQ19peJxCQynMEIcSMZoo8Zui5mE3O8mFekwcFFhdsf7CZ9voW2k6gqFEO+K67auJAIpYnDvfkcQp+fytPx4Lc0ngxENYa5XfXdF6UCTD2Jacp/rD83OmYFB3s09VVOqmpUET24lto2Q7menF8DzHwizn1tWvK2kiJHiN9a6yQpM0oEZwCeLSlfcoSfFpIec63ZEgjAz3T0soRXqAPb20dADc0uXTbvd/Z+AbjDRaElIvxBsRo+SWi+EcY/fid6eWt4qKLUi5G9wx8+qA=="
+                        }
+                    }
+                ],
+                "trustedClientCertificates": [
+                    {
+                        "name": "rootCACert",
+                        "properties": {
+                            "data": "-----BEGIN CERTIFICATE-----MIIDSzCCAjOgAwIBAgIQTMUDN0KwvYtAzZ2orDPVljANBgkqhkiG9w0BAQsFADAgMR4wHAYDVQQEDBVLYWluaUluZHVzdHJpZXNSb290Q0EwHhcNMjEwODEyMDQ1OTEyWhcNMjIwODEyMDUxOTEyWjAgMR4wHAYDVQQEDBVLYWluaUluZHVzdHJpZXNSb290Q0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/1t3oWqtax1V2K9UTVgm5MGhMX46Ua0G7I6/GZ/5yo8FWAxrwGihrGJX3LzX1oJrOKw5V3+uEdHrmnqm/wcpczPsPUjU/OitIOocjhssz+yDs5vQYAv/A1gf51XXZYoFyTprEvzO5ntl543UaEMis74TCVfq0duzUscouuvQvEq8aUvLXKJPjHJQIoW444KglId8275Q1cOSEM7tBfn8nKdR1w5iavzVXnRIfth81yDcRwULWlnahTYyRdZiXADr66DzCQMR8IfmHgA9ETzG//EB459TkMDaXOiobwcN5s0zzuvHGLXp6LHKPuAQ1xSYFmsqP7LwuTjBsuEBSBLoNAgMBAAGjgYAwfjAOBgNVHQ8BAf8EBAMCAYYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMB0GA1UdEQQWMBSCEkthaW5pSW5kdXN0cmllcyBDQTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTf1UmbtmBb59/8yTbPgkn/FaeGzzANBgkqhkiG9w0BAQsFAAOCAQEAg/M3/SvkxRUpe9bBoNgYgbbIKQPLcWHAbxbhgmrm1I5xQW+fK/eWkKoLgdbefAalVMHYqpQ19peJxCQynMEIcSMZoo8Zui5mE3O8mFekwcFFhdsf7CZ9voW2k6gqFEO+K67auJAIpYnDvfkcQp+fytPx4Lc0ngxENYa5XfXdF6UCTD2Jacp/rD83OmYFB3s09VVOqmpUET24lto2Q7menF8DzHwizn1tWvK2kiJHiN9a6yQpM0oEZwCeLSlfcoSfFpIec63ZEgjAz3T0soRXqAPb20dADc0uXTbvd/Z+AbjDRaElIvxBsRo+SWi+EcY/fid6eWt4qKLUi5G9wx8+qA==-----END CERTIFICATE-----"
+                        }
+                    }
+                ],
+                "sslProfiles": [
+                    {
+                        "name": "sslProfile1",
+                        "properties": {
+                            "clientAuthConfiguration": {
+                                "verifyClientCertIssuerDN": true
+                            },
+                            "trustedClientCertificates": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/trustedClientCertificates/rootCACert')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "frontend",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[parameters('publicIPAddresses_appgwy_pip_eidzbqjygqbru_externalid')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "internal-frontend",
+                        "properties": {
+                            "privateIPAddress": "10.1.2.200",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[concat(parameters('virtualNetworks_hub_vnet_eidzbqjygqbru_externalid'), '/subnets/AppGwySubnet')]"
+                            }
+                        }
+                    }
+                ],
+                "frontendPorts": [
+                    {
+                        "name": "frontend-port",
+                        "properties": {
+                            "port": 443
+                        }
+                    },
+                    {
+                        "name": "internal-frontend-port",
+                        "properties": {
+                            "port": 8080
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "apim-backend",
+                        "properties": {
+                            "backendAddresses": [
+                                {
+                                    "fqdn": "apim.internal.kainiindustries.net"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sinkpool",
+                        "properties": {
+                            "backendAddresses": []
+                        }
+                    }
+                ],
+                "backendHttpSettingsCollection": [
+                    {
+                        "name": "apim-gateway-poolsetting",
+                        "properties": {
+                            "port": 443,
+                            "protocol": "Https",
+                            "cookieBasedAffinity": "Disabled",
+                            "hostName": "apim.internal.kainiindustries.net",
+                            "pickHostNameFromBackendAddress": false,
+                            "requestTimeout": 180,
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/probes/apim-gateway-probe')]"
+                            },
+                            "trustedRootCertificates": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/trustedRootCertificates/root-cert')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "httpListeners": [
+                    {
+                        "name": "internal-apim-gateway-listener",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/frontendIPConfigurations/internal-frontend')]"
+                            },
+                            "frontendPort": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/frontendPorts/internal-frontend-port')]"
+                            },
+                            "protocol": "Https",
+                            "sslCertificate": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/sslCertificates/apim-gateway-cert')]"
+                            },
+                            "hostName": "api.internal.kainiindustries.net",
+                            "hostNames": [],
+                            "requireServerNameIndication": true,
+                            "customErrorConfigurations": []
+                        }
+                    },
+                    {
+                        "name": "apim-gateway-listener",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/frontendIPConfigurations/frontend')]"
+                            },
+                            "frontendPort": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/frontendPorts/frontend-port')]"
+                            },
+                            "protocol": "Https",
+                            "sslCertificate": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/sslCertificates/apim-gateway-cert')]"
+                            },
+                            "sslProfile": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/sslProfiles/sslProfile1')]"
+                            },
+                            "hostName": "api.kainiindustries.net",
+                            "hostNames": [],
+                            "requireServerNameIndication": true
+                        }
+                    }
+                ],
+                "urlPathMaps": [
+                    {
+                        "name": "external-urlpathmapconfig",
+                        "properties": {
+                            "defaultBackendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendAddressPools/apim-backend')]"
+                            },
+                            "defaultBackendHttpSettings": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendHttpSettingsCollection/apim-gateway-poolsetting')]"
+                            },
+                            "pathRules": [
+                                {
+                                    "name": "external",
+                                    "properties": {
+                                        "paths": [
+                                            "/external/*"
+                                        ],
+                                        "backendAddressPool": {
+                                            "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendAddressPools/apim-backend')]"
+                                        },
+                                        "backendHttpSettings": {
+                                            "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendHttpSettingsCollection/apim-gateway-poolsetting')]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "internal-urlpathmapconfig",
+                        "properties": {
+                            "defaultBackendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendAddressPools/apim-backend')]"
+                            },
+                            "defaultBackendHttpSettings": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendHttpSettingsCollection/apim-gateway-poolsetting')]"
+                            },
+                            "pathRules": [
+                                {
+                                    "name": "internal",
+                                    "properties": {
+                                        "paths": [
+                                            "/internal/*"
+                                        ],
+                                        "backendAddressPool": {
+                                            "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendAddressPools/apim-backend')]"
+                                        },
+                                        "backendHttpSettings": {
+                                            "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/backendHttpSettingsCollection/apim-gateway-poolsetting')]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "requestRoutingRules": [
+                    {
+                        "name": "apim-gateway-external-rule",
+                        "properties": {
+                            "ruleType": "PathBasedRouting",
+                            "httpListener": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/httpListeners/apim-gateway-listener')]"
+                            },
+                            "urlPathMap": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/urlPathMaps/external-urlpathmapconfig')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "apim-gateway-internal-rule",
+                        "properties": {
+                            "ruleType": "PathBasedRouting",
+                            "httpListener": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/httpListeners/internal-apim-gateway-listener')]"
+                            },
+                            "urlPathMap": {
+                                "id": "[concat(resourceId('Microsoft.Network/applicationGateways', parameters('applicationGateways_appgwy_eidzbqjygqbru_name')), '/urlPathMaps/internal-urlpathmapconfig')]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "apim-gateway-probe",
+                        "properties": {
+                            "protocol": "Https",
+                            "host": "apim.internal.kainiindustries.net",
+                            "path": "/status-0123456789abcdef",
+                            "interval": 30,
+                            "timeout": 120,
+                            "unhealthyThreshold": 8,
+                            "pickHostNameFromBackendHttpSettings": false,
+                            "minServers": 0,
+                            "match": {}
+                        }
+                    }
+                ],
+                "rewriteRuleSets": [],
+                "redirectConfigurations": [],
+                "privateLinkConfigurations": [],
+                "webApplicationFirewallConfiguration": {
+                    "enabled": true,
+                    "firewallMode": "Prevention",
+                    "ruleSetType": "OWASP",
+                    "ruleSetVersion": "3.0",
+                    "disabledRuleGroups": [],
+                    "exclusions": [],
+                    "requestBodyCheck": true,
+                    "maxRequestBodySizeInKb": 128,
+                    "fileUploadLimitInMb": 100
+                },
+                "customErrorConfigurations": []
+            }
+        }
+    ]
+}
