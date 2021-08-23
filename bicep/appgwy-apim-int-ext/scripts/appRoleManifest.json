@@ -1,9 +1,0 @@
-[{
-    "allowedMemberTypes": [
-      "Application"
-    ],
-    "description": "Api.Caller can call the API",
-    "displayName": "Api.Caller",
-    "isEnabled": "true",
-    "value": "api.caller"
-}]

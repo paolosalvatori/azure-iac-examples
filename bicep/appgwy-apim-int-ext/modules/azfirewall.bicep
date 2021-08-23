@@ -1,6 +1,8 @@
 param firewallSubnetRef string
 param sourceAddressRangePrefix array
 param suffix string
+param retentionInDays int = 7
+param workspaceId string 
 
 var publicIpName = 'azfw-pip-${suffix}'
 var firewallName = 'azfw-${suffix}'
@@ -128,14 +130,50 @@ resource azFirewall 'Microsoft.Network/azureFirewalls@2018-11-01' = {
               ]
               targetFqdns: [
                 '*azurecr.io'
-                '*blob.core.windows.net'
+                '*blob.${environment().suffixes.storage}'
                 '*.trafficmanager.net'
                 '*.azureedge.net'
                 '*.microsoft.com'
-                '*.core.windows.net'
+                '*.${environment().suffixes.storage}'
                 'aka.ms'
                 '*.azure-automation.net'
                 '*.azure.com'
+              ]
+            }
+          ]
+        }
+      }
+      {
+        name: 'windows-update'
+        properties: {
+          priority: 400
+          action: {
+            type: 'Allow'
+          }
+          rules: [
+            {
+              name: 'allow-windows-update'
+              sourceAddresses: sourceAddressRangePrefix
+              fqdnTags: [
+                'WindowsUpdate'
+              ]
+            }
+          ]
+        }
+      }
+      {
+        name: 'ntp'
+        properties: {
+          priority: 500
+          action: {
+            type: 'Allow'
+          }
+          rules: [
+            {
+              name: 'allow-ntp'
+              sourceAddresses: sourceAddressRangePrefix
+              fqdnTags: [
+                'Internet'
               ]
             }
           ]
@@ -167,6 +205,50 @@ resource azFirewall 'Microsoft.Network/azureFirewalls@2018-11-01' = {
         }
       }
     ]
+  }
+}
+
+resource azFirewallDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'az-fw-diagnostics'
+  scope: azFirewall
+  properties: {
+    logs: [
+      {
+        category: 'AzureFirewallApplicationRule'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+      {
+        category: 'AzureFirewallNetworkRule'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+      {
+        category: 'AzureFirewallDnsProxy'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          days: retentionInDays
+          enabled: true
+        }
+      }
+    ]
+    workspaceId: workspaceId
   }
 }
 

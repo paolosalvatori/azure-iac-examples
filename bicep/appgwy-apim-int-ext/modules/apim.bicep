@@ -2,9 +2,11 @@ param apimSku object = {
   name: 'Developer'
   capacity: 1
 }
-param gatewayHostName string = 'apim.internal'
-param apiCertificatePassword string
-param apiCertificate string
+param proxyHostName string = 'proxy'
+param portalHostName string = 'portal'
+param managementHostName string = 'management'
+param certificatePassword string
+param certificate string
 param subnetId string
 param location string
 param deployCertificates bool = false
@@ -20,11 +22,27 @@ var apimName = 'api-mgmt-${suffix}'
 var hostNameConfigurations = [
   {
     type: 'Proxy'
-    encodedCertificate: apiCertificate
+    encodedCertificate: certificate
     defaultSslBinding: true
-    hostName: gatewayHostName
+    hostName: proxyHostName
     negotiateClientCertificate: false
-    certificatePassword: apiCertificatePassword
+    certificatePassword: certificatePassword
+  }
+  {
+    type: 'Portal'
+    encodedCertificate: certificate
+    defaultSslBinding: false
+    hostName: portalHostName
+    negotiateClientCertificate: false
+    certificatePassword: certificatePassword
+  }
+  {
+    type: 'Management'
+    encodedCertificate: certificate
+    defaultSslBinding: false
+    hostName: managementHostName
+    negotiateClientCertificate: false
+    certificatePassword: certificatePassword
   }
 ]
 
@@ -72,122 +90,13 @@ resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-previe
   ]
 }
 
-/* 
-resource apimExternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
-  parent: apim
-  name: 'external-api'
-  properties: {
-    displayName: 'External API'
-    subscriptionRequired: false
-    apiRevision: '1'
-    serviceUrl: '${webAppUrl}/api/external'
-    path: 'external'
-    protocols: [
-      'https'
-    ]
-  }
-} */
-
-/* resource apimInternalApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
-  parent: apim
-  name: 'internal-api'
-  properties: {
-    displayName: 'Internal API'
-    subscriptionRequired: false
-    apiRevision: '1'
-    serviceUrl: '${webAppUrl}/api/internal'
-    path: 'internal'
-    protocols: [
-      'https'
-    ]
-  }
-} */
-
-/* resource apimExternalApiTest 'Microsoft.ApiManagement/service/apis/operations@2021-01-01-preview' = {
-  parent: apimExternalApi
-  name: 'external-test-call'
-  properties: {
-    displayName: 'External API test call'
-    method: 'POST'
-    urlTemplate: '/'
-    templateParameters: []
-    request: {
-      queryParameters: [
-        {
-          name: 'name'
-          type: 'string'
-          values: [
-            'myname'
-          ]
-        }
-      ]
-      headers: []
-      representations: []
-    }
-    responses: [
-      {
-        statusCode: 200
-        representations: [
-          {
-            contentType: 'application/json'
-            sample: '{"name":"dave-external"}'
-          }
-        ]
-        headers: []
-      }
-    ]
-  }
-  dependsOn: [
-    apim
-  ]
-}
-
-resource apimInternalApiTest 'Microsoft.ApiManagement/service/apis/operations@2021-01-01-preview' = {
-  parent: apimInternalApi
-  name: 'internal-test-call'
-  properties: {
-    displayName: 'Internal API test call'
-    method: 'POST'
-    urlTemplate: '/'
-    templateParameters: []
-    request: {
-      queryParameters: [
-        {
-          name: 'name'
-          type: 'string'
-          values: [
-            'myname'
-          ]
-        }
-      ]
-      headers: []
-      representations: []
-    }
-    responses: [
-      {
-        statusCode: 200
-        representations: [
-          {
-            contentType: 'application/json'
-            sample: '{"name":"dave-internal"}'
-          }
-        ]
-        headers: []
-      }
-    ]
-  }
-  dependsOn: [
-    apim
-  ]
-} */
-
 resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
   name: privateDnsZoneName
 }
 
-resource apimGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+resource apimProxyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
-  name: gatewayHostName
+  name: 'proxy'
   properties: {
     aRecords: [
       {
@@ -198,7 +107,7 @@ resource apimGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   }
 }
 
-/* resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
   name: 'portal'
   properties: {
@@ -209,7 +118,20 @@ resource apimGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
     ]
     ttl: 3600
   }
-} */
+}
+
+resource apimManagementDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+  parent: apimPrivateDnsZone
+  name: 'management'
+  properties: {
+    aRecords: [
+      {
+        ipv4Address: apim.properties.privateIPAddresses[0]
+      }
+    ]
+    ttl: 3600
+  }
+}
 
 resource ApimHubVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${apimPrivateDnsZone.name}/${apimPrivateDnsZone.name}-hub-link'
@@ -266,3 +188,4 @@ resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
 output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]
 output apimDnsName array = split(replace(apim.properties.gatewayUrl, 'https://', ''), '.')
 output apimName string = apim.name
+output apimManagedIdentityPrincipalId string = apim.identity.principalId

@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "17752911214041108745"
+    }
+  },
   "parameters": {
     "accountName": {
       "type": "string",
@@ -19,6 +26,7 @@
       "defaultValue": "Dev",
       "allowedValues": [
         "Dev",
+        "Test",
         "Prod"
       ]
     }
@@ -34,8 +42,7 @@
       "name": "[parameters('accountName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "[variables('storageAccountSku')]",
-        "tier": "Premium"
+        "name": "[variables('storageAccountSku')]"
       },
       "kind": "StorageV2",
       "properties": {
@@ -63,6 +70,13 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "17123081346131359562"
+            }
+          },
           "parameters": {
             "location": {
               "type": "string"
@@ -80,7 +94,7 @@
           "resources": [
             {
               "type": "Microsoft.Web/serverfarms",
-              "apiVersion": "2020-06-01",
+              "apiVersion": "2020-01-01",
               "name": "[variables('appServicePlanName')]",
               "location": "[parameters('location')]",
               "sku": {
@@ -114,7 +128,7 @@
   "outputs": {
     "appHostName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(resourceGroup().id, 'Microsoft.Resources/deployments', 'app-service'), '2019-10-01').outputs.appServiceHostName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'app-service'), '2019-10-01').outputs.appServiceHostName.value]"
     }
   }
 }

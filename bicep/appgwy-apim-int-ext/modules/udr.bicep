@@ -54,3 +54,20 @@ resource defaultFirewallRoute 'Microsoft.Network/routeTables@2021-02-01' = {
     ]
   }
 }
+
+resource appGwyFirewallRoute 'Microsoft.Network/routeTables@2021-02-01' = {
+  name: 'appgwy-firewall-rt-${suffix}'
+  location: resourceGroup().location
+  properties: {
+    disableBgpRoutePropagation: false
+    routes: [
+      {
+        name: 'appgwy-fw-route'
+        properties: {
+          addressPrefix: '0.0.0.0/0'
+          nextHopType: 'Internet'
+        }
+      }
+    ]
+  }
+}

@@ -1,13 +1,13 @@
 param accountName string = 'stor${uniqueString(resourceGroup().id)}'
 param location string = resourceGroup().location
 param appName string = 'my-app-cbellee'
-param environmentName string {
-  allowed: [
-    'Dev'
-    'Prod'
-  ]
-  default: 'Dev'
-}
+
+@allowed([
+  'Dev'
+  'Test'
+  'Prod'
+])
+param environmentName string = 'Dev'
 
 var storageAccountSku = (environmentName == 'Prod') ? 'Premium_LRS' : 'Standard_LRS'
 
@@ -16,7 +16,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2020-08-01-preview' =
   location: location
   sku: {
     name: storageAccountSku
-    tier: 'Premium'
   }
   kind: 'StorageV2'
   properties: {

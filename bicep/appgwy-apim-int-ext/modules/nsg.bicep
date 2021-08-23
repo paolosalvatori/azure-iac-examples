@@ -124,3 +124,5 @@ resource apimSubnetNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
     ]
   }
 }
+
+output nsgs array = concat(array(apimSubnetNsg.id),array(appGatewaySubnetNsg.id))
