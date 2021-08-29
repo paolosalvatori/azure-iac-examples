@@ -7,6 +7,8 @@ param vmSku string = 'Standard_F8s_v2'
 param addressPrefix string
 param subnets array
 param sshPublicKey string
+param windowsAdminUserName string
+param windowsAdminPassword string
 
 module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
@@ -45,6 +47,8 @@ module aks './modules/aks.bicep' = {
   ]
   params: {
     prefix: prefix
+    windowsAdminPassword: windowsAdminPassword
+    windowsAdminUserName: windowsAdminUserName
     logAnalyticsWorkspaceId: wks.outputs.workspaceId
     aksDnsPrefix: prefix
     aksAgentOsDiskSizeGB: 60
