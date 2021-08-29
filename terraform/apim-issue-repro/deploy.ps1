@@ -1,5 +1,6 @@
 $certPassword = 'M1cr0soft123'
 $domainName = 'kainiindustries.net'
+$rgName = 'apim-repro-env-rg'
 $sans = "api.$domainName", "apim.$domainName", "apim-proxy.$domainName", "developer.apim.$domainName", "portal.apim$domainName", "management.apim.$domainName", "proxy.internal.$domainName", "portal.internal.$domainName", "management.internal.$domainName"
 $sans2 = "apim-proxy.internal.$domainName"
 
@@ -28,5 +29,5 @@ $env:TF_LOG="DEBUG"
 $env:TF_LOG_PATH="./debug_log.json"
 
 terraform init
-terraform plan -var apim_cert_password=$certPassword -out=tfplan
+terraform plan -var apim_cert_password=$certPassword -out=tfplan -var domain_name=$domainName -var rg_name=$rgName
 terraform apply tfplan

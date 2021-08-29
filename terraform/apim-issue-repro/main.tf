@@ -234,7 +234,7 @@ resource "azurerm_api_management_custom_domain" "apim_domain" {
     certificate_password = var.apim_cert_password
     default_ssl_binding  = true
   }
-// uncomment to add a new custom domain for the ApiM Proxy 
+// uncomment to add an additional custom domain for the Api Management Proxy 
 /*     proxy {
     host_name            = "proxy.internal.${var.domain_name}"
     key_vault_id         = azurerm_api_management_certificate.apim-cert.key_vault_secret_id
