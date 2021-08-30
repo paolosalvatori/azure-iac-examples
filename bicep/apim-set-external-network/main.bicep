@@ -2,10 +2,12 @@ param location string = 'australiasoutheast'
 param vnetName string = 'apim-pb-vnet'
 param subnetName string = 'apim-subnet'
 param publicIpName string = 'apim-pip'
+param subnetAddressPrefix string = '10.0.0.0/24'
+param updateApim bool = false
 param apimProperties object = {
   name: 'apim-pb'
   sku: {
-    sku: 'Premium'
+    name: 'Premium'
     capacity: 1
   }
   publisherEmail: 'cbellee@microsoft.com'
@@ -48,23 +50,18 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: vnetName
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' existing = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
   parent: vnet
   name: subnetName
-}
-
-resource subnetUpdate 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
-  parent: vnet
-  name: subnet.name
   properties: {
-    addressPrefix: subnet.properties.addressPrefix
+    addressPrefix: subnetAddressPrefix
     networkSecurityGroup: {
       id: apimNsgModule.outputs.nsgId
     }
   }
 }
 
-resource apim 'Microsoft.ApiManagement/service@2020-12-01' = {
+resource apim 'Microsoft.ApiManagement/service@2020-12-01' = if (updateApim == true) {
   name: apimProperties.name
   location: location
   tags: tags
