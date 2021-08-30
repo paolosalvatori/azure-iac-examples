@@ -18,10 +18,6 @@ param (
 
     [Parameter()]
     [String]
-    $subnetAddressPrefix = '10.0.0.0/24',
-
-    [Parameter()]
-    [String]
     $publicIpName = 'apim-pip',
 
     [Parameter()]

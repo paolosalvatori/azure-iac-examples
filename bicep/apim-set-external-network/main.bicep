@@ -1,7 +1,6 @@
 param location string = 'australiasoutheast'
 param vnetName string = 'apim-pb-vnet'
 param subnetName string = 'apim-subnet'
-param subnetAddressPrefix string = '10.0.0.0/24'
 param publicIpName string = 'apim-pip'
 param apimProperties object = {
   name: 'apim-pb'
