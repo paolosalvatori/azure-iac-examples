@@ -26,7 +26,7 @@ param (
     $publicIpName,
 
     [Parameter()]
-    [Boolean]
+    [System.Boolean]
     $isUpdateApim = $false,
 
     [Parameter(Mandatory = $true)]
@@ -81,7 +81,7 @@ param (
     PS C:\> ./deploy.ps1 -location 'australiaeast' -resourceGroupName 'my-rg' -vnetName 'apim-vnet' -subnetName 'apim-subnet -publicIpName 'apim-pip -apimName 'my-apim' -apimSku 'Premium' -apimCapacity 1 -publisherEmail 'me@mycompany.net' -publisherName 'my company' -nsgName 'apim-nsg -domainLabelPrefix 'apim-external' -tags @{'environment'='uat';'costcentre'='12345'} 
     Runs the script with specificed inputs as a 'WhatIf' deployment
 .EXAMPLE
-    PS C:\> ./deploy.ps1 -location 'australiaeast' -resourceGroupName 'my-rg' -vnetName 'apim-vnet' -subnetName 'apim-subnet -publicIpName 'apim-pip -apimName 'my-apim' -apimSku 'Premium' -apimCapacity 1 -publisherEmail 'me@mycompany.net' -publisherName 'my company' -nsgName 'apim-nsg -domainLabelPrefix 'apim-external' -tags @{'environment'='uat';'costcentre'='12345'} -isWhatIf:$false
+    PS C:\> ./deploy.ps1 -location 'australiaeast' -resourceGroupName 'my-rg' -vnetName 'apim-vnet' -subnetName 'apim-subnet -publicIpName 'apim-pip -apimName 'my-apim' -apimSku 'Premium' -apimCapacity 1 -publisherEmail 'me@mycompany.net' -publisherName 'my company' -nsgName 'apim-nsg -domainLabelPrefix 'apim-external' -tags @{'environment'='uat';'costcentre'='12345'} -isWhatIf:$false -isUpdateApim $true
     Runs the script with specificed inputs and deploys/updates the resources in the bicep template
 #>
 
@@ -115,11 +115,11 @@ New-AzResourceGroupDeployment `
     -nsgName 'apim-nsg' `
     -domainLabelPrefix 'cbellee-apim-external' `
     -tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
-    -isUpdateApim $isUpdateApim
+    -isUpdateApim $false
 #>
 
 <#
-# example deployment
+# example deployment that skips changing APIM configuration
 ./deploy.ps1 -location 'australiasoutheast' `
     -resourceGroupName 'apim-pb-rg' `
     -vnetName 'apim-pb-vnet' `
@@ -134,6 +134,25 @@ New-AzResourceGroupDeployment `
     -nsgName 'apim-nsg' `
     -domainLabelPrefix 'cbellee-apim-external' `
     -tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
-    -isUpdateApim $isUpdateApim `
+    -isWhatIf:$false     
+#>
+
+<#
+# example deployment that skips changing APIM configuration
+./deploy.ps1 -location 'australiasoutheast' `
+    -resourceGroupName 'apim-pb-rg' `
+    -vnetName 'apim-pb-vnet' `
+    -subnetName 'apim-subnet' `
+    -subnetAddressPrefix '10.0.0.0/24' `
+    -publicIpName 'apim-pip' `
+    -apimName 'apim-pb-inst' `
+    -apimSku 'Premium' `
+    -apimCapacity 1 `
+    -publisherEmail 'me@mycompany.net' `
+    -publisherName 'myCompany' `
+    -nsgName 'apim-nsg' `
+    -domainLabelPrefix 'cbellee-apim-external' `
+    -tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
+    -isUpdateApim $true `
     -isWhatIf:$false     
 #>
