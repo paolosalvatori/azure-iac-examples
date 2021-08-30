@@ -1,52 +1,57 @@
 [CmdletBinding()]
 param (
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("australiaeast", "australiasoutheast")]
     [String]
-    $location = 'australiasoutheast',
+    $location,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $resourceGroupName = 'apim-pb-rg',
+    $resourceGroupName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $vnetName = 'apim-pb-vnet',
+    $vnetName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $subnetName = 'apim-subnet',
+    $subnetName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $publicIpName = 'apim-pip',
+    $publicIpName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $apimName = 'apim-pb',
+    $apimName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("Premium", "Developer")]
     [String]
-    $apimSku = 'Premium',
+    $apimSku,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
+    [ValidateCount(1,10)]
     [Int32]
-    $apimCapacity = 1,
+    $apimCapacity,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
+    [ValidatePattern("^\w+([-+.’]\w+)@\w+([-.]\w+).\w+([-.]\w+)*$")]
     [String]
-    $publisherEmail = 'cbellee@microsoft.com',
+    $publisherEmail,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
+    [ValidatePattern("^\w+([-+.’]\w+)@\w+([-.]\w+).\w+([-.]\w+)*$")]
     [String]
-    $publisherName = 'KainiIndustries',
+    $publisherName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $nsgName = 'apim-nsg',
+    $nsgName,
 
-    [Parameter()]
+    [Parameter(Mandatory=$true)]
     [String]
-    $domainLabelPrefix = 'apim-pb',
+    $domainLabelPrefix,
 
     [Parameter()]
     [System.Object]
