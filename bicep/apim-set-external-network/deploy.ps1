@@ -3,27 +3,27 @@ param (
     [Parameter(Mandatory = $true)]
     [ValidateSet("australiaeast", "australiasoutheast")]
     [String]
-    $location,
+    $Location,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $resourceGroupName,
+    $ResourceGroupName,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $vnetName,
+    $VnetName,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $subnetName,
+    $SubnetName,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $subnetAddressPrefix,
+    $SubnetAddressPrefix,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $publicIpName,
+    $PublicIpName,
 
     [Parameter()]
     [Switch]
@@ -31,38 +31,38 @@ param (
 
     [Parameter(Mandatory = $true)]
     [String]
-    $apimName,
+    $ApimName,
 
     [Parameter(Mandatory = $true)]
     [ValidateSet("Premium", "Developer")]
     [String]
-    $apimSku,
+    $ApimSku,
 
     [Parameter(Mandatory = $true)]
     [ValidateRange(1, 10)]
     [Int32]
-    $apimCapacity,
+    $ApimCapacity,
 
     [Parameter(Mandatory = $true)]
     [ValidatePattern("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$")]
     [String]
-    $publisherEmail,
+    $PublisherEmail,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $publisherName,
+    $PublisherName,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $nsgName,
+    $NsgName,
 
     [Parameter(Mandatory = $true)]
     [String]
-    $domainLabelPrefix,
+    $DomainLabelPrefix,
 
     [Parameter()]
     [System.Object]
-    $tags = @{
+    $Tags = @{
         'environment' = 'uat'
         'costcentre'  = '1234567890'
     }
