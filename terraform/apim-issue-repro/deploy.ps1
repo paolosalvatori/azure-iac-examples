@@ -1,6 +1,6 @@
 $certPassword = 'M1cr0soft123'
 $domainName = 'kainiindustries.net'
-$rgName = 'apim-repro-env-rg'
+$rgName = 'apim-test-rg'
 $sans = "api.$domainName", "apim.$domainName", "apim-proxy.$domainName", "developer.apim.$domainName", "portal.apim$domainName", "management.apim.$domainName", "proxy.internal.$domainName", "portal.internal.$domainName", "management.internal.$domainName"
 $sans2 = "apim-proxy.internal.$domainName"
 

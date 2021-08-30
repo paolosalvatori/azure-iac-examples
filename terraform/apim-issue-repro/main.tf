@@ -9,10 +9,6 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-locals {
-  postfix = substr(sha1(var.rg_name), 0, 8)
-}
-
 resource "azurerm_resource_group" "rg" {
   name     = var.rg_name
   location = var.location
@@ -20,7 +16,7 @@ resource "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "apim_vnet" {
   resource_group_name = azurerm_resource_group.rg.name
-  name                = "${var.vnet_name}-${local.postfix}"
+  name                = "${var.vnet_name}-${substr(sha1(azurerm_resource_group.rg.id), 0, 8)}"
   address_space       = ["192.168.0.0/16"]
   location            = azurerm_resource_group.rg.location
   subnet {
@@ -35,7 +31,7 @@ resource "azurerm_virtual_network" "apim_vnet" {
 }
 
 resource "azurerm_key_vault" "kv" {
-  name                        = "${var.key_vault_name}-${local.postfix}"
+  name                        = "${var.key_vault_name}-${substr(sha1(azurerm_resource_group.rg.id), 0, 8)}"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
   enabled_for_disk_encryption = true
@@ -159,7 +155,7 @@ resource "azurerm_api_management" "apim" {
   identity {
     type = "SystemAssigned"
   }
-  name                 = "${var.apim_name}-${local.postfix}"
+  name                 = "${var.apim_name}-${substr(sha1(azurerm_resource_group.rg.id), 0, 8)}"
   resource_group_name  = azurerm_resource_group.rg.name
   location             = azurerm_resource_group.rg.location
   virtual_network_type = "External"
@@ -241,4 +237,3 @@ resource "azurerm_api_management_custom_domain" "apim_domain" {
     certificate_password = var.apim_cert_password
   } */
 }
-
