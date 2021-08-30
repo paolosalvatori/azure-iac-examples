@@ -73,6 +73,7 @@ param (
     Script to deploy Bicep temaplate which updates a specific API Management Instance to use an External Public IP
 .DESCRIPTION
     Script to deploy Bicep temaplate which updates a specific API Management Instance to use an External Public IP
+    The deployment also creates a subnet in the specified vnet within the same resource group
 .EXAMPLE
     # example test deployment whaivch shows only the potential changes - note the -WhatIf switch is specified when calling the script
         ./deploy.ps1 -location 'australiasoutheast' `
