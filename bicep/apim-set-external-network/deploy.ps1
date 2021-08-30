@@ -74,11 +74,55 @@ param (
 .DESCRIPTION
     Script to deploy Bicep temaplate which updates a specific API Management Instance to use an External Public IP
 .EXAMPLE
-    PS C:\> ./deploy.ps1 -location 'australiaeast' -resourceGroupName 'my-rg' -vnetName 'apim-vnet' -subnetName 'apim-subnet -publicIpName 'apim-pip -apimName 'my-apim' -apimSku 'Premium' -apimCapacity 1 -publisherEmail 'me@mycompany.net' -publisherName 'my company' -nsgName 'apim-nsg -domainLabelPrefix 'apim-external' -tags @{'environment'='uat';'costcentre'='12345'} 
-    Runs the script with specificed inputs as a 'WhatIf' deployment
+    # example test deployment whaivch shows only the potential changes - note the -WhatIf switch is specified when calling the script
+        ./deploy.ps1 -location 'australiasoutheast' `
+        -ResourceGroupName 'apim-pb-rg' `
+        -VnetName 'apim-pb-vnet' `
+        -SubnetName 'apim-subnet' `
+        -SubnetAddressPrefix '10.0.0.0/24' `
+        -PublicIpName 'apim-pip' `
+        -ApimName 'apim-pb-inst' `
+        -ApimSku 'Premium' `
+        -ApimCapacity 1 `
+        -PublisherEmail 'me@mycompany.net' `
+        -PublisherName 'myCompany' `
+        -NsgName 'apim-nsg' `
+        -DomainLabelPrefix 'cbellee-apim-external' `
+        -Tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
+        -WhatIf
 .EXAMPLE
-    PS C:\> ./deploy.ps1 -location 'australiaeast' -resourceGroupName 'my-rg' -vnetName 'apim-vnet' -subnetName 'apim-subnet -publicIpName 'apim-pip -apimName 'my-apim' -apimSku 'Premium' -apimCapacity 1 -publisherEmail 'me@mycompany.net' -publisherName 'my company' -nsgName 'apim-nsg -domainLabelPrefix 'apim-external' -tags @{'environment'='uat';'costcentre'='12345'} -isWhatIf:$false -isUpdateApim $true
-    Runs the script with specificed inputs and deploys/updates the resources in the bicep template
+     example deployment that adds the subnet & NSG, but skips changing APIM configuration
+    ./deploy.ps1 -location 'australiasoutheast' `
+        -ResourceGroupName 'apim-pb-rg' `
+        -VnetName 'apim-pb-vnet' `
+        -SubnetName 'apim-subnet' `
+        -SubnetAddressPrefix '10.0.0.0/24' `
+        -PublicIpName 'apim-pip' `
+        -ApimName 'apim-pb-inst' `
+        -ApimSku 'Premium' `
+        -ApimCapacity 1 `
+        -PublisherEmail 'me@mycompany.net' `
+        -PublisherName 'myCompany' `
+        -NsgName 'apim-nsg' `
+        -DomainLabelPrefix 'cbellee-apim-external' `
+        -tags @{'environment' = 'uat'; 'costcentre' = '12345' } 
+.EXAMPLE
+    # example deployment that includes the change to APIM - note the '-UpdateApim' switch
+    ./deploy.ps1 -location 'australiasoutheast' `
+        -ResourceGroupName 'apim-pb-rg' `
+        -VnetName 'apim-pb-vnet' `
+        -SubnetName 'apim-subnet' `
+        -SubnetAddressPrefix '10.0.0.0/24' `
+        -PublicIpName 'apim-pip' `
+        -ApimName 'apim-pb-inst' `
+        -ApimSku 'Premium' `
+        -ApimCapacity 1 `
+        -PublisherEmail 'me@mycompany.net' `
+        -PublisherName 'myCompany' `
+        -NsgName 'apim-nsg' `
+        -DomainLabelPrefix 'cbellee-apim-external' `
+        -Tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
+        -UpdateApim 
 #>
 
 #Requires -Module @{ ModuleName = 'Az'; ModuleVersion = '5.6.0' }
@@ -93,59 +137,3 @@ New-AzResourceGroupDeployment `
     -UpdateApim $UpdateApim.IsPresent `
     -ApimProperties @{name = $apimName ; sku = @{name = $apimSku; capacity = $apimCapacity } ; publisherEmail = $publisherEmail ; publisherName = $publisherName } `
     -Verbose
-
-<#
-# example test deployment whaivch shows only the potential changes - note the -WhatIf switch is specified when calling the script
-./deploy.ps1 -location 'australiasoutheast' `
-    -ResourceGroupName 'apim-pb-rg' `
-    -VnetName 'apim-pb-vnet' `
-    -SubnetName 'apim-subnet' `
-    -SubnetAddressPrefix '10.0.0.0/24' `
-    -PublicIpName 'apim-pip' `
-    -ApimName 'apim-pb-inst' `
-    -ApimSku 'Premium' `
-    -ApimCapacity 1 `
-    -PublisherEmail 'me@mycompany.net' `
-    -PublisherName 'myCompany' `
-    -NsgName 'apim-nsg' `
-    -DomainLabelPrefix 'cbellee-apim-external' `
-    -Tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
-    -WhatIf
-#>
-
-<#
-# example deployment that adds the subnet & NSG, but skips changing APIM configuration
-./deploy.ps1 -location 'australiasoutheast' `
-    -ResourceGroupName 'apim-pb-rg' `
-    -VnetName 'apim-pb-vnet' `
-    -SubnetName 'apim-subnet' `
-    -SubnetAddressPrefix '10.0.0.0/24' `
-    -PublicIpName 'apim-pip' `
-    -ApimName 'apim-pb-inst' `
-    -ApimSku 'Premium' `
-    -ApimCapacity 1 `
-    -PublisherEmail 'me@mycompany.net' `
-    -PublisherName 'myCompany' `
-    -NsgName 'apim-nsg' `
-    -DomainLabelPrefix 'cbellee-apim-external' `
-    -tags @{'environment' = 'uat'; 'costcentre' = '12345' }    
-#>
-
-<#
-# example deployment that includes the change to APIM - note the '-UpdateApim' switch
-./deploy.ps1 -location 'australiasoutheast' `
-    -ResourceGroupName 'apim-pb-rg' `
-    -VnetName 'apim-pb-vnet' `
-    -SubnetName 'apim-subnet' `
-    -SubnetAddressPrefix '10.0.0.0/24' `
-    -PublicIpName 'apim-pip' `
-    -ApimName 'apim-pb-inst' `
-    -ApimSku 'Premium' `
-    -ApimCapacity 1 `
-    -PublisherEmail 'me@mycompany.net' `
-    -PublisherName 'myCompany' `
-    -NsgName 'apim-nsg' `
-    -DomainLabelPrefix 'cbellee-apim-external' `
-    -Tags @{'environment' = 'uat'; 'costcentre' = '12345' } `
-    -UpdateApim 
-#>
