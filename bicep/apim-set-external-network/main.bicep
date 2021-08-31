@@ -1,27 +1,13 @@
-param location string = 'australiasoutheast'
-param vnetName string = 'apim-pb-vnet'
-param subnetName string = 'apim-subnet'
-param publicIpName string = 'apim-pip'
-param subnetAddressPrefix string = '10.0.0.0/24'
+param vnetName string
+param subnetName string
+param publicIpName string
+param apimName string
 param updateApim bool = false
-param apimProperties object = {
-  name: 'apim-pb'
-  sku: {
-    name: 'Premium'
-    capacity: 1
-  }
-  publisherEmail: 'cbellee@microsoft.com'
-  publisherName: 'KainiIndustries'
-}
-param nsgName string = 'apim-nsg'
-param domainLabelPrefix string = 'apim-pb'
-param tags object = {
-  'environment': 'uat'
-  'costcentre': '1234567890'
-}
+param nsgName string
+param domainLabelPrefix string
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
-  location: location
+  location: resourceGroup().location
   name: publicIpName
   sku: {
     name: 'Standard'
@@ -34,44 +20,35 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
       domainNameLabel: domainLabelPrefix
     }
   }
-  tags: tags
 }
 
 module apimNsgModule 'nsg.bicep' = {
   name: 'apimNsgDeployment'
   params: {
-    location: location
+    location: resourceGroup().location
     nsgName: nsgName
-    tags: tags
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-}
-
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
-  parent: vnet
-  name: subnetName
-  properties: {
-    addressPrefix: subnetAddressPrefix
-    networkSecurityGroup: {
-      id: apimNsgModule.outputs.nsgId
-    }
+module subnetModule 'subnet.bicep' = {
+  name: 'subnetNsgUpdateDeployment'
+  params: {
+    subnetName: subnetName
+    subnetAddressPrefix: reference(resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName), '2021-02-01').addressPrefix
+    vnetName: vnetName
+    nsgId: apimNsgModule.outputs.nsgId
   }
 }
 
-resource apim 'Microsoft.ApiManagement/service@2020-12-01' = if (updateApim == true) {
-  name: apimProperties.name
-  location: location
-  tags: tags
-  sku: apimProperties.sku
-  properties: {
-    publisherEmail: apimProperties.publisherEmail
-    publisherName: apimProperties.publisherName
-    virtualNetworkType: 'External'
-    virtualNetworkConfiguration: {
-      subnetResourceId: subnet.id
-    }
+module apim 'apim.bicep' = if (updateApim == true) {
+  name: 'apimUpdate'
+  params: {
+    name: apimName
+    sku: reference(resourceId('Microsoft.ApiManagement/service', apimName), '2020-12-01', 'Full').sku.name
+    capacity: reference(resourceId('Microsoft.ApiManagement/service', apimName), '2020-12-01', 'Full').sku.capacity
+    publisherEmail: reference(resourceId('Microsoft.ApiManagement/service', apimName), '2020-12-01', 'Full').properties.publisherEmail
+    publisherName: reference(resourceId('Microsoft.ApiManagement/service', apimName), '2020-12-01', 'Full').properties.publisherName
+    customProperties: reference(resourceId('Microsoft.ApiManagement/service', apimName), '2020-12-01', 'Full').properties.customProperties
+    subnetId: subnetModule.outputs.subnetId
   }
 }

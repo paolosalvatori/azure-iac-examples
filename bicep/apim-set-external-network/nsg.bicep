@@ -1,11 +1,9 @@
 param location string
 param nsgName string
-param tags object
 
 resource apimSubnetNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: nsgName
   location: location
-  tags: tags
   properties: {
     securityRules: [
       {
