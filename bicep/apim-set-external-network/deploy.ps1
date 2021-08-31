@@ -45,8 +45,8 @@ param (
     Script to deploy Bicep temaplate which updates a specific API Management Instance to use an External Public IP
     The deployment also creates a subnet in the specified vnet within the same resource group
 .EXAMPLE
-    # example test deployment whaivch shows only the potential changes - note the -WhatIf switch is specified when calling the script
-        ./deploy.ps1 -location 'australiasoutheast' `
+    Example test deployment whaivch shows only the potential changes - note the -WhatIf switch is specified when calling the script
+    ./deploy.ps1 -location 'australiasoutheast' `
         -ResourceGroupName 'apim-pb-rg' `
         -VnetName 'apim-pb-vnet' `
         -SubnetName 'apim-subnet' `
@@ -56,7 +56,7 @@ param (
         -DomainLabelPrefix 'cbellee-apim-external' `
         -WhatIf
 .EXAMPLE
-     example deployment that adds the subnet & NSG, but skips changing APIM configuration
+    Example deployment that adds the subnet & NSG, but skips changing APIM configuration
     ./deploy.ps1 -location 'australiasoutheast' `
         -ResourceGroupName 'apim-pb-rg' `
         -VnetName 'apim-pb-vnet' `
@@ -66,7 +66,7 @@ param (
         -NsgName 'apim-nsg' `
         -DomainLabelPrefix 'cbellee-apim-external' 
 .EXAMPLE
-    # example deployment that includes the change to APIM - note the '-UpdateApim' switch
+    Example deployment that includes the change to APIM - note the '-UpdateApim' switch
     ./deploy.ps1 -location 'australiasoutheast' `
         -ResourceGroupName 'apim-pb-rg' `
         -VnetName 'apim-pb-vnet' `
