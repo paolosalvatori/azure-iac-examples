@@ -35,14 +35,7 @@ param (
 
     [Parameter(Mandatory = $true)]
     [String]
-    $DomainLabelPrefix,
-
-    [Parameter()]
-    [System.Object]
-    $Tags = @{
-        'environment' = 'uat'
-        'costcentre'  = '1234567890'
-    }
+    $DomainLabelPrefix
 )
 
 <#
