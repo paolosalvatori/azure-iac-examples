@@ -73,9 +73,9 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
     overprovision: true
     upgradePolicy: {
       automaticOSUpgradePolicy: {
-        enableAutomaticOSUpgrade: false
+        enableAutomaticOSUpgrade: true
       }
-      mode: 'Manual'
+      mode: 'Automatic'
       rollingUpgradePolicy: {
         maxBatchInstancePercent: 10
       }
@@ -118,7 +118,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
               }
             }
           }
-          /* {
+          {
             name: 'healthExtension'
             properties: {
               autoUpgradeMinorVersion: true
@@ -129,11 +129,11 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
               publisher: 'Microsoft.ManagedServices'
               settings: {
                 protocol: 'http'
-                port: 80
+                port: 3000
                 requestPath: '/'
               }
             }
-          } */
+          }
         ]
       }
       osProfile: {
@@ -207,9 +207,9 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
       {
         name: 'Profile1'
         capacity: {
-          minimum: '1'
+          minimum: '2'
           maximum: '10'
-          default: '1'
+          default: '2'
         }
         rules: [
           {
