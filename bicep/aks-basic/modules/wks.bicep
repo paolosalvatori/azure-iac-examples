@@ -11,7 +11,7 @@ param sku string = 'Standard'
 
 var workspaceName = '${prefix}-${uniqueString(resourceGroup().id)}-wks'
 
-resource azureMonitorWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
+resource azureMonitorWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   location: location
   name: workspaceName
   tags: tags

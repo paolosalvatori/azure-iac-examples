@@ -35,29 +35,53 @@ if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friend
     Write-Host "Creating new Self-Signed Client Certificate"
     $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certififcate'
     Export-PfxCertificate -cert $pfxCert -FilePath ..\certs\clientCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1 -Force
+    Export-Certificate -Cert $pfxCert -FilePath ..\certs\publicCert.cer
 }
 
 # create Base64 encoded versions of the root & client certificates
-foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter *.pfx)) {
+foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter clientCert.pfx)) {
     $flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
     $collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
     $collection.Import($pfxCert.FullName, $certPassword, $flag)
 
-    foreach ($cert in $collection) {
+    if ($collection.Count -gt 1) {
+        for ($i = 0; $i -lt $collection.Count; $i++) {
+            if ($collection[$i].Issuer -eq $collection[$i].Subject) {
+                [void]$collection.RemoveAt($i); break
+            }
+        }
+    }
+    # write back pfx to a file
+    $bytes = $collection.Export("pfx", $certPassword)
+    $path = 'C:\Users\cbellee\repos\github.com\cbellee\azure-iac-examples\bicep\appgwy-apim-int-ext\certs\clientCertNoRoot.pfx'
+    [IO.File]::WriteAllBytes($path, $bytes)
+  <#   $i = 0
+    foreach ($cert in $collection ) {
+        if ($cert.Issuer -eq $cert.Subject) {
+            $cert | gm
+            #[void]$cert.RemoveAt($i)
+            break
+        }
+        $i++
+    }
+ #>
+<#     foreach ($cert in $collection) {
         $cert
         if ($cert.HasPrivateKey) {
+            "Private Key"
             $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12
             $clearBytes = $cert.Export($pkcs12ContentType, $certPassword)
             $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
             $cert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
         }
         else {
+            "Certificate"
             $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
             $clearBytes = $cert.Export($cerContentType, $certPassword)
             $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
             $rootCert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
         }
-    }
+    } #>
 }
 
 # deploy bicep templates

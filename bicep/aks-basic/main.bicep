@@ -92,3 +92,11 @@ module aks './modules/aks.bicep' = {
 output aksClusterName string = aks.outputs.aksClusterName
 output aksClusterFqdn string = aks.outputs.aksControlPlaneFQDN
 output aksClusterApiServerUri string = aks.outputs.aksApiServerUri
+
+param type array= [
+  {
+    sku: 'fhfhf'
+  }
+]
+
+

@@ -11,7 +11,7 @@ az deployment group create \
     --template-file ./main.bicep \
     --parameters @main.parameters.json \
     --parameters prefix=$PREFIX \
-    --parameters windowsAdminPassword=$WIN_ADMIN_PASSWORD
+    --parameters windowsAdminPassword=$WIN_ADMIN_PASSWORD --what-if
 
 CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name aks-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
 

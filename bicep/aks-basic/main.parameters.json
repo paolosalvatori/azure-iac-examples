@@ -23,9 +23,6 @@
         "windowsAdminUserName": {
             "value": "localadmin"
         },
-        "linuxAdminUserName": {
-            "value": "localadmin"
-        },
         "vmSku": {
             "value": "Standard_F8s_v2"
         },
