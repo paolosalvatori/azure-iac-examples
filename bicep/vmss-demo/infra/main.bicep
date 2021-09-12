@@ -74,7 +74,7 @@ module vmssMod './modules/vmss.bicep' = {
   params: {
     sshPublicKey: sshPublicKey
     storageAccountName: storageAccountName
-    //sasToken: sasToken
+    appGatewayResourceId: appGwyMod.outputs.appGatewayResourceId
     forceScriptUpdate: forceScriptUpdate
     vmssExtensionCustomScriptUri: vmssCustomScriptUri
     appGatewayBePoolResourceId: appGwyMod.outputs.appGatewayBeAddressPoolResourceId
