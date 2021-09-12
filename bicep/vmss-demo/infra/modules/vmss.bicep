@@ -71,7 +71,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
     '3'
   ]
   properties: {
-    overprovision: true
+    overprovision: false
     upgradePolicy: {
       automaticOSUpgradePolicy: {
         enableAutomaticOSUpgrade: true
