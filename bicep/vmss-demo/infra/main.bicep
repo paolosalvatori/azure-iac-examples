@@ -46,7 +46,9 @@ module vnetMod './modules/vnet.bicep' = {
   params: {
     vnetName: vnetName
     subnets: subnets
-    vnetAddressPrefix: '10.0.0.0/16'
+    vnetAddressPrefixes: [
+      '10.0.0.0/16'
+    ]
   }
 }
 
