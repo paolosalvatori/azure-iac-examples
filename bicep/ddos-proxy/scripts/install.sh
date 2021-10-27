@@ -1,24 +1,26 @@
 #!/bin/bash
 
-sudo systemctl stop goweb.service
-sudo systemctl disable goweb.service
-sudo rm /etc/systemd/system/goweb.service
+if [ -x "$(command -v docker)" ]; then
+    echo "Docker is already installed"
+else
+      echo "Installing Docker..."
+  
+  sudo apt-get update -y && sudo apt-get upgrade -y
 
-cp ./main /home/localadmin/main
+  sudo apt-get install \
+      apt-transport-https \
+      ca-certificates \
+      curl \
+      gnupg \
+      lsb-release
 
-cat <<EOF > /etc/systemd/system/goweb.service
-[Unit]
-Description=Go sample web app
-After=multi-user.target
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --no-tty --batch --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  sudo chmod o+r /usr/share/keyrings/docker-archive-keyring.gpg
 
-[Service]
-User=root
-Group=root
-ExecStart=/home/localadmin/main
+  sudo echo \
+    "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
 
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl start goweb.service
-sudo systemctl enable goweb.service
+  sudo apt-get update -y
+  sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+fi

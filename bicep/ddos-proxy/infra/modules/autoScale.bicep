@@ -2,7 +2,7 @@ param vmssResourceId string
 param appGatewayResourceId string
 param autoscaleName string = 'app-gwy-autoscale-requests-per-minute-per-healthy-backend-host'
 
-resource appGatewayScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
+resource appGatewayScaleSettings 'docum' = {
   name: autoscaleName
   location: resourceGroup().location
   properties: {

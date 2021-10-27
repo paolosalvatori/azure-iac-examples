@@ -1,18 +1,18 @@
 param loadBalancerName string
 param publicIpAddressName string
 param domainNameLabel string = 'alb-ddos-proxy'
-param enableDdosProtection bool = false
+// param enableDdosProtection bool = false
 param idleTimeoutInMinutes int = 4
 param enableTcpReset bool = true
-param vnetResourceId string
 param backendPoolName string
 param tags object
 
-@allowed([
+/* @allowed([
   'Basic'
   'Standard'
 ])
 param ddosProtectionCoverage string = 'Basic'
+ */
 
 resource lbPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   name: publicIpAddressName
@@ -23,7 +23,7 @@ resource lbPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   tags: tags
   properties: {
     publicIPAllocationMethod: 'Static'
-    /* ddosSettings: enableDdosProtection ? {
+/*     ddosSettings: enableDdosProtection ? {
       protectionCoverage: ddosProtectionCoverage
     } : {} */
     publicIPAddressVersion: 'IPv4'
@@ -56,18 +56,18 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
         name: 'smb-lb-rule'
         properties: {
           backendAddressPool: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/backendAddressPools/', backendPoolName)
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/backendAddressPools/${backendPoolName}'
           }
           frontendPort: 445
           backendPort: 445
           frontendIPConfiguration: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/frontendIPConfigurations/', 'IpConfiguration')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/frontendIPConfigurations/IpConfiguration'
           }
           loadDistribution: 'SourceIPProtocol'
           idleTimeoutInMinutes: idleTimeoutInMinutes
           enableTcpReset: enableTcpReset
           probe: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/probes/', 'smb-lb-rule-probe')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/probes/smb-lb-rule-probe'
           }
           protocol: 'Tcp'
         }
@@ -76,18 +76,18 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
         name: 'dns-lb-rule'
         properties: {
           backendAddressPool: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/backendAddressPools/', backendPoolName)
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/backendAddressPools/${backendPoolName}'
           }
           frontendPort: 53
           backendPort: 53
           frontendIPConfiguration: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/frontendIPConfigurations/', 'IpConfiguration')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/frontendIPConfigurations/IpConfiguration'
           }
           loadDistribution: 'SourceIPProtocol'
           idleTimeoutInMinutes: idleTimeoutInMinutes
           enableTcpReset: enableTcpReset
           probe: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/probes/', 'smb-lb-rule-probe')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/probes/dns-lb-rule-probe'
           }
           protocol: 'Udp'
         }
@@ -96,18 +96,18 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
         name: 'smtp-lb-rule'
         properties: {
           backendAddressPool: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/backendAddressPools/', backendPoolName)
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/backendAddressPools/${backendPoolName}'
           }
           frontendPort: 25
           backendPort: 25
           frontendIPConfiguration: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/frontendIPConfigurations/', 'IpConfiguration')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/frontendIPConfigurations/IpConfiguration'
           }
           loadDistribution: 'SourceIPProtocol'
           idleTimeoutInMinutes: idleTimeoutInMinutes
           enableTcpReset: enableTcpReset
           probe: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/probes/', 'smb-lb-rule-probe')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/probes/smtp-lb-rule-probe'
           }
           protocol: 'Tcp'
         }
@@ -116,18 +116,18 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
         name: 'ftp-lb-rule'
         properties: {
           backendAddressPool: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/backendAddressPools/', backendPoolName)
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/backendAddressPools/${backendPoolName}'
           }
           frontendPort: 21
           backendPort: 21
           frontendIPConfiguration: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/frontendIPConfigurations/', 'IpConfiguration')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/frontendIPConfigurations/IpConfiguration'
           }
           loadDistribution: 'SourceIPProtocol'
           idleTimeoutInMinutes: idleTimeoutInMinutes
           enableTcpReset: enableTcpReset
           probe: {
-            id: concat(resourceId('Microsoft.Network/loadbalancers', loadBalancerName), '/probes/', 'smb-lb-rule-probe')
+            id: '${resourceId('Microsoft.Network/loadbalancers', loadBalancerName)}/probes/ftp-lb-rule-probe'
           }
           protocol: 'Tcp'
         }

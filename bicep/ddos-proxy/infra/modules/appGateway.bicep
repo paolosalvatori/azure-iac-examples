@@ -2,7 +2,7 @@ param frontEndHostName string
 param minCapacity int = 2
 param maxCapacity int = 10
 param frontendPort int = 443
-param backendPort int = 3000
+param backendPort int = 80
 param pfxCert string
 param pfxCertPassword string
 param probePath string = '/'

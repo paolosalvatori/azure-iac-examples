@@ -1,19 +1,7 @@
 param loadBalancerName string
-param publicIpAddressName string
-param domainNameLabel string = 'ilb-ddos-proxy'
-param enableDdosProtection bool = false
-param idleTimeoutInMinutes int = 4
-param enableTcpReset bool = true
-param vnetResourceId string
 param vmssSubnetResourceId string
 param backendAddressPoolName string
 param tags object
-
-@allowed([
-  'Basic'
-  'Standard'
-])
-param ddosProtectionCoverage string = 'Basic'
 
 resource loadBalancer 'Microsoft.Network/loadBalancers@2020-06-01' = {
   location: resourceGroup().location

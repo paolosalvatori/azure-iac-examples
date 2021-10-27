@@ -1,16 +1,11 @@
 param vmSku string = 'Standard_D2_v4'
 param vmssSubnetId string
-param appGatewayResourceId string
 param appGatewayBePoolResourceId string
-param extensionName string = 'LinuxCustomScriptExtension'
-param forceUpdateTag int
-param vmssExtensionCustomScriptUri string
-param commandToExecute string = 'sh ./install.sh'
 param sshPublicKey string
 param tags object
 param storageAccountName string
-// param ilbBackendPoolResourceId string
 param albBackendPoolResourceId string
+param acrName string
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 @allowed([
@@ -18,8 +13,17 @@ param albBackendPoolResourceId string
   '14.04.5-LTS'
   '16.04.0-LTS'
   '18.04-LTS'
+  '20_04-lts'
 ])
-param ubuntuOSVersion string = '18.04-LTS'
+param ubuntuOSVersion string = '20_04-lts'
+
+@allowed([
+  '0001-com-ubuntu-server-focal'
+  'UbuntuServer'
+])
+param ubuntuOffer string = '0001-com-ubuntu-server-focal'
+
+param ubuntuPublisher string = 'Canonical'
 
 @minValue(1)
 @maxValue(100)
@@ -30,17 +34,17 @@ param adminUsername string
 param adminPassword string
 param location string = resourceGroup().location
 
+var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
+
 var prefix = toLower(uniqueString(resourceGroup().id))
 var vmssName = '${prefix}-vmss'
-var longprefix = toLower(vmssName)
-var publicIPAddressName = '${prefix}-pip'
-var autoscaleName = '${prefix}-apgwy-autoscale'
 var nicname = '${prefix}-nic'
 var ipConfigName = '${prefix}ipconfig'
 var imageReference = osType
 var osType = {
-  publisher: 'Canonical'
-  offer: 'UbuntuServer'
+  publisher: ubuntuPublisher
+  offer: ubuntuOffer
   sku: ubuntuOSVersion
   version: 'latest'
 }
@@ -147,6 +151,10 @@ resource existingStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing
   name: storageAccountName
 }
 
+resource existingAcr 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' existing = {
+  name: acrName
+}
+
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
   name: guid(resourceGroup().id, vmss.name, 'StorageDataContributor')
   scope: existingStorage
@@ -154,6 +162,16 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-prev
     principalId: vmss.identity.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: dataContributorRoleId
+  }
+}
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+  name: guid(resourceGroup().id, acrName, 'AcrPull')
+  scope: existingAcr
+  properties: {
+    roleDefinitionId: acrPullRoleId
+    principalId: vmss.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

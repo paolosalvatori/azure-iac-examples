@@ -3,7 +3,6 @@ param subnetArray array
 param vnetName string
 param enableDdosProtection bool = false
 param enableVmProtection bool = false
-param ddosProctectionPlanResourceId string = ''
 param dnsServers array = [
   '168.63.129.16'
 ]

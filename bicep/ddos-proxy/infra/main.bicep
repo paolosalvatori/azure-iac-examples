@@ -13,6 +13,12 @@ param forceUpdateTag int
 param storageAccountName string
 param domainNameLabel string = 'ddos-proxy'
 param albBackendPoolName string = 'alb-backend-pool'
+param acrName string
+param acrPassword string
+param imageName string
+param localGatewayIpAddress string
+param vpnSharedKey string
+param localNetworkAddressPrefixes array
 param tags object = {
   costcentre: '1234567890'
   environment: 'dev'
@@ -25,6 +31,10 @@ var natGatewayPublicIPAddressName = '${prefix}-natgw-pip'
 var appGatewayNsgName = '${prefix}-appgwy-nsg'
 var loadBalancerName = '${prefix}-alb'
 var albPublicIpAddressName = '${prefix}-vmss-alb-pip'
+var virtualNetworkGatewayName = '${prefix}-vpn-gwy'
+var gatewaySubnetResourceId = vnetMod.outputs.subnetList[3].id
+var localNetworkGatewayName = '${prefix}-loc-gwy'
+var vpnGatewayPublicIpAddressName = '${prefix}-vpn-gwy-pip'
 
 var subnets = [
   {
@@ -49,6 +59,12 @@ var subnets = [
     name: 'AzureBastionSubnet'
     properties: {
       addressPrefix: '10.0.2.0/24'
+    }
+  }
+  {
+    name: 'GatewaySubnet'
+    properties: {
+      addressPrefix: '10.0.3.0/24'
     }
   }
 ]
@@ -119,7 +135,6 @@ module publicLoadBalancer 'modules/alb.bicep' = {
     domainNameLabel: '${domainNameLabel}-alb'
     loadBalancerName: loadBalancerName
     tags: tags
-    vnetResourceId: vnetMod.outputs.vnetResourceId
     publicIpAddressName: albPublicIpAddressName
   }
 }
@@ -127,13 +142,10 @@ module publicLoadBalancer 'modules/alb.bicep' = {
 module vmssMod './modules/vmss.bicep' = {
   name: 'vmssDeployment'
   params: {
+    acrName: acrName
     albBackendPoolResourceId: publicLoadBalancer.outputs.albBackendPoolResourceId
     sshPublicKey: sshPublicKey
-    forceUpdateTag: forceUpdateTag
-    commandToExecute: 'sh ./install.sh'
     storageAccountName: storageAccountName
-    appGatewayResourceId: appGwyMod.outputs.appGatewayResourceId
-    vmssExtensionCustomScriptUri: vmssCustomScriptUri
     appGatewayBePoolResourceId: appGwyMod.outputs.appGatewayBeAddressPoolResourceId
     instanceCount: vmssInstanceCount
     vmssSubnetId: vnetMod.outputs.subnetList[1].id
@@ -148,13 +160,13 @@ module vmssCustomScriptExtensionMod './modules/scriptExtension.bicep' = {
   params: {
     forceUpdateTag: forceUpdateTag
     vmssExtensionCustomScriptUri: vmssCustomScriptUri
-    commandToExecute: 'sh ./install.sh'
+    commandToExecute: 'sh ./install.sh && sh ./run.sh -r ${acrName}.azurecr.io -l ${acrName} -i ${imageName} -p "${acrPassword}"'
     extensionName: 'vmssNginxInstallScriptExtension'
     vmssName: vmssMod.outputs.vmssName
   }
 }
 
-/* module dnsRecord './modules/dns.bicep' = {
+module dnsRecord './modules/dns.bicep' = {
   scope: resourceGroup(dnsResourceGroupName)
   name: 'dnsRecordDeployment'
   params: {
@@ -162,4 +174,18 @@ module vmssCustomScriptExtensionMod './modules/scriptExtension.bicep' = {
     recordName: dnsARecordName
     appGatewayIpAddress: appGwyMod.outputs.appGatewayFrontEndIpAddress
   }
-} */
+}
+
+module vpnGateway './modules/gateway.bicep' = {
+  name: 'gatewayDeployment'
+  params: {
+    tags: tags
+    virtualNetworkGatewayName: virtualNetworkGatewayName
+    gatewaySubnetResourceId: gatewaySubnetResourceId
+    localNetworkGatewayName: localNetworkGatewayName
+    publicIpAddressName: vpnGatewayPublicIpAddressName
+    localGatewayIpAddress: localGatewayIpAddress
+    localNetworkAddressPrefixes: localNetworkAddressPrefixes
+    vpnSharedKey: vpnSharedKey
+  }
+}
