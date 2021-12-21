@@ -35,13 +35,12 @@ param vmSize string = 'Standard_B2s'
 @description('Resource Id of the subnet in the virtual network')
 param subnetRef string = 'Subnet'
 
-/* @description('URI to cloudinit.txt file')
+@description('cloudinit.txt file contents')
 param customData string
- */
 
+var base64CustomData = base64(customData)
 var vmName = '${name}-${suffix}'
 var networkInterfaceName = '${name}-nic-${suffix}'
-var nsgName = '${name}-nsg-${suffix}'
 var osDiskType = 'Standard_LRS'
 var linuxConfiguration = {
   disablePasswordAuthentication: true
@@ -67,31 +66,6 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2018-10-01' = {
             id: subnetRef
           }
           privateIPAllocationMethod: 'Dynamic'
-        }
-      }
-    ]
-    networkSecurityGroup: {
-      id: nsg.id
-    }
-  }
-}
-
-resource nsg 'Microsoft.Network/networkSecurityGroups@2019-02-01' = {
-  name: nsgName
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'SSH'
-        properties: {
-          priority: 1000
-          protocol: 'Tcp'
-          access: 'Allow'
-          direction: 'Inbound'
-          sourceAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '22'
         }
       }
     ]
@@ -131,6 +105,7 @@ resource vmName_resource 'Microsoft.Compute/virtualMachines@2019-03-01' = {
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      customData: base64CustomData
     }
   }
 }

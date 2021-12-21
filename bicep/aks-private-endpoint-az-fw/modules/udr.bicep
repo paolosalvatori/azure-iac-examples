@@ -11,7 +11,6 @@ resource default_firewall_rt 'Microsoft.Network/routeTables@2018-11-01' = {
     routes: [
       {
         name: 'default-fw-route'
-        type: 'Microsoft.Network/routeTables/routes'
         properties: {
           addressPrefix: '0.0.0.0/0'
           nextHopType: 'VirtualAppliance'

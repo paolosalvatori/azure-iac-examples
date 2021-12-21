@@ -22,9 +22,9 @@ param aksMaxPodCount int = 50
 @description('AKS nodes SSH Key')
 param sshPublicKey string
 
-@description('SQL DB server admin password')
+/* @description('SQL DB server admin password')
 @secure()
-param dbAdminPassword string
+param dbAdminPassword string */
 
 @description('Array of AAD principal ObjectIds')
 param aadAdminGroupObjectIds array
@@ -32,11 +32,13 @@ param aadAdminGroupObjectIds array
 @description('admin user name for Linux jump box VM')
 param adminUsername string
 
+param customData string
+
 var suffix = substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)
 var separatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
 var firewallPrivateIpAddress = '${separatedAddressprefix[0]}.${separatedAddressprefix[1]}.${separatedAddressprefix[2]}.4'
-var sqlPrivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
-var sqlGroupType = 'sqlServer'
+////var sqlPrivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
+//var sqlGroupType = 'sqlServer'
 var workspaceName = 'wks-${suffix}'
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
@@ -86,12 +88,24 @@ module module_peering './modules/peering.bicep' = {
   ]
 }
 
+module bastion_host './modules/bastion.bicep' = {
+  name: 'bastion-host'
+  params: {
+    suffix: suffix
+    tags: {
+    }
+    subnetId: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[2].id
+  }
+}
+
 module module_vm './modules/vm.bicep' = {
   name: 'module-vm'
   params: {
+    name: 'jumpbox'
     suffix: suffix
     location: location
-    vmName: 'jump-box-vm'
+    customData: customData
+    //vmName: 'jump-box-vm'
     adminUsername: adminUsername
     authenticationType: 'sshPublicKey'
     adminPasswordOrKey: sshPublicKey
@@ -118,6 +132,16 @@ module module_firewall './modules/firewall.bicep' = {
   }
 }
 
+module module_application_gateway './modules/appGateway.bicep' = {
+  name: 'module-app-gateway'
+  params: {
+    tags: tags
+    applicationGatewaySubnetId: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[2].id
+    suffix: suffix 
+    logAnalyticsWorkspaceId: workspace.id
+  }
+}
+
 module module_aks './modules/aks.bicep' = {
   name: 'module-aks'
   params: {
@@ -125,7 +149,7 @@ module module_aks './modules/aks.bicep' = {
     location: location
     aksVersion: aksVersion
     aksSubnetRef: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[0].id
-    appGwySubnetPrefix: '10.1.2.0/24'
+    applicationGatewayId: module_application_gateway.outputs.applicationGatewayId
     aksNodeVMSize: aksNodeVmSize
     aksNodeCount: aksNodeCount
     maxPods: aksMaxPodCount
@@ -147,6 +171,7 @@ module module_privateDnsLink './modules/private-dns-link.bicep' = {
   }
 }
 
+/* 
 module module_sqldb './modules/sql.bicep' = if (true) {
   name: 'module-sqldb'
   params: {
@@ -209,6 +234,7 @@ module module_sqldb_private_link_ipconfigs './modules/private_link_ipconfigs.bic
     module_sqldb_private_dns_hub_link
   ]
 }
+ */
 
 output firewallPublicIpAddress string = module_firewall.outputs.firewallPublicIpAddress
 output aksClusterPrivateDnsHostName string = module_aks.outputs.aksControlPlanePrivateFQDN

@@ -258,10 +258,11 @@ param aadAdminGroupObjectIdList array
 
 @description('Log Analytics workspace resource id')
 param workspaceRef string
-param appGwySubnetPrefix string
+//param appGwySubnetPrefix string
+param applicationGatewayId string
 
 var aksClusterName_var = 'aks-${suffix}'
-var appGwyName = 'appgwy-${suffix}'
+//var appGwyName = 'appgwy-${suffix}'
 
 resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
   name: aksClusterName_var
@@ -280,11 +281,11 @@ resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' 
           logAnalyticsWorkspaceResourceID: workspaceRef
         }
       }
-      IngressApplicationGateway: {
+      ingressApplicationGateway: {
         enabled: true
         config: {
-          applicationGatewayName: appGwyName
-          subnetPrefix: appGwySubnetPrefix
+          applicationGatewayId: applicationGatewayId
+          applicationGatewayWatchNamespace: 'dev,staging,stage,prod,default'
         }
       }
     }
