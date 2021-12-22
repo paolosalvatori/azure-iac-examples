@@ -22,10 +22,6 @@ param aksMaxPodCount int = 50
 @description('AKS nodes SSH Key')
 param sshPublicKey string
 
-/* @description('SQL DB server admin password')
-@secure()
-param dbAdminPassword string */
-
 @description('Array of AAD principal ObjectIds')
 param aadAdminGroupObjectIds array
 
@@ -37,9 +33,14 @@ param customData string
 var suffix = substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)
 var separatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
 var firewallPrivateIpAddress = '${separatedAddressprefix[0]}.${separatedAddressprefix[1]}.${separatedAddressprefix[2]}.4'
-////var sqlPrivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
-//var sqlGroupType = 'sqlServer'
 var workspaceName = 'wks-${suffix}'
+
+module module_acr 'modules/acr.bicep' = {
+  name: 'module-acr'
+  params: {
+    tags: tags
+  }
+}
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
   name: workspaceName
@@ -105,14 +106,12 @@ module module_vm './modules/vm.bicep' = {
     suffix: suffix
     location: location
     customData: customData
-    //vmName: 'jump-box-vm'
     adminUsername: adminUsername
     authenticationType: 'sshPublicKey'
     adminPasswordOrKey: sshPublicKey
     ubuntuOSVersion: '18.04-LTS'
     vmSize: 'Standard_B2s'
     subnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[1].id
-    // customData: '#include\n${artifactsLocation}/cloudinit.txt${artifactsLocationSasToken}'
   }
   dependsOn: [
     module_peering
@@ -237,4 +236,9 @@ module module_sqldb_private_link_ipconfigs './modules/private_link_ipconfigs.bic
  */
 
 output firewallPublicIpAddress string = module_firewall.outputs.firewallPublicIpAddress
+output aksClusterName string = module_aks.outputs.aksClusterName
 output aksClusterPrivateDnsHostName string = module_aks.outputs.aksControlPlanePrivateFQDN
+output acrName string = module_acr.outputs.registryName
+output acrServer string = module_acr.outputs.registryServer
+output acrPassword string = module_acr.outputs.registryPassword
+output acrId string = module_acr.outputs.registryResourceId
