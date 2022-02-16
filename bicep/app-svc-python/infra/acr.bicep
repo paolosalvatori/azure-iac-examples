@@ -1,7 +1,7 @@
 param location string
-param prefix string
+param name string
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
-var acrName = '${prefix}${affix}'
+var acrName = '${name}${affix}'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: acrName

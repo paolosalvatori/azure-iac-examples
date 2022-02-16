@@ -1,12 +1,13 @@
 param location string
-param prefix string
 param imageNameAndTag string
 param containerPort string
 param acrName string
+param subnetId string
 
+var name = 'kenshotest'
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
-var aspName = '${prefix}-asp-${affix}'
-var appName = '${prefix}-app-${affix}'
+var aspName = '${name}-asp-${affix}'
+var appName = '${name}-app-${affix}'
 var containerImageName = 'DOCKER|${existingAcr.properties.loginServer}/${imageNameAndTag}'
 var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
@@ -61,6 +62,7 @@ resource app 'Microsoft.Web/sites@2021-02-01' = {
       functionAppScaleLimit: 0
       minimumElasticInstanceCount: 1
     }
+    virtualNetworkSubnetId: subnetId
     scmSiteAlsoStopped: false
     clientAffinityEnabled: false
     clientCertEnabled: false
@@ -123,5 +125,3 @@ resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignment
     principalType: 'ServicePrincipal'
   }
 }
-
-output appName string = app.name
