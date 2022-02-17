@@ -2,9 +2,9 @@ param location string
 param imageNameAndTag string
 param containerPort string
 param acrName string
-param subnetId string
+param vnetIntegrationSubnetId string
+param name string
 
-var name = 'kenshotest'
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
 var aspName = '${name}-asp-${affix}'
 var appName = '${name}-app-${affix}'
@@ -19,10 +19,10 @@ resource asp 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: aspName
   location: location
   sku: {
-    name: 'S1'
-    tier: 'Standard'
-    size: 'S1'
-    family: 'S'
+    name: 'P1V3'
+    tier: 'PremiumV3'
+    size: 'P1V3'
+    family: 'P'
     capacity: 1
   }
   kind: 'linux'
@@ -62,7 +62,7 @@ resource app 'Microsoft.Web/sites@2021-02-01' = {
       functionAppScaleLimit: 0
       minimumElasticInstanceCount: 1
     }
-    virtualNetworkSubnetId: subnetId
+    virtualNetworkSubnetId: vnetIntegrationSubnetId
     scmSiteAlsoStopped: false
     clientAffinityEnabled: false
     clientCertEnabled: false
@@ -125,3 +125,6 @@ resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignment
     principalType: 'ServicePrincipal'
   }
 }
+
+output hostname string = app.properties.defaultHostName
+output id string = app.id

@@ -1,17 +1,21 @@
-LOCATION='australiaeast'
-RG_NAME='python-test-rg'
-NAME='pythontest'
-IMAGE_TAG='python-test:latest'
+REGION_1='australiaeast'
+REGION_2='uksouth'
+NAME='python'
+RG_NAME="${NAME}-app-rg"
+IMAGE_TAG="${NAME}-app:latest"
+CONTAINER_PORT='8000'
+DB_ADMIN_PASSWORD='M1cr0soft123'
 
 # create resource group
-az group create -l $LOCATION -n $RG_NAME
+az group create -l $REGION_1 -n $RG_NAME
 
+:'
 # deploy Azure container Registry
 az deployment group create \
     --resource-group $RG_NAME \
     --name acr-deployment \
-    --template-file ./infra/acr.bicep \
-    --parameters location=$LOCATION \
+    --template-file ./infra/modules/acr.bicep \
+    --parameters location=$REGION_1 \
     --parameters name=$NAME
 
 # get ACR details from 'acr-deployment'
@@ -23,24 +27,17 @@ ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --query 'passwords[0].val
 docker build --platform linux/amd64 -t $ACR_LOGIN_SERVER/$IMAGE_TAG .
 docker login -u $ACR_NAME -p $ACR_PASSWORD $ACR_LOGIN_SERVER
 docker push $ACR_LOGIN_SERVER/$IMAGE_TAG
+'
 
-# deploy vnet
+# infra deployment
 az deployment group create \
     --resource-group $RG_NAME \
-    --name vnet-deployment \
-    --resource-group $RG_NAME \
-    --template-file ./infra/vnet.bicep \
-    --parameters location=$LOCATION
-
-SUBNET_ID=$(az deployment group show --resource-group $RG_NAME --name=vnet-deployment --query properties.outputs.vnetIntegrationSubnetId.value -o tsv)
-
-# deploy app service
-az deployment group create \
-    --resource-group $RG_NAME \
-    --name app-deployment \
-    --template-file ./infra/app.bicep \
-    --parameters location=$LOCATION \
-    --parameters acrName=$ACR_NAME \
-    --parameters subnetId=$SUBNET_ID \
+    --name infra-deployment \
+    --template-file ./infra/main.bicep \
+    --parameters name=$NAME \
+    --parameters region1=$REGION_1 \
+    --parameters region2=$REGION_2 \
     --parameters imageNameAndTag=$IMAGE_TAG \
-    --parameters containerPort='8000'
+    --parameters containerPort=$CONTAINER_PORT \
+    --parameters dbAdminUserName='dbadmin' \
+    --parameters dbAdminPassword=$DB_ADMIN_PASSWORD
