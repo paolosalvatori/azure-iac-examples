@@ -39,3 +39,4 @@ resource postGreSQLDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2021-
 
 output postGreSQLServerName string = postGreSQLServer.name
 output postGreSQLDbName string = postGreSQLDb.name
+output postGreSQLCxn string = 'host=${postGreSQLServer.properties.fullyQualifiedDomainName} port=5432 dbname=${postGreSQLDb.name} user=${postGreSQLServer.properties.administratorLogin} password=${adminPassword} sslmode=require'

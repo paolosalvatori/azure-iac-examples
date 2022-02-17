@@ -4,15 +4,40 @@ param containerPort string
 param acrName string
 param vnetIntegrationSubnetId string
 param name string
+param keyVaultName string
+param secretUri string
 
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
 var aspName = '${name}-asp-${affix}'
 var appName = '${name}-app-${affix}'
 var containerImageName = 'DOCKER|${existingAcr.properties.loginServer}/${imageNameAndTag}'
 var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+// var kvSecretReadRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
 
 resource existingAcr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = {
   name: acrName
+}
+
+resource existingKv 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
+  name: keyVaultName
+}
+
+resource accessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2021-11-01-preview' = {
+  parent: existingKv
+  name: 'add'
+  properties: {
+    accessPolicies: [
+      {
+        objectId: app.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+        tenantId: subscription().tenantId
+      }
+    ]
+  }
 }
 
 resource asp 'Microsoft.Web/serverfarms@2021-02-01' = {
@@ -81,6 +106,10 @@ resource appConfig 'Microsoft.Web/sites/config@2021-02-01' = {
         name: 'WEBSITES_PORT'
         value: containerPort
       }
+      {
+        name: 'DB_CONNECTION_STRING'
+        value: '@Microsoft.KeyVault(SecretUri=${secretUri})'
+      }
     ]
     numberOfWorkers: 1
     linuxFxVersion: containerImageName
@@ -125,6 +154,16 @@ resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignment
     principalType: 'ServicePrincipal'
   }
 }
+
+/* resource appServiceKeyVaultSecretReadRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+  scope: existingKv
+  name: guid(existingAcr.id, app.id, kvSecretReadRoleDefinitionId)
+  properties: {
+    principalId: app.identity.principalId
+    roleDefinitionId: kvSecretReadRoleDefinitionId
+    principalType: 'ServicePrincipal'
+  }
+} */
 
 output hostname string = app.properties.defaultHostName
 output id string = app.id

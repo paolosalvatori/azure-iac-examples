@@ -15,7 +15,7 @@ az group create -l $REGION_1 -n $RG_NAME
 az deployment group create \
     --resource-group $RG_NAME \
     --name acr-deployment \
-    --template-file ./modules/acr.bicep \
+    --template-file ./infra/modules/acr.bicep \
     --parameters location=$REGION_1 \
     --parameters name=$NAME
 
@@ -33,11 +33,12 @@ docker push $ACR_LOGIN_SERVER/$IMAGE_TAG
 az deployment group create \
     --resource-group $RG_NAME \
     --name infra-deployment \
-    --template-file ./main.bicep \
+    --template-file ./infra/main.bicep \
     --parameters name=$NAME \
     --parameters region1=$REGION_1 \
     --parameters region2=$REGION_2 \
     --parameters imageNameAndTag=$IMAGE_TAG \
     --parameters containerPort=$CONTAINER_PORT \
     --parameters dbAdminUserName='dbadmin' \
-    --parameters dbAdminPassword=$DB_ADMIN_PASSWORD
+    --parameters dbAdminPassword=$DB_ADMIN_PASSWORD \
+    --parameters adminUserObjectId=$ADMIN_USER_OBJECT_ID

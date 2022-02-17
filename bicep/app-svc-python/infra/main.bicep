@@ -1,11 +1,14 @@
 param name string
-param region1 string = 'eastus'
-param region2 string = 'westus'
-param containerPort string = '8000'
+param region1 string
+param region2 string
+param containerPort string
 param imageNameAndTag string
 param dbAdminUserName string
 param dbAdminPassword string
 param dbSizeGB int = 32
+param adminUserObjectId string
+
+var affix = substring(uniqueString(resourceGroup().id), 0, 6)
 
 /* param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
 
@@ -160,7 +163,7 @@ module region1PostGreSQLModule './modules/postgesql-flex.bicep' = {
   }
 }
 
-module region2PpostGreSQLModule './modules/postgesql-flex.bicep' = {
+module region2PostGreSQLModule './modules/postgesql-flex.bicep' = {
   dependsOn: [
     region1ToRegion1PostGreSQLPrivateDnsZoneLink
     region2ToRegion2PostGreSQLPrivateDnsZoneLink
@@ -180,6 +183,59 @@ module region2PpostGreSQLModule './modules/postgesql-flex.bicep' = {
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+  location: region1
+  name: '${name}-kv-${affix}'
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    enableRbacAuthorization: false
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        objectId: adminUserObjectId
+        permissions: {
+          certificates: [
+            'all'
+          ]
+          keys: [
+            'all'
+          ]
+          secrets: [
+            'all'
+          ]
+          storage: [
+            'all'
+          ]
+        }
+        tenantId: subscription().tenantId
+      }
+    ]
+  }
+}
+
+resource dbSecret1 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+  name: '${keyVault.name}/${region1}-db-cxn'
+  properties: {
+    attributes: {
+      enabled: true
+    }
+    value: region1PostGreSQLModule.outputs.postGreSQLCxn
+  }
+}
+
+resource dbSecret2 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+  name: '${keyVault.name}/${region2}-db-cxn'
+  properties: {
+    attributes: {
+      enabled: true
+    }
+    value: region2PostGreSQLModule.outputs.postGreSQLCxn
+  }
+}
+
 module region1AppModule 'modules/app.bicep' = {
   name: '${region1}-app-deployment'
   params: {
@@ -189,6 +245,8 @@ module region1AppModule 'modules/app.bicep' = {
     containerPort: containerPort
     imageNameAndTag: imageNameAndTag
     vnetIntegrationSubnetId: region1VnetModule.outputs.integrationSubnetId
+    keyVaultName: keyVault.name
+    secretUri: dbSecret2.properties.secretUri
   }
 }
 
@@ -201,5 +259,7 @@ module region2AppModule 'modules/app.bicep' = {
     containerPort: containerPort
     imageNameAndTag: imageNameAndTag
     vnetIntegrationSubnetId: region2VnetModule.outputs.integrationSubnetId
+    keyVaultName: keyVault.name
+    secretUri: dbSecret1.properties.secretUri
   }
 }
