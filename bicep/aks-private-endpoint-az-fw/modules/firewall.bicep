@@ -186,8 +186,9 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                 '*.cdn.mscr.io'
                 'mcr.microsoft.com'
                 'management.azure.com'
-                'login.microsoftonline.com'
                 'packages.microsoft.com'
+                '*.dp.kubernetesconfiguration.azure.com'
+                'azurearcfork8s.azurecr.io'
               ]
             }
           ]
@@ -204,7 +205,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           }
           rules: [
             {
-              name: 'allow-ssh-inbound-internet'
+              name: 'allow-ssh-inbound-internet-ssh'
               sourceAddresses: [
                 publicIP.properties.ipAddress
               ]
@@ -229,6 +230,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                 '443'
                 '53'
                 '123'
+                '22'
               ]
               protocols: [
                 'TCP'
@@ -242,8 +244,8 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
     ]
   }
 }
-/* 
-resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2021-03-01' = {
+
+/* resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2021-03-01' = {
   scope: firewall
   name: '${firewallName}/microsoft.insights/fwdiagnostics'
   properties: {
@@ -266,9 +268,6 @@ resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagno
       }
     ]
   }
-  dependsOn: [
-    firewall
-  ]
 } */
 
 output firewallPublicIpAddress string = publicIP.properties.ipAddress

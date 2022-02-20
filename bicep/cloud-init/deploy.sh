@@ -9,8 +9,11 @@ az group create --location $LOCATION --resource-group $RG_NAME
 az deployment group create \
     --resource-group $RG_NAME \
     --name 'cloud-init-deployment' \
-    --template-file azuredeploy.bicep \
+    --template-file ./azuredeploy.bicep \
     --parameters location=$LOCATION \
     --parameters adminPasswordOrKey="$SSH_PUBLIC_KEY" \
     --parameters customData="$CLOUD_INIT_CONTENT" \
-    --parameter sourceAddressPrefix="$EXTERNAL_IP/32"
+    --parameters sourceAddressPrefix="$EXTERNAL_IP/32" \
+    --parameters adminUsername='azureuser' \
+    --parameters vnetAddressPrefix='10.0.0.0/16' \
+    --parameters subnetAddressPrefix='10.0.0.0/24'

@@ -1,11 +1,11 @@
 param location string
 param vmSize string = 'Standard_D2_v3'
 param customData string
-param adminUsername string = 'azureuser'
+param adminUsername string
 param adminPasswordOrKey string
 param sourceAddressPrefix string
-param vnetAddressPrefix string = '10.0.0.0/16'
-param subnetAddressPrefix string = '10.0.0.0/24'
+param vnetAddressPrefix string
+param subnetAddressPrefix string
 param imageRef object = {
   offer: '0001-com-ubuntu-server-focal'
   publisher: 'Canonical'
@@ -72,9 +72,8 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = {
       {
         name: subnetName
         properties: {
-          addressPrefixes: [
-            subnetAddressPrefix
-          ]
+
+          addressPrefix: subnetAddressPrefix          
           networkSecurityGroup: {
             id: nsg.id
           }
@@ -139,6 +138,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       ]
     }
     osProfile: {
+      adminUsername: adminUsername
       customData: base64CustomData
       computerName: vmName
       linuxConfiguration: linuxConfiguration

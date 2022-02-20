@@ -1,5 +1,6 @@
 param vmSku string = 'Standard_D2_v4'
 param vmssSubnetId string
+param appGatewayResourceId string
 param appGatewayBePoolResourceId string
 param sshPublicKey string
 param vmssExtensionCustomScriptUri string
@@ -28,7 +29,7 @@ var prefix = toLower(uniqueString(resourceGroup().id))
 var vmssName = '${prefix}-vmss'
 var longprefix = toLower(vmssName)
 var publicIPAddressName = '${prefix}-pip'
-var autoscaleName = '${prefix}-cpu-autoscale'
+var autoscaleName = '${prefix}-apgwy-autoscale'
 var nicname = '${prefix}-nic'
 var ipConfigName = '${prefix}ipconfig'
 var imageReference = osType
@@ -70,12 +71,12 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
     '3'
   ]
   properties: {
-    overprovision: true
+    overprovision: false
     upgradePolicy: {
       automaticOSUpgradePolicy: {
-        enableAutomaticOSUpgrade: false
+        enableAutomaticOSUpgrade: true
       }
-      mode: 'Manual'
+      mode: 'Automatic'
       rollingUpgradePolicy: {
         maxBatchInstancePercent: 10
       }
@@ -118,7 +119,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
               }
             }
           }
-          /* {
+          {
             name: 'healthExtension'
             properties: {
               autoUpgradeMinorVersion: true
@@ -129,11 +130,11 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
               publisher: 'Microsoft.ManagedServices'
               settings: {
                 protocol: 'http'
-                port: 80
+                port: 3000
                 requestPath: '/'
               }
             }
-          } */
+          }
         ]
       }
       osProfile: {
@@ -196,7 +197,79 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-prev
   }
 }
 
-resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
+resource appGatewayScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
+  name: autoscaleName
+  location: location
+  properties: {
+    name: autoscaleName
+    targetResourceUri: vmss.id
+    enabled: true
+    profiles: [
+      {
+        name: autoscaleName
+        capacity: {
+          minimum: '2'
+          maximum: '10'
+          default: '2'
+        }
+        rules: [
+          {
+            scaleAction: {
+              direction: 'Increase'
+              type: 'ChangeCount'
+              value: '1'
+              cooldown: 'PT1M'
+            }
+            metricTrigger: {
+              metricName: 'AvgRequestCountPerHealthyHost'
+              metricNamespace: 'microsoft.network/applicationgateways'
+              metricResourceUri: appGatewayResourceId
+              operator: 'GreaterThan'
+              statistic: 'Average'
+              threshold: 500
+              timeAggregation: 'Average'
+              timeGrain: 'PT1M'
+              timeWindow: 'PT1M'
+              dimensions: [
+                {
+                  DimensionName: 'BackendSettingsPool'
+                  Operator: 'Equals'
+                  Values: [
+                    'backendPool~backendHttpsSettings'
+                  ]
+                }
+              ]
+              dividePerInstance: false
+            }
+          }
+          {
+            scaleAction: {
+              direction: 'Decrease'
+              type: 'ChangeCount'
+              value: '1'
+              cooldown: 'PT1M'
+            }
+            metricTrigger: {
+              metricName: 'AvgRequestCountPerHealthyHost'
+              metricNamespace: 'microsoft.network/applicationgateways'
+              metricResourceUri: appGatewayResourceId
+              operator: 'LessThan'
+              statistic: 'Average'
+              threshold: 350
+              timeAggregation: 'Average'
+              timeGrain: 'PT1M'
+              timeWindow: 'PT1M'
+              dimensions: []
+              dividePerInstance: false
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+
+/* resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
   name: autoscaleName
   location: location
   properties: {
@@ -207,9 +280,9 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
       {
         name: 'Profile1'
         capacity: {
-          minimum: '1'
+          minimum: '2'
           maximum: '10'
-          default: '1'
+          default: '2'
         }
         rules: [
           {
@@ -221,7 +294,7 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
               timeWindow: 'PT5M'
               timeAggregation: 'Average'
               operator: 'GreaterThan'
-              threshold: 50
+              threshold: 20
               statistic: 'Average'
             }
             scaleAction: {
@@ -240,7 +313,7 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
               timeWindow: 'PT5M'
               timeAggregation: 'Average'
               operator: 'LessThan'
-              threshold: 30
+              threshold: 5
               statistic: 'Average'
             }
             scaleAction: {
@@ -254,4 +327,4 @@ resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
       }
     ]
   }
-}
+} */

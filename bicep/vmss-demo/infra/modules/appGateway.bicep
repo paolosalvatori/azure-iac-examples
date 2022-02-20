@@ -187,6 +187,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
   }
 }
 
+output appGatewayResourceId string = applicationGateway.id
 output appGatewayFrontEndIpAddressId string = publicIP.id
 output appGatewayFrontEndIpAddress string = publicIP.properties.ipAddress
 output appGatewayBeAddressPoolResourceId string = resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'backendPool')

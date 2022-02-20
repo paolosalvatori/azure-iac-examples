@@ -46,7 +46,9 @@ module vnetMod './modules/vnet.bicep' = {
   params: {
     vnetName: vnetName
     subnets: subnets
-    vnetAddressPrefix: '10.0.0.0/16'
+    vnetAddressPrefixes: [
+      '10.0.0.0/16'
+    ]
   }
 }
 
@@ -74,6 +76,7 @@ module vmssMod './modules/vmss.bicep' = {
   params: {
     sshPublicKey: sshPublicKey
     storageAccountName: storageAccountName
+    appGatewayResourceId: appGwyMod.outputs.appGatewayResourceId
     forceScriptUpdate: forceScriptUpdate
     vmssExtensionCustomScriptUri: vmssCustomScriptUri
     appGatewayBePoolResourceId: appGwyMod.outputs.appGatewayBeAddressPoolResourceId

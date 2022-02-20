@@ -37,9 +37,9 @@ if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.frien
     $root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 }
 
-if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certififcate' }))) {
+if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certificate' }))) {
     Write-Host "Creating new Self-Signed Client Certificate"
-    $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certififcate'
+    $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certificate'
     Export-PfxCertificate -cert $pfxCert -FilePath ..\certs\clientCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1 -Force
     Export-Certificate -Cert $pfxCert -FilePath ..\certs\publicCert.cer
 
