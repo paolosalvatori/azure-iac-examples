@@ -2,11 +2,9 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-
 @app.route("/")
 def home():
     return jsonify({"response": "OK", "code": 200})
-
 
 @app.route('/info', methods=['GET'])
 def get_server_ip():
