@@ -263,3 +263,6 @@ module region2AppModule 'modules/app.bicep' = {
     secretUri: dbSecret1.properties.secretUri
   }
 }
+
+output region1AppUrl string = '${region1AppModule.outputs.hostname}/info'
+output region2AppUrl string = '${region2AppModule.outputs.hostname}/info'

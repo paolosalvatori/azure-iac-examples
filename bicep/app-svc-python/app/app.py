@@ -12,7 +12,7 @@ def home():
 def get_dbhost():
     import psycopg2
     import os
-    import socket
+    import re
 
     response = "no serverdata found..."
 
@@ -29,8 +29,10 @@ def get_dbhost():
         row = cursor.fetchall()
         serverIp = str(row[0])
 
-        response =  "Connected to Database Server IP: " + serverIp
+        ip = re.sub('[\'(),]', '', serverIp)
+        response =  "Connected to Database Server IP: " + ip
         return response
+
     except Exception as err:
         return("error: (" + err  + ") connecting to database with connection string: " + DB_CXN_STR)
     finally:
