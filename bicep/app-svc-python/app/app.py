@@ -9,7 +9,7 @@ def home():
 
 
 @app.route('/info', methods=['GET'])
-def get_dbhost():
+def get_server_ip():
     import psycopg2
     import os
     import re
