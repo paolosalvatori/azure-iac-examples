@@ -12,6 +12,8 @@ $tags = @{
     'environment'='devtest'
 }
 
+$pkcs12ContentType = 'Pkcs12'
+
 # create app registration for function app
 if ((az ad sp list --all --query "[?displayName=='$appName']" | ConvertFrom-Json).Length -le 0) {
     "Creating App Registration '$appName'"
@@ -29,6 +31,10 @@ if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.frien
     Write-Host "Creating new Self-Signed CA Certificate"
     $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
     Export-Certificate -Cert $rootcert -FilePath ..\certs\rootCert.cer -Force
+
+    $clearBytes = $rootCert.Export($pkcs12ContentType)
+    $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
+    $root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 }
 
 if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certificate' }))) {
@@ -36,8 +42,13 @@ if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friend
     $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certificate'
     Export-PfxCertificate -cert $pfxCert -FilePath ..\certs\clientCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1 -Force
     Export-Certificate -Cert $pfxCert -FilePath ..\certs\publicCert.cer
+
+    $clearBytes = $pfxCert.Export($pkcs12ContentType, $certPassword)
+    $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
+    $cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 }
 
+<#
 # create Base64 encoded versions of the root & client certificates
 foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter clientCert.pfx)) {
     $flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
@@ -65,7 +76,9 @@ foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter clientCert.pfx
         $i++
     }
  #>
-<#     foreach ($cert in $collection) {
+ #>
+ <#
+foreach ($cert in $collection) {
         $cert
         if ($cert.HasPrivateKey) {
             "Private Key"
@@ -81,8 +94,10 @@ foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter clientCert.pfx
             $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
             $rootCert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
         }
-    } #>
+    }
 }
+#>
+
 
 # deploy bicep templates
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
@@ -96,7 +111,7 @@ New-AzResourceGroupDeployment `
     -DomainName $domainName `
     -Tags $tags `
     -Cert $cert `
-    -RootCert $rootCert `
+    -RootCert $root `
     -WinVmPassword $winVmPassword `
     -FunctionAppId $sp.appId `
     -Verbose
