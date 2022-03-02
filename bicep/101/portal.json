@@ -1,0 +1,98 @@
+{
+  "properties": {
+    "lenses": {
+      "0": {
+        "order": 0,
+        "parts": {
+          "0": {
+            "position": {
+              "x": 0,
+              "y": 0,
+              "colSpan": 6,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "options",
+                  "isOptional": true
+                },
+                {
+                  "name": "sharedTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+              "settings": {
+                "content": {
+                  "options": {
+                    "chart": {
+                      "metrics": [],
+                      "title": "Metrics chart",
+                      "titleKind": 1,
+                      "visualization": {
+                        "disablePinning": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "1": {
+            "position": {
+              "x": 6,
+              "y": 0,
+              "colSpan": 2,
+              "rowSpan": 3
+            },
+            "metadata": {
+              "inputs": [],
+              "type": "Extension/Microsoft_Azure_Security/PartType/SecurityMetricGalleryTileViewModel"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "model": {
+        "timeRange": {
+          "value": {
+            "relative": {
+              "duration": 24,
+              "timeUnit": 1
+            }
+          },
+          "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+        },
+        "filterLocale": {
+          "value": "en-us"
+        },
+        "filters": {
+          "value": {
+            "MsPortalFx_TimeRange": {
+              "model": {
+                "format": "utc",
+                "granularity": "auto",
+                "relative": "24h"
+              },
+              "displayCache": {
+                "name": "UTC Time",
+                "value": "Past 24 hours"
+              },
+              "filteredPartIds": [
+                "StartboardPart-MonitorChartPart-596f07a8-51dc-42d8-8316-9b03af964ba1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "name": "5f4c6d95-06c3-4d12-bea2-1ca1b745ae33",
+    "type": "Microsoft.Portal/dashboards",
+    "location": "australiaeast",
+    "tags": {
+        "hidden-title": "My-Dashboard-2"
+    }
+}

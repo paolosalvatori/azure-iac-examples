@@ -10,29 +10,7 @@ param adminUserObjectId string
 
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
 
-/* param frontDoorEndpointName string = 'afd-${uniqueString(resourceGroup().id)}'
-
-var frontDoorSkuName = 'Premium_AzureFrontDoor' // Private Link origins require the premium SKU.
-
-var region1Data = {
-  originHostName: region1AppModule.outputs.hostname
-  privateEndpointResourceId: region1AppModule.outputs.privateEndpointId
-  privateEndpointLocations: region1AppModule.outputs.privateEndpointLocation
-  privateLinkResourceType: 'sites'
-}
-
-var region2Data = {
-  originHostName: region2AppModule.outputs.hostname
-  privateEndpointResourceId: region2AppModule.outputs.privateEndpointId
-  privateEndpointLocations: region2AppModule.outputs.privateEndpointLocation
-  privateLinkResourceType: 'sites'
-}
-
-var regionData = [
-  region1Data
-  region2Data
-] */
-
+// deploy Azure Container Registry
 module acrModule 'modules/acr.bicep' = {
   name: 'acr-deployment'
   params: {
@@ -41,6 +19,7 @@ module acrModule 'modules/acr.bicep' = {
   }
 }
 
+// Deploy vnets
 module region1VnetModule 'modules/vnet.bicep' = {
   name: '${region1}-vnet-deployment'
   params: {
@@ -67,6 +46,7 @@ module region2VnetModule 'modules/vnet.bicep' = {
   }
 }
 
+// Peer vnets
 module region1ToRegion2Peer 'modules/peering.bicep' = {
   name: '${region1}-to-${region2}-peer'
   params: {
@@ -85,6 +65,7 @@ module region2ToRegion1Peer 'modules/peering.bicep' = {
   }
 }
 
+// create private DNS zones
 resource region1PostGreSQLPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: '${region1}.postgres.database.azure.com'
   location: 'global'
@@ -95,6 +76,7 @@ resource region2PostGreSQLPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020
   location: 'global'
 }
 
+// link DNS zones to vnets
 resource region1ToRegion1PostGreSQLPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${region1}-to-${region1}-vnet-link'
   location: 'global'
@@ -143,6 +125,7 @@ resource region2ToRegion1PostGreSQLPrivateDnsZoneLink 'Microsoft.Network/private
   }
 }
 
+// Deploy region 1 PostGeSQL server & database
 module region1PostGreSQLModule './modules/postgesql-flex.bicep' = {
   dependsOn: [
     region1ToRegion1PostGreSQLPrivateDnsZoneLink
@@ -163,6 +146,7 @@ module region1PostGreSQLModule './modules/postgesql-flex.bicep' = {
   }
 }
 
+// Deploy region 2 PostGeSQL server & database
 module region2PostGreSQLModule './modules/postgesql-flex.bicep' = {
   dependsOn: [
     region1ToRegion1PostGreSQLPrivateDnsZoneLink
@@ -183,6 +167,7 @@ module region2PostGreSQLModule './modules/postgesql-flex.bicep' = {
   }
 }
 
+// Deploy Key vault to store DB connection strings 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   location: region1
   name: '${name}-kv-${affix}'
@@ -216,6 +201,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   }
 }
 
+// Deploy secerts to key vault
 resource dbSecret1 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   name: '${keyVault.name}/${region1}-db-cxn'
   properties: {
@@ -236,6 +222,7 @@ resource dbSecret2 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   }
 }
 
+// create App service plans and apps per region
 module region1AppModule 'modules/app.bicep' = {
   name: '${region1}-app-deployment'
   params: {
@@ -264,5 +251,6 @@ module region2AppModule 'modules/app.bicep' = {
   }
 }
 
+// output each region's app serice URL
 output region1AppUrl string = '${region1AppModule.outputs.hostname}/info'
 output region2AppUrl string = '${region2AppModule.outputs.hostname}/info'
