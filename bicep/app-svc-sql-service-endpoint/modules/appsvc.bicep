@@ -1,7 +1,7 @@
 param location string
 param subnetId string
 param containerName string
-param acrName string
+//param acrName string
 param tags object
 
 @allowed([
@@ -18,12 +18,12 @@ param skuName string = 'S1'
 var suffix = uniqueString(resourceGroup().id)
 var serverFarmName = 'app-svc-${suffix}'
 var siteName = 'my-app-${suffix}'
-var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+/* var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
 resource existingAcr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = {
   name: acrName
 }
-
+ */
 resource serverFarm 'Microsoft.Web/serverfarms@2020-12-01' = {
   kind: 'linux'
   tags: tags
@@ -48,7 +48,7 @@ resource webApp 'Microsoft.Web/sites@2020-06-01' = {
     serverFarmId: serverFarm.id
     siteConfig: {
       linuxFxVersion: 'DOCKER|${containerName}'
-      
+
       vnetRouteAllEnabled: true
       httpLoggingEnabled: true
       detailedErrorLoggingEnabled: true
@@ -82,7 +82,7 @@ resource webAppAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+/* resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: existingAcr
   name: guid(existingAcr.id, webApp.id, acrPullRoleDefinitionId)
   properties: {
@@ -90,7 +90,7 @@ resource appServiceAcrPullRoleAssignment 'Microsoft.Authorization/roleAssignment
     roleDefinitionId: acrPullRoleDefinitionId
     principalType: 'ServicePrincipal'
   }
-}
+} */
 
 output webAppName string = webApp.name
 output webAppHostName string = webApp.properties.defaultHostName

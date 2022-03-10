@@ -15,14 +15,6 @@ module vnetModule './modules/vnet.bicep' = {
   }
 }
 
-module acrModule './modules/acr.bicep' = {
-  name: 'acrDeployment'
-  params: {
-    location: location
-    tags: tags
-  }
-}
-
 module sqlModule './modules/sql.bicep' = {
   name: 'sqlDeployment'
   params: {
@@ -41,7 +33,6 @@ module appServiceModule './modules/appsvc.bicep' = {
     location: location
     tags: tags
     subnetId: vnetModule.outputs.subnetIds[0].id
-    acrName: acrModule.outputs.acrName
     containerName: containerName
   }
 }

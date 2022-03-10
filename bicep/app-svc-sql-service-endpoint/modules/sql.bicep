@@ -31,8 +31,8 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2020-02-02-preview' = {
   }
 }
 
-resource symbolicname 'Microsoft.Sql/servers/virtualNetworkRules@2021-08-01-preview' = {
-  name: 'string'
+resource virtualNetworkSetting 'Microsoft.Sql/servers/virtualNetworkRules@2021-08-01-preview' = {
+  name: 'vnetSetting'
   parent: sqlServer
   properties: {
     ignoreMissingVnetServiceEndpoint: false
