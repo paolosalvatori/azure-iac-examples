@@ -4,6 +4,7 @@ param vmSize string = 'Standard_D2_v3'
 param computerName string
 param dateTimeStamp string = utcNow()
 param storageAccountName string
+param domainName string
 param userAssignedManagedIdentityResourceId string
 param userAssignedManagedIdentityPrincipalId string
 param pfxCertThumbprint string
@@ -147,7 +148,7 @@ resource vmScriptExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07
       fileUris: [
         scriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -File iis.ps1 -PfxThumbprint ${pfxCertThumbprint} -WebSiteName "Default Web Site"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -File iis.ps1 -PfxThumbprint ${pfxCertThumbprint} -WebSiteName "Default Web Site" -DomainName ${domainName}'
     }
     protectedSettings: {
       managedIdentity: {

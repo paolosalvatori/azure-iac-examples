@@ -37,6 +37,9 @@ module vnetModule './modules/vnet.bicep' = {
   params: {
     location: location
   }
+  dependsOn: [
+    networkSecurityGroupModule
+  ]
 }
 
 module bastionModule './modules/bastion.bicep' = {
@@ -57,6 +60,7 @@ module winVmModule './modules/winvm.bicep' = {
     pfxCertThumbprint: pfxCertThumbprint
     scriptUri: '${storageContainerUri}/${scriptName}'
     pfxCertSecretId: pfxCertSecretId
+    domainName: frontEndHostName
     windowsOSVersion: '2016-Datacenter'
     adminPassword: winVmPassword
     adminUserName: 'localadmin'

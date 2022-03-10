@@ -1,4 +1,4 @@
-RG_NAME='appgwy-demo-rg'
+RG_NAME='appgwy-e2e-tls-bash-rg'
 LOCATION='australiaeast'
 SCRIPT_NAME='iis.ps1'
 CONTAINER_NAME='scripts'
