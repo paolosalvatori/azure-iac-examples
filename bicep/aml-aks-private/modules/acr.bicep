@@ -1,14 +1,16 @@
 param location string
 param tags object
-param prefix string 
-var acrName = '${prefix}acr${uniqueString(resourceGroup().id)}'
+param suffix string
+param sku string = 'Premium'
+
+var acrName = 'acr${suffix}'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2020-11-01-preview' = {
   name: acrName
   location: location
   tags: tags
   sku: {
-    name: 'Premium'
+    name: sku
   }
   properties: {
     adminUserEnabled: true

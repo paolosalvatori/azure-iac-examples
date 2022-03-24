@@ -9,6 +9,7 @@ param subnets array
 param sshPublicKey string
 param windowsAdminUserName string
 param windowsAdminPassword string
+param gitRepoUrl string = 'https://github.com/cbellee/flux2-kustomize-helm-example'
 
 module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
@@ -88,6 +89,14 @@ module aks './modules/aks.bicep' = {
         }
       }
     }
+  }
+}
+
+module flux_extension 'modules/flux-extension.bicep' = {
+  name: 'fluxDeploy'
+  params: {
+    aksClusterName: aks.outputs.aksClusterName
+    gitRepoUrl: gitRepoUrl
   }
 }
 

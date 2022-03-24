@@ -31,18 +31,19 @@ kubectl config get-contexts
 # STAGING
 ##############
 
+# NOTE: this is now defind in the bicep template
 # apply flux configuration to staging cluster
-az k8s-configuration flux create \
-    --resource-group $STAGING_RG_NAME \
-    --cluster-name $STAGING_CLUSTER_NAME \
-    --name $NAMESPACE \
-    --namespace $NAMESPACE \
-    --cluster-type managedClusters \
-    --scope cluster \
-    --url https://github.com/cbellee/flux2-kustomize-helm-example \
-    --branch main \
-    --kustomization name=infra path=./infrastructure prune=true \
-    --kustomization name=apps path=./apps/staging prune=true depends_on=infra
+#az k8s-configuration flux create \
+#    --resource-group $STAGING_RG_NAME \
+#    --cluster-name $STAGING_CLUSTER_NAME \
+#    --name $NAMESPACE \
+#    --namespace $NAMESPACE \
+#    --cluster-type managedClusters \
+#    --scope cluster \
+#    --url https://github.com/cbellee/flux2-kustomize-helm-example \
+#    --branch main \
+#    --kustomization name=infra path=./infrastructure prune=true \
+#    --kustomization name=apps path=./apps/staging prune=true depends_on=infra
 
 # show flux configuration for staging cluster
 az k8s-configuration flux show -g $STAGING_RG_NAME -c $STAGING_CLUSTER_NAME -n $NAMESPACE -t managedClusters
@@ -80,18 +81,19 @@ kubectl get all -n redis
 # PRODUCTION
 ##############
 
+# NOTE: this is now defind in the bicep template
 # apply flux configuration to production cluster
-az k8s-configuration flux create \
-    --resource-group $PRODUCTION_RG_NAME \
-    --cluster-name $PRODUCTION_CLUSTER_NAME \
-    --name $NAMESPACE \
-    --namespace $NAMESPACE \
-    --cluster-type managedClusters \
-    --scope cluster \
-    --url https://github.com/cbellee/flux2-kustomize-helm-example \
-    --branch main \
-    --kustomization name=infra path=./infrastructure prune=true \
-    --kustomization name=apps path=./apps/production prune=true depends_on=infra
+#az k8s-configuration flux create \
+#    --resource-group $PRODUCTION_RG_NAME \
+#    --cluster-name $PRODUCTION_CLUSTER_NAME \
+#    --name $NAMESPACE \
+#    --namespace $NAMESPACE \
+#    --cluster-type managedClusters \
+#    --scope cluster \
+#    --url https://github.com/cbellee/flux2-kustomize-helm-example \
+#    --branch main \
+#    --kustomization name=infra path=./infrastructure prune=true \
+#    --kustomization name=apps path=./apps/production prune=true depends_on=infra
 
 # show flux configuration for production cluster
 az k8s-configuration flux show -g $PRODUCTION_RG_NAME -c $PRODUCTION_CLUSTER_NAME -n $NAMESPACE -t managedClusters
