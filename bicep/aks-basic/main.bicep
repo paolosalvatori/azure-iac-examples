@@ -2,7 +2,7 @@ param location string
 param adminGroupObjectID string
 param tags object
 param prefix string
-param aksVersion string = '1.19.9'
+param aksVersion string = '1.23.3'
 param vmSku string = 'Standard_F8s_v2'
 param addressPrefix string
 param subnets array
@@ -34,6 +34,7 @@ module vnet './modules/vnet.bicep' = {
 module acr './modules/acr.bicep' = {
   name: 'acrDeploy'
   params: {
+    location: location
     prefix: prefix
     tags: tags
   }
@@ -46,6 +47,7 @@ module aks './modules/aks.bicep' = {
     wks
   ]
   params: {
+    location: location
     prefix: prefix
     windowsAdminPassword: windowsAdminPassword
     windowsAdminUserName: windowsAdminUserName
@@ -92,11 +94,3 @@ module aks './modules/aks.bicep' = {
 output aksClusterName string = aks.outputs.aksClusterName
 output aksClusterFqdn string = aks.outputs.aksControlPlaneFQDN
 output aksClusterApiServerUri string = aks.outputs.aksApiServerUri
-
-param type array= [
-  {
-    sku: 'fhfhf'
-  }
-]
-
-

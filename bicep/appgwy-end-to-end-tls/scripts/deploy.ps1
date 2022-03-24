@@ -6,9 +6,25 @@ $DOMAIN_NAME='kainiindustries.net'
 $DNS_ZONE_RG_NAME='external-dns-zones-rg'
 $CERT_FILE_PATH='../certs/api.kainiindustries.net.pfx'
 
-$vars = Get-Content -Path ./env.json | ConvertFrom-Json
+# create file /scripts/env.json
+# populate it with json representing the secret information
 
-# create .pfx from certificate & private key
+<#
+{
+    "ADMIN_USER_OBJECT_ID": "<your GUID>",
+    "CERT_PASSWORD": "<your Password>",
+    "VM_PASSWORD": "<your password>"
+}
+#>
+
+if (Test-Path -Path ./certs/envv.json) {
+    $vars = Get-Content -Path ./env.json | ConvertFrom-Json
+} else {
+    Write-Error -Exception "../cert/env.json not found"
+    exit
+}
+
+# create .pfx from certificate & private key & add it to /certs directory
 # openssl pkcs12 -export -out ../certs/api.kainiindustries.net.pfx -inkey ../certs/private.key -in ../certs/certificate.crt
 
 az group create -g $RG_NAME -l $LOCATION
