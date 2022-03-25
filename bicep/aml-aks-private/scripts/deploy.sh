@@ -13,5 +13,4 @@ az deployment group create \
     -n $deploymentName \
     -f ../azuredeploy.bicep \
     -p ../azuredeploy.parameters.json \
-    -p customData="$CLOUD_INIT_CONTENT" \
     -p adminUserObjectId="57963f10-818b-406d-a2f6-6e758d86e259"

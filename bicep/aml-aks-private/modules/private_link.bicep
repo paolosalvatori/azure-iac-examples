@@ -43,3 +43,4 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
 
 output privateLinkNicResource string = reference(privateEndpoint.id, '2021-05-01').networkInterfaces[0].id
 output privateEndpointName string = privateEndpointName
+output privateEndpoint object = privateEndpoint

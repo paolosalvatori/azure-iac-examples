@@ -26,11 +26,9 @@ param sshPublicKey string
 param aadAdminGroupObjectIds array
 
 @description('admin user name for Linux jump box VM')
-param adminUsername string
+param adminUserName string
 
 param adminUserObjectId string
-
-param customData string
 
 var suffix = substring(uniqueString(subscription().subscriptionId, uniqueString(resourceGroup().id)), 0, 6)
 var separatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
@@ -39,6 +37,7 @@ var workspaceName = 'wks-${suffix}'
 var kvGroupType = 'vault'
 var acrGroupType = 'registry'
 var storGroupType = 'blob'
+var amlGroupType = 'amlworkspace'
 
 // ACR
 module module_acr 'modules/acr.bicep' = {
@@ -128,14 +127,13 @@ module bastion_host './modules/bastion.bicep' = {
   name: 'bastion-host'
   params: {
     suffix: suffix
-    tags: {
-    }
+    tags: {}
     subnetId: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[2].id
   }
 }
 
 // Jump box VM
-module module_vm './modules/vm.bicep' = {
+/* module module_vm './modules/vm.bicep' = {
   name: 'module-vm'
   params: {
     name: 'jumpbox'
@@ -152,6 +150,19 @@ module module_vm './modules/vm.bicep' = {
   dependsOn: [
     module_peering
   ]
+} */
+
+// Data Science VM
+module module_ds_vm 'modules/ds-vm.bicep' = {
+  name: 'module-ds-vm'
+  params: {
+    location: location
+    authenticationType: 'sshPublicKey'
+    cpu_gpu: 'CPU-8GB'
+    adminPasswordOrKey: sshPublicKey
+    adminUsername: adminUserName
+    subnetId: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[1].id
+  }
 }
 
 // Azure Firewall
@@ -163,7 +174,7 @@ module module_firewall './modules/firewall.bicep' = {
     location: location
     firewallSubnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[0].id
     sourceAddressRangePrefixes: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
-    vmPrivateIp: module_vm.outputs.vmPrivateIp
+    vmPrivateIp: module_ds_vm.outputs.privateIp
   }
 }
 
@@ -186,24 +197,133 @@ module module_aks './modules/aks.bicep' = {
   ]
 }
 
-// Private Link
-/* module module_aks_hub_privateDnsLink './modules/private_dns_link.bicep' = {
-  name: 'hub-aks-privateDnsLink'
-  scope: resourceGroup('MC_${resourceGroup().name}_aks-${suffix}_${location}')
-  params: {
-    privateDnsName: module_aks.outputs.aksControlPlanePrivateFQDN
-    vnetName: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.vnetName.value
-    vnetResourceGroupName: resourceGroup().name
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'app-insights-${suffix}'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
   }
 }
 
-module module_aks_spoke_privateDnsLink './modules/private_dns_link.bicep' = {
-  name: 'spoke-aks-privateDnsLink'
+// Cosmos DB
+module cosmos 'modules/cosmos_db.bicep' = {
+  name: 'modules-cosmos'
+  params: {
+    containerName: 'test_container'
+    databaseName: 'test_db'
+    location: location
+    suffix: suffix
+  }
+}
+
+// Azure Machine Learning Workspace
+module module_aml_ws 'modules/aml.bicep' = {
+  name: 'module_aml_ws'
+  params: {
+    applicationInsightsId: appInsights.id
+    containerRegistryId: module_acr.outputs.registryResourceId
+    keyVaultId: module_kv.outputs.keyVaultId
+    location: location
+    storageId: module_stor.outputs.storageAccountId
+    suffix: suffix
+  }
+}
+
+// Private DNS zones & Private Link Endpoints
+module module_aml_private_link './modules/private_link.bicep' = {
+  name: 'module-aml-private-link'
+  params: {
+    suffix: suffix
+    location: location
+    resourceType: 'Microsoft.MachineLearningServices/workspaces'
+    resourceName: module_aml_ws.outputs.amlWorkspaceName
+    groupType: amlGroupType
+    subnet: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.subnetRefs.value[2].id
+  }
+  dependsOn: [
+    module_vnet
+  ]
+}
+
+module module_aml_notebook_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-aml-notebook-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.notebooks.azure.net'
+  }
+}
+
+module module_aml_api_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-aml-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.api.azureml.ms'
+  }
+}
+
+module private_dns_zone_group 'modules/private_dns_zone_group.bicep' = {
+  name: 'module_private_dns_zone_group'
+  params: {
+    privateEndpointName: module_aml_private_link.outputs.privateEndpointName
+    zoneConfigs: [
+      {
+        name: module_aml_api_private_dns_zone.outputs.dnsZoneName
+        properties: {
+          privateDnsZoneId: module_aml_api_private_dns_zone.outputs.dnsZoneId
+        }
+      }
+      {
+        name: module_aml_notebook_private_dns_zone.outputs.dnsZoneName
+        properties: {
+          privateDnsZoneId: module_aml_notebook_private_dns_zone.outputs.dnsZoneId
+        }
+      }
+    ]
+  }
+}
+
+module module_hub_aml_api_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-hub-aml-api-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.api.azureml.ms'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
+  }
+}
+
+module module_spoke_aml_api_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-spoke-aml-api-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.api.azureml.ms'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
+}
+
+module module_hub_aml_notebook_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-hub-aml-notebook-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.notebooks.azure.net'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
+  }
+}
+
+module module_spoke_aml_notebook_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-spoke-aml-notebook-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.notebooks.azure.net'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
+}
+
+/* module module_aks_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-aks-hub-private-dns-zone-link'
   scope: resourceGroup('MC_${resourceGroup().name}_aks-${suffix}_${location}')
   params: {
-    privateDnsName: module_aks.outputs.aksControlPlanePrivateFQDN
-    vnetName: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.vnetName.value
-    vnetResourceGroupName: resourceGroup().name
+    privateDnsZoneName: module_aks.outputs.aksControlPlanePrivateFQDN
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
 } */
 
@@ -222,6 +342,31 @@ module module_kv_private_link './modules/private_link.bicep' = {
   ]
 }
 
+module module_kv_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-kv-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.vaultcore.azure.net'
+  }
+}
+
+module module_hub_kv_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-kv-hub-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.vaultcore.azure.net'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
+  }
+}
+
+module module_spoke_kv_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-kv-spoke-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.vaultcore.azure.net'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
+}
+
 module module_acr_private_link './modules/private_link.bicep' = {
   name: 'module-acr-private-link'
   params: {
@@ -235,6 +380,31 @@ module module_acr_private_link './modules/private_link.bicep' = {
   dependsOn: [
     module_vnet
   ]
+}
+
+module module_acr_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-acr-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.azurecr.io'
+  }
+}
+
+module module_hub_acr_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-acr-hub-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.azurecr.io'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
+  }
+}
+
+module module_spoke_acr_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-acr-spoke-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.azurecr.io'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
 }
 
 module module_stor_private_link './modules/private_link.bicep' = {
@@ -252,45 +422,32 @@ module module_stor_private_link './modules/private_link.bicep' = {
   ]
 }
 
+module module_blob_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-blob-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+  }
+}
+
+module module_hub_blob_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-blob-hub-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
+  }
+}
+
+module module_spoke_blob_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-blob-spoke-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
+}
+
 /*
-module module_sqldb_private_link './modules/private_link.bicep' = {
-  name: 'module-sqldb-private-link'
-  params: {
-    suffix: suffix
-    location: location
-    resourceType: 'Microsoft.Sql/servers'
-    resourceName: module_sqldb.outputs.sqlServerName
-    groupType: sqlGroupType
-    subnet: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.subnetRefs.value[1].id
-  }
-  dependsOn: [
-    module_vnet
-  ]
-}
-
-module module_sqldb_private_dns_spoke_link './modules/private_dns.bicep' = {
-  name: 'module-sqldb-private-dns-spoke-link'
-  params: {
-    privateDnsZoneName: sqlPrivateDnsZoneName
-    virtualNetworkName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
-  }
-  dependsOn: [
-    module_sqldb_private_link
-  ]
-}
-
-module module_sqldb_private_dns_hub_link './modules/private_dns.bicep' = {
-  name: 'module-sqldb-private-dns-hub-link'
-  params: {
-    privateDnsZoneName: sqlPrivateDnsZoneName
-    virtualNetworkName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
-  }
-  dependsOn: [
-    module_sqldb_private_link
-    module_sqldb_private_dns_spoke_link
-  ]
-}
-
 module module_sqldb_private_link_ipconfigs './modules/private_link_ipconfigs.bicep' = {
   name: 'module-sqldb-private-link-ipconfigs'
   params: {
@@ -308,5 +465,4 @@ output aksClusterName string = module_aks.outputs.aksClusterName
 output aksClusterPrivateDnsHostName string = module_aks.outputs.aksControlPlanePrivateFQDN
 output acrName string = module_acr.outputs.registryName
 output acrServer string = module_acr.outputs.registryServer
-output acrPassword string = module_acr.outputs.registryPassword
 output acrId string = module_acr.outputs.registryResourceId

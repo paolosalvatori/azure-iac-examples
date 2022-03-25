@@ -116,7 +116,7 @@
         "aksMaxPodCount": {
             "value": 50
         },
-        "adminUsername": {
+        "adminUserName": {
             "value": "localadmin"
         }
     }
