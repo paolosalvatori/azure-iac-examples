@@ -30,7 +30,7 @@ az ml computetarget update aks \
     --workspace-name aml-ws-qdgxjt \
     -g $rgName
 
-# 
+# insruct aml to build images using compute
 az ml workspace update \
     -n aml-ws-qdgxjt \
     -g $rgName \
