@@ -23,7 +23,7 @@
                             "name": "ManagementSubnet",
                             "addressPrefix": "10.0.1.0/24",
                             "udrName": "default-firewall",
-                            "nsgName": null,
+                            "nsgName": "ds-vm",
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Enabled",
                             "serviceEndpoints": null
@@ -67,7 +67,7 @@
                             "name": "PrivateLinkSubnet",
                             "addressPrefix": "10.1.2.0/24",
                             "udrName": null,
-                            "nsgName": null,
+                            "nsgName": "ds-vm",
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled",
                             "serviceEndpoints": [

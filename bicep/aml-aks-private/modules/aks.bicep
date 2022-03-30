@@ -16,11 +16,12 @@ param aksNodeOsDiskSizeGB int = 40
 ])
 param networkPlugin string = 'azure'
 
+param enableAutoScaling bool = true
+
 @description('The default number of agent nodes for the cluster.')
 @minValue(1)
 @maxValue(50)
-param aksNodeCount int = 1
-param enableAutoScaling bool = true
+param aksNodeCount int = 3
 
 @description('The minimum number of agent nodes for the cluster.')
 @minValue(1)
@@ -32,8 +33,23 @@ param aksMinNodeCount int = 1
 @maxValue(50)
 param aksMaxNodeCount int = 5
 
+@description('The default number of agent nodes for the cluster.')
+@minValue(1)
+@maxValue(50)
+param aksSystemNodeCount int = 1
+
+@description('The minimum number of agent nodes for the cluster.')
+@minValue(1)
+@maxValue(50)
+param aksSystemMinNodeCount int = 1
+
+@description('The maximum number of agent nodes for the cluster.')
+@minValue(1)
+@maxValue(50)
+param aksSystemMaxNodeCount int = 5
+
 @description('The maximum number of pods per AKS worker node')
-param maxPods int = 30
+param maxPods int = 50
 
 @description('The size of the Virtual Machine.')
 @allowed([
@@ -289,7 +305,7 @@ resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' 
     }
     agentPoolProfiles: [
       {
-        name: 'systempool'
+        name: 'pool1'
         osDiskSizeGB: aksNodeOsDiskSizeGB
         count: aksNodeCount
         minCount: aksMinNodeCount
@@ -297,10 +313,10 @@ resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' 
         maxPods: maxPods
         vmSize: aksNodeVMSize
         osType: 'Linux'
+        mode: 'User'
         type: 'VirtualMachineScaleSets'
         vnetSubnetID: aksSubnetRef
         enableAutoScaling: enableAutoScaling
-        mode: 'System'
         availabilityZones: [
           '1'
           '2'
@@ -308,18 +324,18 @@ resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' 
         ]
       }
       {
-        name: 'userpool1'
+        name: 'pool2'
         osDiskSizeGB: aksNodeOsDiskSizeGB
-        count: aksNodeCount
-        minCount: aksMinNodeCount
-        maxCount: aksMaxNodeCount
+        count: aksSystemNodeCount
+        minCount: aksSystemMinNodeCount
+        maxCount: aksSystemMaxNodeCount
         maxPods: maxPods
         vmSize: aksNodeVMSize
+        mode: 'System'
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
         vnetSubnetID: aksSubnetRef
         enableAutoScaling: enableAutoScaling
-        mode: 'User'
         availabilityZones: [
           '1'
           '2'

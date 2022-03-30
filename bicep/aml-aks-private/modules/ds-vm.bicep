@@ -1,8 +1,10 @@
 @description('Username for Administrator Account')
 param adminUsername string
 
+param suffix string
+
 @description('The name of you Virtual Machine.')
-param vmName string = 'vmName'
+param vmName string
 
 param subnetId string
 
@@ -20,8 +22,12 @@ param location string = resourceGroup().location
 ])
 param cpu_gpu string = 'CPU-4GB'
 
-@description('Name of the Network Security Group')
-param networkSecurityGroupName string = 'SecGroupNet'
+param imageRef object = {
+  publisher: 'microsoft-dsvm'
+  offer: 'dsvm-win-2019'
+  sku: 'server-2019'
+  version: 'latest'
+}
 
 @description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
 @allowed([
@@ -34,13 +40,9 @@ param authenticationType string = 'sshPublicKey'
 @secure()
 param adminPasswordOrKey string
 
-var networkInterfaceName = '${vmName}NetInt'
-var virtualMachineName = vmName
-var nsgId = networkSecurityGroup.id
+var networkInterfaceName = '${vmName}-${suffix}-nic'
+var virtualMachineName = '${vmName}-${suffix}'
 var osDiskType = 'StandardSSD_LRS'
-var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
-var storageAccountType = 'Standard_LRS'
-var storageAccountKind = 'Storage'
 var vmSize = {
   'CPU-4GB': 'Standard_B2s'
   'CPU-7GB': 'Standard_D2s_v3'
@@ -49,6 +51,7 @@ var vmSize = {
   'CPU-16GB': 'Standard_D4s_v3'
   'GPU-56GB': 'Standard_NC6_Promo'
 }
+
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -76,67 +79,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-05-01' = {
         }
       }
     ]
-    networkSecurityGroup: {
-      id: nsgId
-    }
   }
-}
-
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
-  name: networkSecurityGroupName
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'JupyterHub'
-        properties: {
-          priority: 1010
-          protocol: 'Tcp'
-          access: 'Allow'
-          direction: 'Inbound'
-          sourceAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '8000'
-        }
-      }
-      {
-        name: 'RStudioServer'
-        properties: {
-          priority: 1020
-          protocol: 'Tcp'
-          access: 'Allow'
-          direction: 'Inbound'
-          sourceAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '8787'
-        }
-      }
-      {
-        name: 'SSH'
-        properties: {
-          priority: 1030
-          protocol: 'Tcp'
-          access: 'Allow'
-          direction: 'Inbound'
-          sourceAddressPrefix: 'VirtualNetwork'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'VirtualNetwork'
-          destinationPortRange: '22'
-        }
-      }
-    ]
-  }
-}
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: storageAccountType
-  }
-  kind: storageAccountKind
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
@@ -153,12 +96,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
           storageAccountType: osDiskType
         }
       }
-      imageReference: {
-        publisher: 'microsoft-dsvm'
-        offer: 'ubuntu-1804'
-        sku: '1804-gen2'
-        version: 'latest'
-      }
+      imageReference: imageRef
     }
     networkProfile: {
       networkInterfaces: [
@@ -168,15 +106,12 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
       ]
     }
     osProfile: {
-      computerName: virtualMachineName
+      computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
     }
   }
-  dependsOn: [
-    storageAccount
-  ]
 }
 
 output adminUsername string = adminUsername

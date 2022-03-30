@@ -3,7 +3,7 @@ param location string
 param suffix string
 param firewallSubnetRef string
 param sourceAddressRangePrefixes array
-param vmPrivateIp string
+param workspaceId string
 
 var publicIpName = 'fw-pip-${suffix}'
 var firewallName = 'fw-${suffix}'
@@ -38,36 +38,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
         }
       }
     ]
-    natRuleCollections: [
-      {
-        name: 'jumpbox'
-        properties: {
-          priority: 100
-          action: {
-            type: 'Dnat'
-          }
-          rules: [
-            {
-              name: 'dnat-to-jumpbox'
-              sourceAddresses: [
-                '*'
-              ]
-              destinationAddresses: [
-                publicIP.properties.ipAddress
-              ]
-              destinationPorts: [
-                '22'
-              ]
-              protocols: [
-                'TCP'
-              ]
-              translatedAddress: vmPrivateIp
-              translatedPort: '22'
-            }
-          ]
-        }
-      }
-    ]
+    natRuleCollections: []
     applicationRuleCollections: [
       {
         name: 'aks'
@@ -188,6 +159,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                 'packages.microsoft.com'
                 '*.dp.kubernetesconfiguration.azure.com'
                 'azurearcfork8s.azurecr.io'
+                '*.data.azurecr.io'
               ]
             }
           ]
@@ -203,7 +175,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
             type: 'Allow'
           }
           rules: [
-            {
+            /*             {
               name: 'allow-ssh-inbound-internet-ssh'
               sourceAddresses: [
                 publicIP.properties.ipAddress
@@ -217,7 +189,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
               protocols: [
                 'TCP'
               ]
-            }
+            } */
             {
               name: 'allow-outbound-http-https-internet'
               sourceAddresses: sourceAddresses
@@ -244,12 +216,11 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
   }
 }
 
-/* resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2021-03-01' = {
+resource firewall_diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'firewall-diagnostics'
   scope: firewall
-  name: '${firewallName}/microsoft.insights/fwdiagnostics'
   properties: {
-    name: 'fwdiagnostics'
-    workspaceId: workspaceRef
+    workspaceId: workspaceId
     logs: [
       {
         category: 'AzureFirewallApplicationRule'
@@ -257,6 +228,10 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       }
       {
         category: 'AzureFirewallNetworkRule'
+        enabled: true
+      }
+      {
+        category: 'AzureFirewallDnsProxy'
         enabled: true
       }
     ]
@@ -267,6 +242,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       }
     ]
   }
-} */
+}
 
 output firewallPublicIpAddress string = publicIP.properties.ipAddress

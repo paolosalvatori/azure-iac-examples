@@ -14,6 +14,7 @@ resource aml_ws 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview
   properties: {
     applicationInsights: applicationInsightsId
     containerRegistry: containerRegistryId
+    // imageBuildCompute: 'FastProd'
     friendlyName: 'secure-aml-workspace'
     keyVault: keyVaultId
     primaryUserAssignedIdentity: ''

@@ -17,10 +17,13 @@ param aksNodeVmSize string = 'Standard_D2_v2'
 param aksNodeCount int = 1
 
 @description('AKS max pod count per worker node')
-param aksMaxPodCount int = 50
+param aksMaxPodCount int = 5
 
 @description('AKS nodes SSH Key')
-param sshPublicKey string
+param sshPublicKey string = ''
+
+@description('AKS nodes SSH Key')
+param password string
 
 @description('Array of AAD principal ObjectIds')
 param aadAdminGroupObjectIds array
@@ -38,6 +41,14 @@ var kvGroupType = 'vault'
 var acrGroupType = 'registry'
 var storGroupType = 'blob'
 var amlGroupType = 'amlworkspace'
+
+module module_nsg 'modules/nsg.bicep' = {
+  name: 'module-nsg'
+  params: {
+    location: location
+    nsgName: 'ds-vm-nsg-${suffix}'
+  }
+} 
 
 // ACR
 module module_acr 'modules/acr.bicep' = {
@@ -72,7 +83,7 @@ module module_stor 'modules/storage.bicep' = {
 }
 
 // Azure Monitor Workspace
-resource workspace 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
+resource az_monitor_ws 'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
   name: workspaceName
   location: location
   properties: {
@@ -105,6 +116,7 @@ module module_vnet './modules/vnets.bicep' = [for (item, i) in vNets: {
   }
   dependsOn: [
     module_udr
+    module_nsg
   ]
 }]
 
@@ -127,42 +139,28 @@ module bastion_host './modules/bastion.bicep' = {
   name: 'bastion-host'
   params: {
     suffix: suffix
+    location: location
     tags: {}
     subnetId: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[2].id
   }
 }
 
-// Jump box VM
-/* module module_vm './modules/vm.bicep' = {
-  name: 'module-vm'
-  params: {
-    name: 'jumpbox'
-    suffix: suffix
-    location: location
-    customData: customData
-    adminUsername: adminUsername
-    authenticationType: 'sshPublicKey'
-    adminPasswordOrKey: sshPublicKey
-    ubuntuOSVersion: '18.04-LTS'
-    vmSize: 'Standard_B2s'
-    subnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[1].id
-  }
-  dependsOn: [
-    module_peering
-  ]
-} */
-
 // Data Science VM
 module module_ds_vm 'modules/ds-vm.bicep' = {
   name: 'module-ds-vm'
   params: {
+    suffix: suffix
+    vmName: 'ds-vm'
     location: location
-    authenticationType: 'sshPublicKey'
-    cpu_gpu: 'CPU-8GB'
-    adminPasswordOrKey: sshPublicKey
+    authenticationType: 'password'
+    cpu_gpu: 'CPU-16GB'
+    adminPasswordOrKey: password
     adminUsername: adminUserName
     subnetId: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[1].id
   }
+  dependsOn: [
+    module_firewall
+  ]
 }
 
 // Azure Firewall
@@ -172,9 +170,9 @@ module module_firewall './modules/firewall.bicep' = {
   params: {
     suffix: suffix
     location: location
+    workspaceId: az_monitor_ws.id
     firewallSubnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[0].id
     sourceAddressRangePrefixes: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
-    vmPrivateIp: module_ds_vm.outputs.privateIp
   }
 }
 
@@ -190,7 +188,7 @@ module module_aks './modules/aks.bicep' = {
     aksNodeCount: aksNodeCount
     maxPods: aksMaxPodCount
     aadAdminGroupObjectIdList: aadAdminGroupObjectIds
-    workspaceRef: workspace.id
+    workspaceRef: az_monitor_ws.id
   }
   dependsOn: [
     module_firewall
@@ -203,17 +201,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-  }
-}
-
-// Cosmos DB
-module cosmos 'modules/cosmos_db.bicep' = {
-  name: 'modules-cosmos'
-  params: {
-    containerName: 'test_container'
-    databaseName: 'test_db'
-    location: location
-    suffix: suffix
   }
 }
 
@@ -230,7 +217,24 @@ module module_aml_ws 'modules/aml.bicep' = {
   }
 }
 
+// AML Compute
+module module_aml_compute 'modules/aml-compute.bicep' = {
+  name: 'module-aml-compute'
+  params: {
+    location: location
+    subnetId: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[2].id
+    computeName: 'aml-compute'
+    suffix: suffix
+    objectId: adminUserObjectId
+    workspaceName: module_aml_ws.outputs.amlWorkspaceName
+  }
+}
+
 // Private DNS zones & Private Link Endpoints
+// TODO - find Azure Batch egress dns names
+// Todo - add acrPull role to AKS cluster & disable Admin access
+// TODO - add A records for <acrname> & <acrname>.<location>.data to privatelink.azurecr.io + bLob & file private endpoints
+
 module module_aml_private_link './modules/private_link.bicep' = {
   name: 'module-aml-private-link'
   params: {
@@ -316,16 +320,6 @@ module module_spoke_aml_notebook_private_dns_zone_link './modules/private_dns_zo
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
 }
-
-/* module module_aks_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
-  name: 'module-aks-hub-private-dns-zone-link'
-  scope: resourceGroup('MC_${resourceGroup().name}_aks-${suffix}_${location}')
-  params: {
-    privateDnsZoneName: module_aks.outputs.aksControlPlanePrivateFQDN
-    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
-    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
-  }
-} */
 
 module module_kv_private_link './modules/private_link.bicep' = {
   name: 'module-kv-private-link'
@@ -429,6 +423,13 @@ module module_blob_private_dns_zone './modules/private_dns_zone.bicep' = {
   }
 }
 
+module module_file_private_dns_zone './modules/private_dns_zone.bicep' = {
+  name: 'module-file-private-dns-zone'
+  params: {
+    privateDnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+  }
+}
+
 module module_hub_blob_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
   name: 'module-blob-hub-private-dns-zone-link'
   params: {
@@ -447,18 +448,23 @@ module module_spoke_blob_private_dns_zone_link './modules/private_dns_zone_link.
   }
 }
 
-/*
-module module_sqldb_private_link_ipconfigs './modules/private_link_ipconfigs.bicep' = {
-  name: 'module-sqldb-private-link-ipconfigs'
+module module_hub_file_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-file-hub-private-dns-zone-link'
   params: {
-    privateDnsZoneName: sqlPrivateDnsZoneName
-    privateLinkNicResource: module_sqldb_private_link.outputs.privateLinkNicResource
+    privateDnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
-  dependsOn: [
-    module_sqldb_private_dns_hub_link
-  ]
 }
-*/
+
+module module_spoke_file_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
+  name: 'module-file-spoke-private-dns-zone-link'
+  params: {
+    privateDnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+    vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
+    vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
+  }
+}
 
 output firewallPublicIpAddress string = module_firewall.outputs.firewallPublicIpAddress
 output aksClusterName string = module_aks.outputs.aksClusterName

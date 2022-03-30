@@ -24,8 +24,12 @@ param inlineCommand string = 'ls'
 @description('Specifies the cmd arguments of the creation script in the storage volume of the Compute Instance.')
 param creationScript_cmdArguments string = ''
 
-resource workspaceName_computeName 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
-  name: '${workspaceName}/${computeName}'
+param suffix string
+
+var computeInstanceName = '${computeName}-${suffix}'
+
+resource workspace_compute 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+  name: '${workspaceName}/${computeInstanceName}'
   location: location
   properties: {
     computeType: 'ComputeInstance'
