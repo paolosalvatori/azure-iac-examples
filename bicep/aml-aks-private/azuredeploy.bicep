@@ -239,7 +239,7 @@ module module_aml_ws 'modules/aml_ws.bicep' = {
 }
 
 // AML Compute
-module module_aml_compute 'modules/aml-compute.bicep' = {
+module module_aml_compute 'modules/aml_compute.bicep' = {
   name: 'module-aml-compute'
   params: {
     location: location
