@@ -159,7 +159,7 @@ module bastion_host './modules/bastion.bicep' = {
 }
 
 // Data Science VM
-module module_ds_vm 'modules/ds-vm.bicep' = {
+module module_ds_vm 'modules/ds_vm.bicep' = {
   name: 'module-ds-vm'
   params: {
     suffix: suffix
