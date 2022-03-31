@@ -1,16 +1,15 @@
 @description('location to deploy the storage account')
 param location string
-param suffix string
+param firewallName string
+param firewallPublicIpName string
 param firewallSubnetRef string
 param sourceAddressRangePrefixes array
 param workspaceId string
 
-var publicIpName = 'fw-pip-${suffix}'
-var firewallName = 'fw-${suffix}'
 var sourceAddresses = [for item in sourceAddressRangePrefixes: item.properties.addressPrefix]
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2020-03-01' = {
-  name: publicIpName
+  name: firewallPublicIpName
   location: location
   sku: {
     name: 'Standard'

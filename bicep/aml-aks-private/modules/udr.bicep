@@ -1,10 +1,10 @@
 @description('location to deploy the storage account')
 param location string
-param suffix string
+param udrName string
 param azureFirewallPrivateIpAddress string
 
 resource default_firewall_rt 'Microsoft.Network/routeTables@2018-11-01' = {
-  name: 'default-firewall-rt-${suffix}'
+  name: udrName
   location: location
   properties: {
     disableBgpRoutePropagation: false

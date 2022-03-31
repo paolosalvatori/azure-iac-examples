@@ -1,9 +1,7 @@
 param location string
-param suffix string
+param keyVaultName string
 param adminUserObjectId string
 param subnetId string
-
-var keyVaultName = 'kv-${suffix}'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   location: location

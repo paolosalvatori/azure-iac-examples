@@ -3,9 +3,7 @@ param storageSku string = 'Standard_LRS'
 param storageKind string = 'StorageV2'
 param containerName string = 'default'
 param subnetId string
-param suffix string
-
-var storageAccountName = 'stor${suffix}'
+param storageAccountName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2018-07-01' = {
   name: storageAccountName

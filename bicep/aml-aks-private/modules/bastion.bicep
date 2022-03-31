@@ -1,10 +1,8 @@
-param suffix string
+param bastionName string
+param bastionPublicIpName string
 param tags object
 param subnetId string
 param location string
-
-var bastionName = 'bastion-${suffix}'
-var bastionPublicIpName = 'bastion-pip-${suffix}'
 
 resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   location: location

@@ -11,14 +11,14 @@ param resourceType string
 param resourceName string
 
 @description('private link resource group id')
-param groupType string
+param groupId string
 
 @description('resource id of private link subnet')
 param subnet string
 
-var prefix = guid(resourceType)
-var privateEndpointName = '${prefix}-pep-${suffix}'
-var privateEndpointConnectionName = '${prefix}-pep-cxn-${suffix}'
+// var prefix = guid(groupIds[0])
+var privateEndpointName = '${groupId}-pep-${suffix}'
+var privateEndpointConnectionName = '${groupId}-pep-cxn-${suffix}'
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   name: privateEndpointName
@@ -30,7 +30,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
         properties: {
           privateLinkServiceId: resourceId(resourceType, resourceName)
           groupIds: [
-            groupType
+            groupId
           ]
         }
       }

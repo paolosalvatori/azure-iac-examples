@@ -41,7 +41,7 @@ param authenticationType string = 'sshPublicKey'
 param adminPasswordOrKey string
 
 var networkInterfaceName = '${vmName}-${suffix}-nic'
-var virtualMachineName = '${vmName}-${suffix}'
+var virtualMachineName = '${vmName}-${cpu_gpu}-${suffix}'
 var osDiskType = 'StandardSSD_LRS'
 var vmSize = {
   'CPU-4GB': 'Standard_B2s'
@@ -83,7 +83,7 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2020-05-01' = {
 }
 
 resource virtualMachine 'Microsoft.Compute/virtualMachines@2019-07-01' = {
-  name: '${virtualMachineName}-${cpu_gpu}'
+  name: virtualMachineName
   location: location
   properties: {
     hardwareProfile: {

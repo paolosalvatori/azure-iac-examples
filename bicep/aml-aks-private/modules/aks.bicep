@@ -26,7 +26,7 @@ param aksNodeCount int = 3
 @description('The minimum number of agent nodes for the cluster.')
 @minValue(1)
 @maxValue(50)
-param aksMinNodeCount int = 1
+param aksMinNodeCount int = 3
 
 @description('The maximum number of agent nodes for the cluster.')
 @minValue(1)
@@ -264,7 +264,6 @@ param aksNodeVMSize string = 'Standard_F2'
 @description('The version of Kubernetes.')
 param aksVersion string
 param aksSubnetRef string
-param suffix string
 
 @description('Enable RBAC on the AKS cluster.')
 param aksEnableRBAC bool = true
@@ -275,11 +274,16 @@ param aadAdminGroupObjectIdList array
 @description('Log Analytics workspace resource id')
 param workspaceRef string
 
-var aksClusterName_var = 'aks-${suffix}'
-//var appGwyName = 'appgwy-${suffix}'
+param acrName string
 
-resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
-  name: aksClusterName_var
+param aksName string
+
+var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
+var acrPullRoleAssignmentName = 'Microsoft.Authorization/${guid('${resourceGroup().id}acrPullRoleAssignment')}'
+
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
+  name: aksName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -354,6 +358,16 @@ resource aksClusterName 'Microsoft.ContainerService/managedClusters@2020-03-01' 
   }
 }
 
-output aksClusterName string = aksClusterName_var
-output aksControlPlanePrivateFQDN string = aksClusterName.properties.privateFQDN
-output aksNodeResourceGroupName string = aksClusterName.properties.nodeResourceGroup
+resource acrPullRoleAssignment 'Microsoft.ContainerRegistry/registries/providers/roleAssignments@2020-04-01-preview' = {
+  name: '${acrName}/${acrPullRoleAssignmentName}'
+  properties: {
+    roleDefinitionId: acrPullRoleId
+    principalId: reference(aksCluster.id, '2020-12-01', 'Full').properties.identityProfile.kubeletidentity.objectId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+output aksClusterName string = aksCluster.name
+output aksControlPlanePrivateFQDN string = aksCluster.properties.privateFQDN
+output aksNodeResourceGroupName string = aksCluster.properties.nodeResourceGroup
+output aksClusterId string = aksCluster.id
