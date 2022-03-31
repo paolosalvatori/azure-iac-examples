@@ -1,7 +1,6 @@
 # Secure Azure Machine Learning Workspace Deployment
 
 ## Prerequisites
-- active azure subscription
 - [install azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt)
 
 ## Deployment steps
