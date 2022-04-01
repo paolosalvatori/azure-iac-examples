@@ -450,6 +450,9 @@ module module_hub_aml_api_private_dns_zone_link './modules/private_dns_zone_link
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_aml_api_private_dns_zone
+  ]
 }
 
 module module_spoke_aml_api_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -459,6 +462,9 @@ module module_spoke_aml_api_private_dns_zone_link './modules/private_dns_zone_li
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_aml_api_private_dns_zone
+  ]
 }
 
 module module_hub_aml_notebook_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -468,6 +474,9 @@ module module_hub_aml_notebook_private_dns_zone_link './modules/private_dns_zone
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_aml_notebook_private_dns_zone
+  ]
 }
 
 module module_spoke_aml_notebook_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -477,6 +486,9 @@ module module_spoke_aml_notebook_private_dns_zone_link './modules/private_dns_zo
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_aml_notebook_private_dns_zone
+  ]
 }
 
 module module_hub_kv_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -486,6 +498,9 @@ module module_hub_kv_private_dns_zone_link './modules/private_dns_zone_link.bice
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_kv_private_dns_zone
+  ]
 }
 
 module module_spoke_kv_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -495,6 +510,9 @@ module module_spoke_kv_private_dns_zone_link './modules/private_dns_zone_link.bi
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_kv_private_dns_zone
+  ]
 }
 
 module module_hub_acr_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -504,6 +522,9 @@ module module_hub_acr_private_dns_zone_link './modules/private_dns_zone_link.bic
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_acr_private_dns_zone
+  ]
 }
 
 module module_spoke_acr_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -513,6 +534,9 @@ module module_spoke_acr_private_dns_zone_link './modules/private_dns_zone_link.b
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_acr_private_dns_zone
+  ]
 }
 
 module module_hub_blob_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -522,6 +546,9 @@ module module_hub_blob_private_dns_zone_link './modules/private_dns_zone_link.bi
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_blob_private_dns_zone
+  ]
 }
 
 module module_spoke_blob_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -531,6 +558,9 @@ module module_spoke_blob_private_dns_zone_link './modules/private_dns_zone_link.
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-1')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_blob_private_dns_zone
+  ]
 }
 
 module module_hub_file_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
@@ -540,6 +570,9 @@ module module_hub_file_private_dns_zone_link './modules/private_dns_zone_link.bi
     vnetRef: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetRef.value
     vnetName: reference(resourceId('Microsoft.Resources/deployments', 'module-vnet-0')).outputs.vnetName.value
   }
+  dependsOn: [
+    module_file_private_dns_zone
+  ]
 }
 
 module module_spoke_file_private_dns_zone_link './modules/private_dns_zone_link.bicep' = {
