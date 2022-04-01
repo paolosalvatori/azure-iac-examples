@@ -7,6 +7,5 @@
 - create /scripts/.env file with the following content on separate lines
   - `DS_VM_PASSWORD='<your vm password>'`
   - `ADMIN_USER_OBJECT_ID="<your admin user objectId GUID>"`
-- cd to /scripts and execute the deployment script
-  - `$ cd ./scripts`
+- execute the deployment script
   - `$ ./deploy.sh`
