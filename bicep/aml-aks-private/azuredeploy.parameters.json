@@ -42,12 +42,13 @@
                 {
                     "name": "spoke-vnet",
                     "addressPrefixes": [
-                        "10.1.0.0/16"
+                        "10.1.0.0/16",
+                        "10.2.0.0/16"
                     ],
                     "subnets": [
                         {
                             "name": "ScoringSubnet",
-                            "addressPrefix": "10.1.0.0/24",
+                            "addressPrefix": "10.1.0.0/16",
                             "udrName": "default-firewall",
                             "nsgName": null,
                             "privateEndpointNetworkPolicies": "Disabled",
@@ -56,7 +57,7 @@
                         },
                         {
                             "name": "TrainingSubnet",
-                            "addressPrefix": "10.1.1.0/24",
+                            "addressPrefix": "10.2.0.0/24",
                             "udrName": "default-firewall",
                             "nsgName": null,
                             "privateEndpointNetworkPolicies": "Disabled",
@@ -65,7 +66,7 @@
                         },
                         {
                             "name": "PrivateLinkSubnet",
-                            "addressPrefix": "10.1.2.0/24",
+                            "addressPrefix": "10.2.1.0/24",
                             "udrName": null,
                             "nsgName": "ds-vm",
                             "privateEndpointNetworkPolicies": "Disabled",
@@ -87,7 +88,7 @@
                         },
                         {
                             "name": "LoadBalancerSubnet",
-                            "addressPrefix": "10.1.3.0/24",
+                            "addressPrefix": "10.2.2.0/24",
                             "udrName": "default-firewall",
                             "nsgName": null,
                             "privateEndpointNetworkPolicies": "Disabled",

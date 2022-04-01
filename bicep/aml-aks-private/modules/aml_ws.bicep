@@ -4,10 +4,26 @@ param containerRegistryId string
 param keyVaultId string
 param storageId string
 param amlComputeName string
+param amlAksComputeName string
 param workspaceName string
 param aksClusterId string
 param loadBalancerSubnetName string
-param aksClusterFqdn string
+param amlComputeSubnetId string
+
+@description('The VM size for compute instance')
+param vmSize string = 'Standard_DS3_v2'
+
+@description('AAD tenant id of the user to which compute instance is assigned to')
+param tenantId string = subscription().tenantId
+
+@description('AAD object id of the user to which compute instance is assigned to')
+param objectId string
+
+@description('inline command')
+param inlineCommand string = 'ls'
+
+@description('Specifies the cmd arguments of the creation script in the storage volume of the Compute Instance.')
+param creationScript_cmdArguments string = ''
 
 resource aml_ws 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview' = {
   name: workspaceName
@@ -27,7 +43,7 @@ resource aml_ws 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview
     description: 'secure aml workspace'
     allowPublicAccessWhenBehindVnet: false
     hbiWorkspace: true
-/* encryption: {
+    /* encryption: {
       keyVaultProperties: {
         keyVaultArmId: module_kv.outputs.keyVaultId
         keyIdentifier: ''
@@ -40,20 +56,48 @@ resource aml_ws 'Microsoft.MachineLearningServices/workspaces@2022-01-01-preview
   }
 }
 
+resource workspace_compute 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
+  name: amlComputeName
+  parent: aml_ws
+  location: location
+  properties: {
+    computeType: 'ComputeInstance'
+    properties: {
+      vmSize: vmSize
+      subnet: {
+        id: amlComputeSubnetId
+      }
+      personalComputeInstanceSettings: {
+        assignedUser: {
+          objectId: objectId
+          tenantId: tenantId
+        }
+      }
+      setupScripts: {
+        scripts: {
+          creationScript: {
+            scriptSource: 'inline'
+            scriptData: base64(inlineCommand)
+            scriptArguments: creationScript_cmdArguments
+          }
+        }
+      }
+    }
+  }
+}
+
 resource amlAksCompute 'Microsoft.MachineLearningServices/workspaces/computes@2021-07-01' = {
-  name: 'aks-inference'
+  name: amlAksComputeName
   location: location
   parent: aml_ws
   properties: {
-    // computeLocation: location
     description: 'aks inference cluster'
-    // disableLocalAuth: false
     resourceId: aksClusterId
     computeType: 'AKS'
-/*     properties: {
+    properties: {
       loadBalancerType: 'InternalLoadBalancer'
       loadBalancerSubnet: loadBalancerSubnetName
-    } */
+    }
   }
 }
 

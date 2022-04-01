@@ -148,7 +148,7 @@ module module_peering './modules/peering.bicep' = {
 
 // Bastion Host
 module bastion_host './modules/bastion.bicep' = {
-  name: 'bastion-host'
+  name: 'module-bastion'
   params: {
     bastionName: bastionName
     bastionPublicIpName: bastionPublicIpName
@@ -226,27 +226,17 @@ module module_aml_ws 'modules/aml_ws.bicep' = {
   name: 'module_aml_ws'
   params: {
     workspaceName: amlWorkspaceName
+    amlComputeName: 'aml-compute-${suffix}'
+    amlAksComputeName: 'aml-aks-${suffix}'
+    amlComputeSubnetId: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[2].id
+    objectId: adminUserObjectId
     loadBalancerSubnetName: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[3].name
     applicationInsightsId: appInsights.id
     containerRegistryId: module_acr.outputs.registryResourceId
     keyVaultId: module_kv.outputs.keyVaultId
     location: location
     storageId: module_stor.outputs.storageAccountId
-    amlComputeName: module_aml_compute.outputs.amlComputeName
     aksClusterId: module_aks.outputs.aksClusterId
-    aksClusterFqdn: module_aks.outputs.aksControlPlanePrivateFQDN
-  }
-}
-
-// AML Compute
-module module_aml_compute 'modules/aml_compute.bicep' = {
-  name: 'module-aml-compute'
-  params: {
-    location: location
-    subnetId: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[2].id
-    computeName: 'aml-compute-${suffix}'
-    objectId: adminUserObjectId
-    workspaceName: amlWorkspaceName
   }
 }
 
@@ -263,7 +253,7 @@ module module_aml_private_link './modules/private_link.bicep' = {
   }
   dependsOn: [
     module_vnet
-    module_aml_compute
+    module_aml_ws
   ]
 }
 
@@ -561,12 +551,7 @@ module module_spoke_file_private_dns_zone_link './modules/private_dns_zone_link.
   }
 }
 
-output firewallPublicIpAddress string = module_firewall.outputs.firewallPublicIpAddress
 output aksClusterName string = module_aks.outputs.aksClusterName
 output aksClusterId string = module_aks.outputs.aksClusterId
 output aksClusterPrivateDnsHostName string = module_aks.outputs.aksControlPlanePrivateFQDN
-output acrName string = module_acr.outputs.registryName
-output acrServer string = module_acr.outputs.registryServer
-output acrId string = module_acr.outputs.registryResourceId
 output amlWorkspaceName string = module_aml_ws.name
-output amlComputeName string = module_aml_compute.name
