@@ -1,3 +1,4 @@
+param location string
 @description('Optional DNS prefix to use with hosted Kubernetes API server FQDN.')
 param aksDnsPrefix string = 'aks'
 
@@ -64,12 +65,12 @@ param windowsAdminUserName string
 param windowsAdminPassword string
 param sshPublicKey string
 
-var aksClusterName = '${prefix}-aks'
+var aksClusterName = 'aks-${prefix}'
 var aksClusterId = aksCluster.id
 
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
   name: aksClusterName
-  location: resourceGroup().location
+  location: location
   identity: {
     type: 'SystemAssigned'
   }
@@ -135,7 +136,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
         maxPods: maxPods
         tags: tags
       }
-      {
+      /* {
         name: 'windows'
         mode: 'User'
         availabilityZones: [
@@ -155,7 +156,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
         enableAutoScaling: enableAutoScaling
         maxPods: maxPods
         tags: tags
-      }
+      } */
     ]
     networkProfile: {
       networkPlugin: networkPlugin

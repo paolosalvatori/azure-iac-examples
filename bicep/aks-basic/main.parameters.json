@@ -12,13 +12,13 @@
             }
         },
         "prefix": {
-            "value": "cbellee-aks"
+            "value": "flux-aks"
         },
         "adminGroupObjectID": {
             "value": "f6a900e2-df11-43e7-ba3e-22be99d3cede"
         },
         "aksVersion": {
-            "value": "1.18.17"
+            "value": "1.23.3"
         },
         "windowsAdminUserName": {
             "value": "localadmin"
@@ -39,16 +39,8 @@
                     "addressPrefix": "10.0.0.0/21"
                 },
                 {
-                    "name": "aks-linux-subnet",
+                    "name": "aks-user-subnet",
                     "addressPrefix": "10.0.8.0/21"
-                },
-                {
-                    "name": "aks-windows-subnet",
-                    "addressPrefix": "10.0.16.0/21"
-                },
-                {
-                    "name": "appgwy-subnet",
-                    "addressPrefix": "10.0.24.0/21"
                 }
             ]
         }
