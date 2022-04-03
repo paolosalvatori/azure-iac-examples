@@ -333,7 +333,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2020-03-01' = {
         count: aksSystemNodeCount
         minCount: aksSystemMinNodeCount
         maxCount: aksSystemMaxNodeCount
-        maxPods: maxPods
+        maxPods: 50
         vmSize: aksNodeVMSize
         mode: 'System'
         osType: 'Linux'

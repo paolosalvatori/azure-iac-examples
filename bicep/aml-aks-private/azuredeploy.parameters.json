@@ -115,13 +115,8 @@
                 "dept": "it"
             }
         },
-        "aadAdminGroupObjectIds": {
-            "value": [
-                "f6a900e2-df11-43e7-ba3e-22be99d3cede"
-            ]
-        },
         "aksMaxPodCount": {
-            "value": 50
+            "value": 20
         },
         "adminUserName": {
             "value": "localadmin"

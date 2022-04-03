@@ -1,14 +1,11 @@
 LOCATION='australiaeast'
-PREFIX='aml-secure'
+PREFIX='aml-secure-5'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
-WS_CLUSTER_ATTACH_NAME='aks-inference'
+ADMIN_USER_OBJECT_ID=$(az ad signed-in-user show | jq .objectId -r)
 
 # load .env file
 . ./.env
-
-# install az ml extension
-az extension add -n azure-cli-ml
 
 # create resource group
 az group create -n $RG_NAME -l $LOCATION
@@ -21,5 +18,5 @@ az deployment group create \
     -p ./azuredeploy.parameters.json \
     -p password=$DS_VM_PASSWORD \
     -p aksNodeCount=3 \
+    -p aadAdminGroupObjectIds=$ADMIN_GROUP_OBJECT_IDS \
     -p adminUserObjectId=$ADMIN_USER_OBJECT_ID
-
