@@ -34,10 +34,9 @@ param imageRef object = {
   'sshPublicKey'
   'password'
 ])
-param authenticationType string = 'sshPublicKey'
+param authenticationType string = 'password'
 
 @description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
-@secure()
 param adminPasswordOrKey string
 
 var networkInterfaceName = '${vmName}-${suffix}-nic'

@@ -2,6 +2,8 @@ LOCATION='australiaeast'
 PREFIX='aml-secure-5'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
+
+# add current user to KeyVault acess policy
 ADMIN_USER_OBJECT_ID=$(az ad signed-in-user show | jq .objectId -r)
 
 # load .env file
