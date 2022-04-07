@@ -186,7 +186,15 @@ module module_firewall './modules/firewall.bicep' = {
     location: location
     workspaceId: module_az_mon_ws.outputs.workspaceId
     firewallSubnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[0].id
-    sourceAddressRangePrefixes: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
+  }
+}
+
+module module_firewall_policy 'modules/firewall_policy.bicep' = {
+  name: 'module-firewall-policy'
+  params: {
+    location: location
+    sourceAddresses: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
+    firewallName: firewallName
   }
 }
 
@@ -228,6 +236,7 @@ module module_aml_ws 'modules/aml_ws.bicep' = {
     workspaceName: amlWorkspaceName
     amlComputeName: 'aml-compute-${suffix}'
     amlAksComputeName: 'aml-aks-${suffix}'
+    agentCount: aksNodeCount
     amlComputeSubnetId: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[2].id
     objectId: adminUserObjectId
     loadBalancerSubnetName: reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value[3].name

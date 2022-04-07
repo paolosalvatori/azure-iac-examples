@@ -3,12 +3,9 @@ param location string
 param firewallName string
 param firewallPublicIpName string
 param firewallSubnetRef string
-param sourceAddressRangePrefixes array
 param workspaceId string
 
-var sourceAddresses = [for item in sourceAddressRangePrefixes: item.properties.addressPrefix]
-
-resource publicIP 'Microsoft.Network/publicIPAddresses@2020-03-01' = {
+resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: firewallPublicIpName
   location: location
   sku: {
@@ -24,6 +21,10 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
   name: firewallName
   location: location
   properties: {
+    sku: {
+      name: 'AZFW_VNet'
+      tier: 'Standard'
+    }
     ipConfigurations: [
       {
         name: 'ipconfig'
@@ -37,7 +38,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
         }
       }
     ]
-    natRuleCollections: []
+/*     natRuleCollections: []
     applicationRuleCollections: [
       {
         name: 'aks'
@@ -174,21 +175,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
             type: 'Allow'
           }
           rules: [
-            /*             {
-              name: 'allow-ssh-inbound-internet-ssh'
-              sourceAddresses: [
-                publicIP.properties.ipAddress
-              ]
-              destinationAddresses: [
-                '${vmPrivateIp}/32'
-              ]
-              destinationPorts: [
-                '22'
-              ]
-              protocols: [
-                'TCP'
-              ]
-            } */
             {
               name: 'allow-outbound-http-https-internet'
               sourceAddresses: sourceAddresses
@@ -211,7 +197,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           ]
         }
       }
-    ]
+    ] */
   }
 }
 

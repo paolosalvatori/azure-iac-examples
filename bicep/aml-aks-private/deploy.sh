@@ -1,5 +1,5 @@
 LOCATION='australiaeast'
-PREFIX='aml-secure-5'
+PREFIX='aml-secure-8'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
 
@@ -20,5 +20,6 @@ az deployment group create \
     -p ./azuredeploy.parameters.json \
     -p password=$DS_VM_PASSWORD \
     -p aksNodeCount=3 \
+    -p aksSystemNodeCount=3 \
     -p aadAdminGroupObjectIds=$ADMIN_GROUP_OBJECT_IDS \
     -p adminUserObjectId=$ADMIN_USER_OBJECT_ID

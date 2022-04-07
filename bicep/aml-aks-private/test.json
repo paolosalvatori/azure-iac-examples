@@ -1,0 +1,71 @@
+[
+    {
+        "name": "ScoringSubnet",
+        "properties": {
+            "addressPrefix": "10.1.0.0/16",
+            "serviceEndpoints": null,
+            "routeTable": {
+                "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/routeTables/default-firewall-rt-uem333"
+            },
+            "networkSecurityGroup": null,
+            "privateEndpointNetworkPolicies": "Disabled",
+            "privateLinkServiceNetworkPolicies": "Enabled"
+        },
+        "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/virtualNetworks/spoke-vnet-uem333/subnets/ScoringSubnet"
+    },
+    {
+        "name": "TrainingSubnet",
+        "properties": {
+            "addressPrefix": "10.2.0.0/24",
+            "serviceEndpoints": null,
+            "routeTable": {
+                "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/routeTables/default-firewall-rt-uem333"
+            },
+            "networkSecurityGroup": null,
+            "privateEndpointNetworkPolicies": "Disabled",
+            "privateLinkServiceNetworkPolicies": "Enabled"
+        },
+        "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/virtualNetworks/spoke-vnet-uem333/subnets/TrainingSubnet"
+    },
+    {
+        "name": "PrivateLinkSubnet",
+        "properties": {
+            "addressPrefix": "10.2.1.0/24",
+            "serviceEndpoints": [
+                {
+                    "locations": [
+                        "australiaeast"
+                    ],
+                    "service": "Microsoft.Storage"
+                },
+                {
+                    "locations": [
+                        "australiaeast"
+                    ],
+                    "service": "Microsoft.KeyVault"
+                }
+            ],
+            "routeTable": null,
+            "networkSecurityGroup": {
+                "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/networkSecurityGroups/ds-vm-nsg-uem333"
+            },
+            "privateEndpointNetworkPolicies": "Disabled",
+            "privateLinkServiceNetworkPolicies": "Disabled"
+        },
+        "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/virtualNetworks/spoke-vnet-uem333/subnets/PrivateLinkSubnet"
+    },
+    {
+        "name": "LoadBalancerSubnet",
+        "properties": {
+            "addressPrefix": "10.2.2.0/24",
+            "serviceEndpoints": null,
+            "routeTable": {
+                "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/routeTables/default-firewall-rt-uem333"
+            },
+            "networkSecurityGroup": null,
+            "privateEndpointNetworkPolicies": "Disabled",
+            "privateLinkServiceNetworkPolicies": "Disabled"
+        },
+        "id": "/subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/aml-secure-8-rg/providers/Microsoft.Network/virtualNetworks/spoke-vnet-uem333/subnets/LoadBalancerSubnet"
+    }
+]

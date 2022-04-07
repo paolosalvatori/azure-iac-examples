@@ -9,6 +9,7 @@ param workspaceName string
 param aksClusterId string
 param loadBalancerSubnetName string
 param amlComputeSubnetId string
+param agentCount int
 
 @description('The VM size for compute instance')
 param vmSize string = 'Standard_DS3_v2'
@@ -97,6 +98,7 @@ resource amlAksCompute 'Microsoft.MachineLearningServices/workspaces/computes@20
     properties: {
       loadBalancerType: 'InternalLoadBalancer'
       loadBalancerSubnet: loadBalancerSubnetName
+      agentCount: agentCount
     }
   }
 }
