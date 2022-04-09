@@ -68,7 +68,7 @@
                             "name": "PrivateLinkSubnet",
                             "addressPrefix": "10.2.1.0/24",
                             "udrName": null,
-                            "nsgName": "ds-vm",
+                            "nsgName": null,
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled",
                             "serviceEndpoints": [

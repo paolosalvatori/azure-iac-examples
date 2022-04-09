@@ -1,9 +1,12 @@
 @description('location to deploy the storage account')
 param location string
 param firewallName string
+param sourceAddresses array
 param firewallPublicIpName string
 param firewallSubnetRef string
 param workspaceId string
+
+var sourceAddressPrefixes = [for item in sourceAddresses: item.properties.addressPrefix]
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: firewallPublicIpName
@@ -25,20 +28,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       name: 'AZFW_VNet'
       tier: 'Standard'
     }
-    ipConfigurations: [
-      {
-        name: 'ipconfig'
-        properties: {
-          subnet: {
-            id: firewallSubnetRef
-          }
-          publicIPAddress: {
-            id: publicIP.id
-          }
-        }
-      }
-    ]
-/*     natRuleCollections: []
     applicationRuleCollections: [
       {
         name: 'aks'
@@ -50,7 +39,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           rules: [
             {
               name: 'allow-aks'
-              sourceAddresses: sourceAddresses
+              sourceAddresses: sourceAddressPrefixes
               protocols: [
                 {
                   protocolType: 'Http'
@@ -82,7 +71,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           rules: [
             {
               name: 'allow-oss'
-              sourceAddresses: sourceAddresses
+              sourceAddresses: sourceAddressPrefixes
               protocols: [
                 {
                   protocolType: 'Http'
@@ -122,7 +111,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           rules: [
             {
               name: 'allow-sites'
-              sourceAddresses: sourceAddresses
+              sourceAddresses: sourceAddressPrefixes
               protocols: [
                 {
                   protocolType: 'Http'
@@ -138,11 +127,11 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                 '*.opinsights.azure.com'
                 'login.microsoftonline.com'
                 '*azurecr.io'
-                '*.blob.${environment().suffixes.storage}'
+                '*.blob.core.windows.net'
                 '*.trafficmanager.net'
                 '*.azureedge.net'
                 '*.microsoft.com'
-                '*${environment().suffixes.storage}' // '*.core.windows.net'
+                '*.core.windows.net'
                 'aka.ms'
                 '*.azure-automation.net'
                 '*.azure.com'
@@ -159,7 +148,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                 'packages.microsoft.com'
                 '*.dp.kubernetesconfiguration.azure.com'
                 'azurearcfork8s.azurecr.io'
-                '*.data.azurecr.io'
               ]
             }
           ]
@@ -177,7 +165,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           rules: [
             {
               name: 'allow-outbound-http-https-internet'
-              sourceAddresses: sourceAddresses
+              sourceAddresses: sourceAddressPrefixes
               destinationAddresses: [
                 '*'
               ]
@@ -197,7 +185,20 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           ]
         }
       }
-    ] */
+    ]
+    ipConfigurations: [
+      {
+        name: 'ipconfig'
+        properties: {
+          subnet: {
+            id: firewallSubnetRef
+          }
+          publicIPAddress: {
+            id: publicIP.id
+          }
+        }
+      }
+    ]
   }
 }
 
@@ -229,4 +230,5 @@ resource firewall_diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-
   }
 }
 
+output firewallName string = firewall.name
 output firewallPublicIpAddress string = publicIP.properties.ipAddress

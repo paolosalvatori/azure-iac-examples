@@ -186,17 +186,18 @@ module module_firewall './modules/firewall.bicep' = {
     location: location
     workspaceId: module_az_mon_ws.outputs.workspaceId
     firewallSubnetRef: reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value[0].id
+    sourceAddresses: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
   }
 }
 
-module module_firewall_policy 'modules/firewall_policy.bicep' = {
+/* module module_firewall_policy 'modules/firewall_policy.bicep' = {
   name: 'module-firewall-policy'
   params: {
     location: location
     sourceAddresses: union(reference('Microsoft.Resources/deployments/module-vnet-0').outputs.subnetRefs.value, reference('Microsoft.Resources/deployments/module-vnet-1').outputs.subnetRefs.value)
-    firewallName: firewallName
+    firewallName: module_firewall.outputs.firewallName
   }
-}
+} */
 
 // AKS
 module module_aks './modules/aks.bicep' = {
