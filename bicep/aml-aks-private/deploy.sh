@@ -1,10 +1,10 @@
 LOCATION='australiaeast'
-PREFIX='aml-secure-17'
+PREFIX='aml-secure'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
 
 # add current user to KeyVault acess policy
-ADMIN_USER_OBJECT_ID=$(az ad signed-in-user show | jq .objectId -r)
+ADMIN_USER_OBJECT_ID=$(az ad signed-in-user show --query objectId -o tsv)
 
 # load .env file
 . ./.env
@@ -14,12 +14,12 @@ az group create -n $RG_NAME -l $LOCATION
 
 # execute Bicep template deployment
 az deployment group create \
-    -g $RG_NAME \
-    -n $DEPLOYMENT_NAME \
-    -f ./azuredeploy.bicep \
-    -p ./azuredeploy.parameters.json \
-    -p password=$DS_VM_PASSWORD \
-    -p aksNodeCount=3 \
-    -p aksSystemNodeCount=3 \
-    -p aadAdminGroupObjectIds=$ADMIN_GROUP_OBJECT_IDS \
-    -p adminUserObjectId=$ADMIN_USER_OBJECT_ID
+    --resource-group $RG_NAME \
+    --name $DEPLOYMENT_NAME \
+    --template-file ./azuredeploy.bicep \
+    --parameters ./azuredeploy.parameters.json \
+    --parameters password=$DS_VM_PASSWORD \
+    --parameters aksNodeCount=3 \
+    --parameters aksSystemNodeCount=3 \
+    --parameters aadAdminGroupObjectIds=$ADMIN_GROUP_OBJECT_IDS \
+    --parameters adminUserObjectId=$ADMIN_USER_OBJECT_ID

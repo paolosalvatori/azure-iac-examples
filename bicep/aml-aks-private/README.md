@@ -2,7 +2,6 @@
 
 ## Prerequisites
 - install [azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt)
-- install [jq](https://stedolan.github.io/jq/download/) 
 
 ## Deployment steps
 - create `.env` file in `/aml-aks-private` with the following two variable declarations on separate lines. 
