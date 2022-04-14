@@ -393,3 +393,4 @@ resource frontEndApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
     }
   }
 }
+ output latestRevisionFqdn string = frontEndApp.properties.latestRevisionFqdn

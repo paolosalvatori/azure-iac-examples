@@ -52,9 +52,8 @@ az deployment group create \
     --parameters dbAdminPassword=$DB_ADMIN_PASSWORD \
     --parameters adminUserObjectId=$ADMIN_USER_OBJECT_ID
 
-REGION1_URL=$(az deployment group show -n infra-deployment -g $RG_NAME --query properties.outputs.region1AppUrl.value -o tsv)
-REGION2_URL=$(az deployment group show -n infra-deployment -g $RG_NAME --query properties.outputs.region2AppUrl.value -o tsv)
+APP_REVISION_URL=$(az deployment group show -n infra-deployment -g $RG_NAME --query properties.outputs.latestRevisionFqdn.value -o tsv)
 
-# ensure the apps in each region return the databse server ip of the opposite region
-curl https://$REGION1_URL
-curl https://$REGION2_URL
+# ensure the app (canadacentral) connects to the databse server ip of the opposite region (uk south)
+curl https://$APP_REVISION_URL/info
+

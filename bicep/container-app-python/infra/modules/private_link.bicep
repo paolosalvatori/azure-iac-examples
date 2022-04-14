@@ -16,7 +16,6 @@ param groupId string
 @description('resource id of private link subnet')
 param subnet string
 
-// var prefix = guid(groupIds[0])
 var privateEndpointName = '${groupId}-pep-${suffix}'
 var privateEndpointConnectionName = '${groupId}-pep-cxn-${suffix}'
 
@@ -41,6 +40,5 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-05-01' = {
   }
 }
 
-output privateLinkNicResource string = reference(privateEndpoint.id, '2021-05-01').networkInterfaces[0].id
-output privateEndpointName string = privateEndpointName
+output privateEndpointName string = privateEndpoint.name
 output privateEndpoint object = privateEndpoint
