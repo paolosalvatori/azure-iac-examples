@@ -14,7 +14,7 @@
         "virtualNetworks": {
             "value": [
                 {
-                    "name": "hub-vnet",
+                    "name": "vnet",
                     "addressPrefixes": [
                         "10.1.0.0/16"
                     ],

@@ -12,6 +12,9 @@ This set of bicep templates create the following Azure resources:
 - Private endpoints for Function app storage account endpoints (blob, table, queue & file)
 - Private DNS zones for Function app storage account endpoints (blob, table, queue & file)
 
+## Prerequisites
+- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Bash shell (Native Mac/Linux shell or Windows Susbsystem for Linux)
 ## Usage
 - create /.env file in the root directory
 - add a line to the file specifying the VM admin password environment variable & value
