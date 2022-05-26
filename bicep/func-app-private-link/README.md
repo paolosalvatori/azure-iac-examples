@@ -6,7 +6,7 @@ This set of bicep templates create the following Azure resources:
 - Virtual network
 - Private endpoint for function app ingress
 - Private DNS for function app ingress
-- Azure Bastion (to acces the internal Windows VM)
+- Azure Bastion (to access the internal Windows VM)
 - Windows VM (for testing connectivity to the private endpoint)
 - Application Insights
 - Private endpoints for Function app storage account endpoints (blob, table, queue & file)
@@ -14,6 +14,9 @@ This set of bicep templates create the following Azure resources:
 
 ## Usage
 - create /.env file in the root directory
-- add a line specifying the VM admin password environment variable & value
+- add a line to the file specifying the VM admin password environment variable & value
   - `VM_ADMIN_PASSWORD='<VM password>'`
-- execute `/.scripts/deploy.sh` to deploy the environment
+- change working directory to 'scripts'
+  - `$ cd ./scripts`
+- execute the deployment script 
+  - `$ ./deploy.sh`
