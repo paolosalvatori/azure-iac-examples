@@ -1,33 +1,34 @@
 param aksClusterName string
-param gitRepoUrl string = 'https://github.com/cbellee/flux2-kustomize-helm-example'
+param gitRepoUrl string
+
+@allowed([
+  'staging'
+  'production'
+])
+param environmentName string
 
 resource aks 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' existing = {
   name: aksClusterName
 }
 
-resource flux 'Microsoft.KubernetesConfiguration/extensions@2021-09-01' = {
+resource fluxExtension 'Microsoft.KubernetesConfiguration/extensions@2021-09-01' = {
   name: 'flux'
   scope: aks
   properties: {
     extensionType: 'microsoft.flux'
-    scope: {
-      cluster: {
-        releaseNamespace: 'flux-system'
-      }
-    }
     autoUpgradeMinorVersion: true
   }
 }
 
 resource fluxConfig 'Microsoft.KubernetesConfiguration/fluxConfigurations@2021-11-01-preview' = {
-  name: 'gitops-demo'
+  name: 'cluster-config'
   scope: aks
   dependsOn: [
-    flux
+    fluxExtension
   ]
   properties: {
     scope: 'cluster'
-    namespace: 'gitops-demo'
+    namespace: 'cluster-config'
     sourceKind: 'GitRepository'
     suspend: false
     gitRepository: {
@@ -49,7 +50,7 @@ resource fluxConfig 'Microsoft.KubernetesConfiguration/fluxConfigurations@2021-1
         prune: true
       }
       apps: {
-        path: './apps/staging'
+        path: './apps/${environmentName}'
         dependsOn: [
           {
             kustomizationName: 'infra'

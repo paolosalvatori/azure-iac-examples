@@ -1,18 +1,25 @@
-RG_NAME="aks-$1-rg"
+ENVIRONMENTS=(staging production)
 LOCATION='australiaeast'
-PREFIX=$1
-WIN_ADMIN_PASSWORD='M1cr0soft1234567890'
+GIT_REPO_URL='https://github.com/Azure/gitops-flux2-kustomize-helm-mt'
 
-az group create --location $LOCATION --name $RG_NAME
+for i in "${ENVIRONMENTS[@]}"
+do
+    echo "deploying environment: $i"
+    RG_NAME="aks-$i-rg"
 
-az deployment group create \
-    --resource-group $RG_NAME \
-    --name aks-deployment \
-    --template-file ./main.bicep \
-    --parameters @main.parameters.json \
-    --parameters prefix=$PREFIX \
-    --parameters windowsAdminPassword=$WIN_ADMIN_PASSWORD
+    az group create --location $LOCATION --name $RG_NAME
 
-CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name aks-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
+    az deployment group create \
+        --resource-group $RG_NAME \
+        --name aks-deployment \
+        --template-file ./main.bicep \
+        --parameters @main.parameters.json \
+        --parameters environment=$i \
+        --parameters gitRepoUrl=$GIT_REPO_URL
 
-az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
+    CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name aks-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
+
+    az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
+	
+done
+

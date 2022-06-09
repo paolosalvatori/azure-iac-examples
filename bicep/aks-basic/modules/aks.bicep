@@ -61,8 +61,6 @@ param tags object
 param enablePodSecurityPolicy bool = false
 param enablePrivateCluster bool = false
 param linuxAdminUserName string
-param windowsAdminUserName string
-param windowsAdminPassword string
 param sshPublicKey string
 
 var aksClusterName = 'aks-${prefix}'
@@ -136,27 +134,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
         maxPods: maxPods
         tags: tags
       }
-      /* {
-        name: 'windows'
-        mode: 'User'
-        availabilityZones: [
-          '1'
-          '2'
-          '3'
-        ]
-        osDiskSizeGB: aksAgentOsDiskSizeGB
-        count: aksNodeCount
-        minCount: aksMinNodeCount
-        maxCount: aksMaxNodeCount
-        vmSize: aksNodeVMSize
-        osType: 'Windows'
-        osDiskType: 'Ephemeral'
-        type: 'VirtualMachineScaleSets'
-        vnetSubnetID: aksUserSubnetId
-        enableAutoScaling: enableAutoScaling
-        maxPods: maxPods
-        tags: tags
-      } */
     ]
     networkProfile: {
       networkPlugin: networkPlugin
@@ -165,10 +142,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
       dockerBridgeCidr: aksDockerBridgeCIDR
       loadBalancerSku: 'standard'
     }
-  windowsProfile: {
-    adminPassword: windowsAdminPassword
-    adminUsername: windowsAdminUserName
-  }
     aadProfile: {
       managed: true
       enableAzureRBAC: true

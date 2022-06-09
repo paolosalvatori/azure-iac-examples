@@ -7,21 +7,14 @@
         },
         "tags": {
             "value": {
-                "environment": "dev",
                 "costcentre": "123456789"
             }
-        },
-        "prefix": {
-            "value": "flux-aks"
         },
         "adminGroupObjectID": {
             "value": "f6a900e2-df11-43e7-ba3e-22be99d3cede"
         },
         "aksVersion": {
             "value": "1.23.3"
-        },
-        "windowsAdminUserName": {
-            "value": "localadmin"
         },
         "vmSku": {
             "value": "Standard_F8s_v2"

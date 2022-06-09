@@ -1,20 +1,18 @@
 param location string
 param adminGroupObjectID string
 param tags object
-param prefix string
+param environment string
 param aksVersion string = '1.23.3'
 param vmSku string = 'Standard_F8s_v2'
 param addressPrefix string
 param subnets array
 param sshPublicKey string
-param windowsAdminUserName string
-param windowsAdminPassword string
-param gitRepoUrl string = 'https://github.com/cbellee/flux2-kustomize-helm-example'
+param gitRepoUrl string
 
 module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
   params: {
-    prefix: prefix
+    prefix: environment
     tags: tags
     location: location
     retentionInDays: 30
@@ -24,7 +22,7 @@ module wks './modules/wks.bicep' = {
 module vnet './modules/vnet.bicep' = {
   name: 'vnetDeploy'
   params: {
-    prefix: prefix
+    prefix: environment
     tags: tags
     addressPrefix: addressPrefix
     location: location
@@ -36,7 +34,7 @@ module acr './modules/acr.bicep' = {
   name: 'acrDeploy'
   params: {
     location: location
-    prefix: prefix
+    prefix: environment
     tags: tags
   }
 }
@@ -49,11 +47,9 @@ module aks './modules/aks.bicep' = {
   ]
   params: {
     location: location
-    prefix: prefix
-    windowsAdminPassword: windowsAdminPassword
-    windowsAdminUserName: windowsAdminUserName
+    prefix: environment
     logAnalyticsWorkspaceId: wks.outputs.workspaceId
-    aksDnsPrefix: prefix
+    aksDnsPrefix: environment
     aksAgentOsDiskSizeGB: 60
     aksDnsServiceIP: '10.100.0.10'
     aksDockerBridgeCIDR: '172.17.0.1/16'
@@ -97,6 +93,7 @@ module flux_extension 'modules/flux-extension.bicep' = {
   params: {
     aksClusterName: aks.outputs.aksClusterName
     gitRepoUrl: gitRepoUrl
+    environmentName: environment
   }
 }
 
