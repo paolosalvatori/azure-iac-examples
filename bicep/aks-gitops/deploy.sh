@@ -1,8 +1,8 @@
 ENVIRONMENTS=(staging production)
 LOCATION='australiaeast'
 GIT_REPO_URL='https://github.com/Azure/gitops-flux2-kustomize-helm-mt'
-SSH_KEY='<your SSH public key>'
-ADMIN_GROUP_OBJECT_ID='<your AAD Admin group object Id>'
+SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
+ADMIN_GROUP_OBJECT_ID="f6a900e2-df11-43e7-ba3e-22be99d3cede"
 LATEST_K8S_VERSION_IN_REGION=$(az aks get-versions -l $LOCATION | jq -r -c '[.orchestrators[] | .orchestratorVersion][-1]')
 
 for i in "${ENVIRONMENTS[@]}"
@@ -19,7 +19,7 @@ do
         --parameters @main.parameters.json \
         --parameters environment=$i \
         --parameters gitRepoUrl=$GIT_REPO_URL \
-        --parameters sshPublicKey=$SSH_KEY \ 
+        --parameters sshPublicKey="$SSH_KEY" \
         --parameters adminGroupObjectID=$ADMIN_GROUP_OBJECT_ID \
         --parameters aksVersion=$LATEST_K8S_VERSION_IN_REGION
 
