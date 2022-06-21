@@ -1,5 +1,5 @@
 LOCATION='australiaeast'
-PREFIX='aml-secure'
+PREFIX='aml-private'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
 
@@ -16,8 +16,8 @@ az group create -n $RG_NAME -l $LOCATION
 az deployment group create \
     --resource-group $RG_NAME \
     --name $DEPLOYMENT_NAME \
-    --template-file ./azuredeploy.bicep \
-    --parameters ./azuredeploy.parameters.json \
+    --template-file ./main.bicep \
+    --parameters ./main.parameters.json \
     --parameters password=$DS_VM_PASSWORD \
     --parameters aksNodeCount=3 \
     --parameters aksSystemNodeCount=3 \
