@@ -3,6 +3,7 @@ LOCATION='australiaeast'
 GIT_REPO_URL='https://github.com/Azure/gitops-flux2-kustomize-helm-mt'
 SSH_KEY='<your SSH public key>'
 ADMIN_GROUP_OBJECT_ID='<your AAD Admin group object Id>'
+LATEST_K8S_VERSION_IN_REGION=$(az aks get-versions -l $LOCATION | jq -r -c '[.orchestrators[] | .orchestratorVersion][-1]')
 
 for i in "${ENVIRONMENTS[@]}"
 do
@@ -19,7 +20,8 @@ do
         --parameters environment=$i \
         --parameters gitRepoUrl=$GIT_REPO_URL \
         --parameters sshPublicKey=$SSH_KEY \ 
-        --parameters adminGroupObjectID=$ADMIN_GROUP_OBJECT_ID
+        --parameters adminGroupObjectID=$ADMIN_GROUP_OBJECT_ID \
+        --parameters aksVersion=$LATEST_K8S_VERSION_IN_REGION
 
     CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name aks-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
 
