@@ -1,7 +1,6 @@
-param keyVaultUserObjectId string
-param name string
 param tenantId string
 param location string
+param name string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   name: name
@@ -15,32 +14,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
     enabledForDiskEncryption: true
     createMode: 'default'
     tenantId: tenantId
-    accessPolicies: [
-      {
-        tenantId: tenantId
-        objectId: keyVaultUserObjectId
-        permissions: {
-          keys: [
-            'get'
-            'list'
-            'create'
-            'import'
-          ]
-          secrets: [
-            'get'
-            'list'
-            'set'
-          ]
-          certificates: [
-            'get'
-            'list'
-            'create'
-            'import'
-            'update'
-          ]
-        }
-      }
-    ]
+    accessPolicies: []
     sku: {
       name: 'standard'
       family: 'A'

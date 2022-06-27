@@ -2,26 +2,37 @@ param firewallSubnetRef string
 param sourceAddressRangePrefix array
 param suffix string
 param retentionInDays int = 7
-param workspaceId string 
+param workspaceId string
+param location string
 
 var publicIpName = 'azfw-pip-${suffix}'
 var firewallName = 'azfw-${suffix}'
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2017-11-01' = {
+resource publicIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   name: publicIpName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard'
   }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
   }
 }
 
-resource azFirewall 'Microsoft.Network/azureFirewalls@2018-11-01' = {
+resource azFirewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
   name: firewallName
-  location: resourceGroup().location
+  location: location
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
   properties: {
     ipConfigurations: [
       {

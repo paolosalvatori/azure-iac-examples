@@ -1,103 +1,52 @@
 $certPassword = 'M1cr0soft123'
-$location = 'westus2'
+$location = 'australiaeast'
 $domainName = 'kainiindustries.net'
-$rgName = "ag-apim-td-api-$location-rg"
+$sqlPassword = 'M1cr0soft1234567890'
+$sqlUserName = 'sqladmin'
+$adminObjectId = '57963f10-818b-406d-a2f6-6e758d86e259'
+$rgName = "ag-apim-func-api-$location-rg"
 $sans = "api.$domainName", "portal.$domainName", "management.$domainName", "proxy.internal.$domainName", "portal.internal.$domainName", "management.internal.$domainName"
-$blobName = 'funcapp.zip'
+$zipName = 'funcapp.zip'
 $winVmPassword = 'M1cr0soft1234567890'
 $appName = 'todo-api-func'
 $apiName = 'todo-api'
-$tags = @{
-    'costcenter'='123456789'
-    'environment'='devtest'
-}
 
-$pkcs12ContentType = 'Pkcs12'
+$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
+$cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
 # create app registration for function app
 if ((az ad sp list --all --query "[?displayName=='$appName']" | ConvertFrom-Json).Length -le 0) {
-    "Creating App Registration '$appName'"
+    Write-Host "Creating App Registration '$appName'"
     $sp = az ad sp create-for-rbac --name $appName | ConvertFrom-Json
     az ad app update --id $sp.appId --app-roles `@role.json
-} else {
+}
+else {
     $sp = az ad sp list --all --query "[?displayName=='$appName']" | ConvertFrom-Json
-    az ad sp update --id $sp.objectId --set appRoleAssignmentRequired=True
+    az ad sp update --id $sp.objectId --set appRoleAssignmentRequired=False
 }
 
 # create certificate chain
+$cert = @{}
+$root = @{}
 $securePassword = $certPassword | ConvertTo-SecureString -AsPlainText -Force
 
 if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
     Write-Host "Creating new Self-Signed CA Certificate"
     $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
-    Export-Certificate -Cert $rootcert -FilePath ..\certs\rootCert.cer -Force
-
-    $clearBytes = $rootCert.Export($pkcs12ContentType)
-    $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-    $root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 }
+
+$clearBytes = $rootCert.Export($cerContentType)
+$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
+$root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 
 if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certificate' }))) {
     Write-Host "Creating new Self-Signed Client Certificate"
     $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certificate'
-    Export-PfxCertificate -cert $pfxCert -FilePath ..\certs\clientCert.pfx -Password $securePassword -CryptoAlgorithmOption TripleDES_SHA1 -Force
-    Export-Certificate -Cert $pfxCert -FilePath ..\certs\publicCert.cer
-
-    $clearBytes = $pfxCert.Export($pkcs12ContentType, $certPassword)
-    $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-    $cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 }
 
-<#
-# create Base64 encoded versions of the root & client certificates
-foreach ($pfxCert in $(Get-ChildItem -Path ../certs -File -Filter clientCert.pfx)) {
-    $flag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
-    $collection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-    $collection.Import($pfxCert.FullName, $certPassword, $flag)
-
-    if ($collection.Count -gt 1) {
-        for ($i = 0; $i -lt $collection.Count; $i++) {
-            if ($collection[$i].Issuer -eq $collection[$i].Subject) {
-                [void]$collection.RemoveAt($i); break
-            }
-        }
-    }
-    # write back pfx to a file
-    $bytes = $collection.Export("pfx", $certPassword)
-    $path = 'C:\Users\cbellee\repos\github.com\cbellee\azure-iac-examples\bicep\appgwy-apim-int-ext\certs\clientCertNoRoot.pfx'
-    [IO.File]::WriteAllBytes($path, $bytes)
-  <#   $i = 0
-    foreach ($cert in $collection ) {
-        if ($cert.Issuer -eq $cert.Subject) {
-            $cert | gm
-            #[void]$cert.RemoveAt($i)
-            break
-        }
-        $i++
-    }
- #>
- #>
- <#
-foreach ($cert in $collection) {
-        $cert
-        if ($cert.HasPrivateKey) {
-            "Private Key"
-            $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12
-            $clearBytes = $cert.Export($pkcs12ContentType, $certPassword)
-            $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-            $cert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
-        }
-        else {
-            "Certificate"
-            $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
-            $clearBytes = $cert.Export($cerContentType, $certPassword)
-            $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-            $rootCert = @{CertName = $cert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
-        }
-    }
-}
-#>
-
+$clearBytes = $pfxCert.Export($pkcs12ContentType, $certPassword)
+$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
+$cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $certPassword }
 
 # deploy bicep templates
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
@@ -105,37 +54,41 @@ $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 New-AzResourceGroupDeployment `
     -Name 'apim-app-gwy-deploy' `
     -ResourceGroupName $rg.ResourceGroupName `
+    -TemplateParameterFile  ../main.parameters.json `
     -Mode Incremental `
-    -TemplateFile ../main.bicep `
-    -Location $location `
-    -DomainName $domainName `
-    -Tags $tags `
-    -Cert $cert `
-    -RootCert $root `
-    -WinVmPassword $winVmPassword `
-    -FunctionAppId $sp.appId `
+    -templateFile ../main.bicep `
+    -location $location `
+    -domainName $domainName `
+    -cert $cert `
+    -rootCert $root `
+    -winVmPassword $winVmPassword `
+    -functionAppId $sp.appId `
+    -sqlAdminUserPassword $sqlPassword `
+    -sqlAdminUserName $sqlUserName `
+    -adminObjectId $adminObjectId `
+    -sqlDbName 'todosDb' `
     -Verbose
 
 $deployment = Get-AzResourceGroupDeployment -ResourceGroupName $rg.ResourceGroupName -Name 'apim-app-gwy-deploy'
 
 # compress funtion app code to .zip file
-Compress-Archive -Path ../api/* -DestinationPath ./$blobName -Update
+Compress-Archive -Path ../api/* -DestinationPath ./$zipName -Update
 
 # deploy web app code as zip file
-az webapp deployment source config-zip --resource-group $rg.ResourceGroupName --name $deployment.Outputs.funcAppName.Value --src ./$blobName
+az webapp deployment source config-zip --resource-group $rg.ResourceGroupName --name $deployment.Outputs.funcAppName.Value --src ./$zipName
 
 # import api from OpenApi definition
 $apimContext = New-AzApiManagementContext -ResourceGroupName $rg.ResourceGroupName -ServiceName $deployment.Outputs.apimName.Value
 
 if ($null -eq (Get-AzApiManagementApi -Context $apimContext -Name $apiName)) {
-Import-AzApiManagementApi -Context $apimContext `
-    -ApiId $apiName `
-    -SpecificationFormat OpenApi `
-    -SpecificationPath ../api/api.yml `
-    -Path 'external' `
-    -Protocol Https `
-    -ServiceUrl $deployment.Outputs.funcAppUri.Value `
-    -ApiType Http
+    Import-AzApiManagementApi -Context $apimContext `
+        -ApiId $apiName `
+        -SpecificationFormat OpenApi `
+        -SpecificationPath ../api/api.yaml `
+        -Path 'external' `
+        -Protocol Https `
+        -ServiceUrl $deployment.Outputs.funcAppUri.Value `
+        -ApiType Http
 }
 
 # disable subscription requirement
@@ -157,6 +110,12 @@ $appObjectId = az ad sp show --id $sp.appid --query "objectId" -o tsv
 "@ > ./body.json
 
 az rest `
---method POST `
---uri "https://graph.microsoft.com/v1.0/servicePrincipals/$($deployment.Outputs.apimManagedIdentity.Value)/appRoleAssignments" `
---headers 'Content-Type=application/json' --body "@body.json"
+    --method POST `
+    --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$($deployment.Outputs.apimManagedIdentity.Value)/appRoleAssignments" `
+    --headers 'Content-Type=application/json' --body "@body.json"
+
+# test the external api
+curl -k -X POST https://api.kainiindustries.net/external/api/todos -H "Content-Type: application/json" -d '{"description":"feed the dogs"}'
+curl -k https://api.kainiindustries.net/external/api/todos/incomplete
+curl -k -d '{"completed":"true"}' -X POST https://api.kainiindustries.net/external/api/item
+curl -k https://api.kainiindustries.net/external/api/items/completed

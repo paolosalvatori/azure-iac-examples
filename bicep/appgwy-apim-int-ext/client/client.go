@@ -57,7 +57,7 @@ func getAccessToken(URL string, scope string, clientID string, tenant string, as
 
 	req, err := http.NewRequest("POST", URL, strings.NewReader(param.Encode()))
 	if err != nil {
-		fmt.Println("Error creating http request %s", err)
+		fmt.Printf("Error creating http request %s", err)
 		return nil, err
 	}
 

@@ -1,6 +1,7 @@
 param suffix string
 param skuName string = 'Standard'
 param apimPrivateIpAddress string
+param location string
 param gatewaySku object = {
   name: 'WAF_v2'
   tier: 'WAF_v2'
@@ -35,7 +36,7 @@ var appGwyName = 'appgwy-${suffix}'
 
 resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: appGwyPipName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: skuName
   }
@@ -52,7 +53,7 @@ resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 
 resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
   name: appGwyName
-  location: resourceGroup().location
+  location: location
   properties: {
     sku: gatewaySku
     trustedRootCertificates: [
@@ -82,21 +83,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         }
       }
     ]
-    sslProfiles: [
-      {
-        name: 'sslProfile1'
-        properties: {
-          clientAuthConfiguration: {
-            verifyClientCertIssuerDN: true
-          }
-          trustedClientCertificates: [
-            {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedClientCertificates', appGwyName, 'rootCACert')
-            }
-          ]
-        }
-      }
-    ]
+    sslProfiles: []
     authenticationCertificates: []
     frontendIPConfigurations: [
       {
@@ -251,9 +238,6 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           protocol: 'Https'
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-proxy-cert')
-          }
-          sslProfile: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslProfiles', appGwyName, 'sslProfile1')
           }
           hostName: externalProxyHostName
           requireServerNameIndication: true
@@ -526,7 +510,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     redirectConfigurations: []
     webApplicationFirewallConfiguration: {
       enabled: true
-      firewallMode: 'Prevention'
+      firewallMode: 'Detection'
       ruleSetType: 'OWASP'
       ruleSetVersion: '3.0'
       disabledRuleGroups: []
@@ -555,33 +539,7 @@ resource appGwyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
     ttl: 3600
   }
 }
-/* 
-resource appGwyApimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: appGwyPrivateDnsZone
-  name: 'portal'
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: appGwy.properties.frontendIPConfigurations[1].properties.privateIPAddress
-      }
-    ]
-    ttl: 3600
-  }
-}
 
-resource appGwyApimManagementDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: appGwyPrivateDnsZone
-  name: 'management'
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: appGwy.properties.frontendIPConfigurations[1].properties.privateIPAddress
-      }
-    ]
-    ttl: 3600
-  }
-}
- */
 resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'app-gwy-diagnostics'
   scope: appGwy

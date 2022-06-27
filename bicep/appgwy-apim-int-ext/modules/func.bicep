@@ -10,10 +10,6 @@ param linuxFxVersion string = ''
 param sku string = 'ElasticPremium'
 param skuCode string = 'EP1'
 param tags object
-/* param workerSize string
-param workerSizeId string
-param numberOfWorkers string
- */
 
 var hostingPlanName = 'ep-${suffix}'
 var funcAppName = 'func-app-${suffix}'
@@ -25,8 +21,8 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: hostingPlanName
   location: location
   sku: {
-    name: 'EP1'
-    tier: 'ElasticPremium'
+    name: skuCode
+    tier: sku
   }
   kind: 'elastic'
   properties: {
@@ -118,7 +114,7 @@ resource webAppNetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
 }
 
 resource appSvcPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
-  location: resourceGroup().location
+  location: location
   tags: tags
   name: 'appSvcPrivateEndpoint'
   properties: {
@@ -172,9 +168,6 @@ resource AppSvcApokeVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones
 
 resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = {
   name: '${appSvcPrivateEndpoint.name}/funcDnsGroup'
-  dependsOn: [
-    appSvcPrivateEndpointDnsZone
-  ]
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -189,3 +182,4 @@ resource appSvcPrivateDNSZoneGroup 'Microsoft.Network/privateEndpoints/privateDn
 
 output funcAppUrl string = funcApp.properties.defaultHostName
 output funcAppName string = funcApp.name
+output PrincipaId string = funcApp.identity.principalId

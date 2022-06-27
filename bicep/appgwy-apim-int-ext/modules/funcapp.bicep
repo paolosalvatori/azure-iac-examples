@@ -10,6 +10,7 @@ param planKind string = 'elastic'
 param appId string
 param apimManagedIdentityPrincipalId string
 param apimSubnetId string
+param secretUri string
 
 var hostingPlanName = 'ep-${suffix}'
 var funcAppName = 'func-${suffix}'
@@ -43,11 +44,14 @@ resource funcApp 'Microsoft.Web/sites@2021-01-01' = {
   name: funcAppName
   kind: 'functionapp,linux'
   location: location
+  identity: {
+     type: 'SystemAssigned'
+  }
   tags: {}
   properties: {
     ipSecurityRestrictions: [
       {
-          vnetSubnetResourceId: apimSubnetId // /subscriptions/b2375b5f-8dab-4436-b87c-32bc7fdce5d0/resourceGroups/ag-apim-todo-api-westus2-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet-qpiw6xzastgiu/subnets/ApiMgmtSubnet
+          vnetSubnetResourceId: apimSubnetId
           action: 'Allow'
           tag: 'Default'
           priority: 100
@@ -58,6 +62,10 @@ resource funcApp 'Microsoft.Web/sites@2021-01-01' = {
   scmIpSecurityRestrictionsUseMain: true
     siteConfig: {
       appSettings: [
+        {
+          name: 'DB_CXN'
+          value: '@Microsoft.KeyVault(SecretUri=${secretUri})'
+        }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~3'
@@ -276,3 +284,4 @@ resource funcAppNetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
 
 output funcAppUrl string = 'https://${funcApp.properties.defaultHostName}'
 output funcAppName string = funcApp.name
+output principalId string = funcApp.identity.principalId

@@ -5,13 +5,20 @@ param cert object
 param rootCert object
 param winVmPassword string
 param functionAppId string
+param vNets array
+param sqlAdminUserPassword string
+param sqlAdminUserName string
+param sqlDbName string
+param adminObjectId string
 
 var privateDomainName = 'internal.${domainName}'
 var suffix = uniqueString(resourceGroup().id)
-// var azSeparatedAddressprefix = split(virtualNetworks[0].subnets[2].addressPrefix, '.')
-// var appGwySeparatedAddressprefix = split(virtualNetworks[0].subnets[0].addressPrefix, '.')
-// var azFirewallPrivateIpAddress = '${azSeparatedAddressprefix[0]}.${azSeparatedAddressprefix[1]}.${azSeparatedAddressprefix[2]}.4'
-// var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
+var keyVaultName = 'kv-${suffix}'
+var dbCxnString = 'server=${sqlServerAndDb.outputs.sqlServerFQDN};user id=${sqlAdminUserName};password=${sqlAdminUserPassword};port=1433;database=${sqlServerAndDb.outputs.dbName}'
+var azSeparatedAddressprefix = split(vNets[0].subnets[2].addressPrefix, '.')
+var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
+var azFirewallPrivateIpAddress = '${azSeparatedAddressprefix[0]}.${azSeparatedAddressprefix[1]}.${azSeparatedAddressprefix[2]}.4'
+var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
 
 module azMonitorModule './modules/azmon.bicep' = {
   name: 'azureMonitorDeployment'
@@ -20,15 +27,15 @@ module azMonitorModule './modules/azmon.bicep' = {
   }
 }
 
-module userDefinedRouteModule './modules/udr.bicep' = {
+module udrModule './modules/udr.bicep' = {
   name: 'udrDeployment'
   params: {
     suffix: suffix
-    azureFirewallPrivateIpAddress: '10.1.2.4' //azFirewallPrivateIpAddress
+    azureFirewallPrivateIpAddress: azFirewallPrivateIpAddress
   }
 }
 
-module networkSecurityGroupModule './modules/nsg.bicep' = {
+module nsgModule './modules/nsg.bicep' = {
   name: 'nsgDeployment'
   params: {
     location: location
@@ -37,49 +44,69 @@ module networkSecurityGroupModule './modules/nsg.bicep' = {
   }
 }
 
-module hubVirtualNetworkModule 'modules/vnethub.bicep' = {
-  name: 'hubVnetDeployment'
-  dependsOn: [
-    userDefinedRouteModule
-    networkSecurityGroupModule
-  ]
+// Virtual Networks
+module vNetsModule './modules/vnets.bicep' = [for (item, i) in vNets: {
+  name: 'module-vnet-${i}'
+  scope: resourceGroup(resourceGroup().name)
   params: {
     suffix: suffix
+    location: location
+    vNet: item
     tags: tags
   }
-}
-
-module spokeVirtualNetworkModule 'modules/vnetspoke.bicep' = {
-  name: 'spokeVnetDeployment'
   dependsOn: [
-    userDefinedRouteModule
-    networkSecurityGroupModule
+    udrModule
+    nsgModule
   ]
+}]
+
+// Virtual Network Peering
+module peeringModule './modules/peering.bicep' = {
+  name: 'module-peering'
+  scope: resourceGroup(resourceGroup().name)
   params: {
     suffix: suffix
-    tags: tags
+    vNets: vNets
+    isGatewayDeployed: false
   }
-}
-
-module virtualNetworkPeeringModule './modules/peerings.bicep' = {
   dependsOn: [
-    hubVirtualNetworkModule
-    spokeVirtualNetworkModule
+    vNetsModule
   ]
-  name: 'vNetPeeringDeployment'
+}
+
+// KeyVault
+module keyvault 'modules/keyvault.bicep' = {
+  name: 'module-keyvault'
   params: {
-    hubVnet: hubVirtualNetworkModule.outputs.vnet
-    spokeVnet: spokeVirtualNetworkModule.outputs.vnet
+    location: location
+    name: keyVaultName
+    tenantId: tenant().tenantId
   }
 }
 
+// SQL Server & DB
+module sqlServerAndDb 'modules/azure-sql-db.bicep' = {
+  name: 'module-sqlDb'
+  params: {
+    location: location
+    tags: tags
+    suffix: suffix
+    sqlAdminUserPassword: sqlAdminUserPassword
+    sqlAdminUserName: sqlAdminUserName
+    subnetId: vNetsModule[1].outputs.subnetRefs[4].id
+    sqlDbName: 'todosDb'
+  }
+}
+
+// Azure Firewall
 module azureFirewallModule './modules/azfirewall.bicep' = {
   name: 'azureFirewallDeployment'
   params: {
     suffix: suffix
+    location: location
     retentionInDays: 7
     workspaceId: azMonitorModule.outputs.workspaceId
-    firewallSubnetRef: hubVirtualNetworkModule.outputs.vnet.subnetRefs[2].id
+    firewallSubnetRef: vNetsModule[0].outputs.subnetRefs[2].id
     sourceAddressRangePrefix: [
       '10.0.0.0/8'
       '192.168.88.0/24'
@@ -87,6 +114,7 @@ module azureFirewallModule './modules/azfirewall.bicep' = {
   }
 }
 
+// Azure Bastion
 module bastionModule './modules/bastion.bicep' = {
   dependsOn: [
     azureFirewallModule
@@ -94,11 +122,12 @@ module bastionModule './modules/bastion.bicep' = {
   name: 'bastionDeployment'
   params: {
     location: location
-    subnetId: hubVirtualNetworkModule.outputs.vnet.subnetRefs[3].id
+    subnetId: vNetsModule[0].outputs.subnetRefs[3].id
     suffix: suffix
   }
 }
 
+// Windows VM
 module winVmModule './modules/winvm.bicep' = {
   dependsOn: [
     bastionModule
@@ -109,35 +138,27 @@ module winVmModule './modules/winvm.bicep' = {
     adminPassword: winVmPassword
     adminUserName: 'localadmin'
     location: location
-    subnetId: hubVirtualNetworkModule.outputs.vnet.subnetRefs[1].id
+    subnetId: vNetsModule[0].outputs.subnetRefs[1].id
     suffix: suffix
     vmSize: 'Standard_D2_v3'
   }
 }
 
-/* module funcAppModule './modules/funcapp.bicep' = {
-  name: 'funcAppDeployment'
-  params: {
-    location: location
-    packageUrl: funcAppPackageUrl
-    //hubVnetId: hubVirtualNetworkModule.outputs.vnetRef
-    //spokeVnetId: spokeVirtualNetworkModule.outputs.vnetRef
-    vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[4].id
-    //privateEndpointSubnetId: spokeVirtualNetworkModule.outputs.subnetRefs[3].id
-    planSku: 'ElasticPremium'
-    planSkuCode: 'EP1'
-    planKind: 'elastic'
-    suffix: suffix
-    tags: tags
+resource secret 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+  name: '${keyVaultName}/dbCxnString'
+  properties: {
+    value: dbCxnString
   }
-} */
+}
 
+// Function App
 module funcAppModule './modules/funcapp.bicep' = {
   name: 'funcAppDeployment'
   params: {
     location: location
-    vnetIntegrationSubnetId: spokeVirtualNetworkModule.outputs.vnet.subnetRefs[4].id
-    apimSubnetId: hubVirtualNetworkModule.outputs.vnet.subnetRefs[4].id
+    secretUri: secret.properties.secretUri
+    vnetIntegrationSubnetId: vNetsModule[1].outputs.subnetRefs[4].id
+    apimSubnetId: vNetsModule[0].outputs.subnetRefs[4].id
     planSku: 'ElasticPremium'
     planSkuCode: 'EP1'
     planKind: 'elastic'
@@ -148,6 +169,44 @@ module funcAppModule './modules/funcapp.bicep' = {
   }
 }
 
+// Key Vault Policies
+module keyvaultPolicies 'modules/keyvault_policy.bicep' = {
+  name: 'deployKeyVaultPolicies'
+  params: {
+    accessPolicies: [
+      {
+        permissions: {
+          keys: [
+            'all'
+          ]
+          secrets: [
+            'all'
+          ]
+          certificates: [
+            'all'
+          ]
+        }
+        tenantId: tenant().tenantId
+        objectId: adminObjectId
+      }
+      {
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+          ]
+          keys: []
+          certificates: []
+        }
+        tenantId: tenant().tenantId
+        objectId: funcAppModule.outputs.principalId
+      }
+    ]
+    keyVaultName: keyvault.outputs.keyVaultName
+  }
+}
+
+// Private DNS zones
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
   tags: tags
@@ -155,11 +214,11 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   properties: {}
 }
 
+// APIM
 module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
     azMonitorModule
     azureFirewallModule
-    privateDnsZone
   ]
   name: 'apimDeployment'
   params: {
@@ -168,8 +227,8 @@ module apiManagementModule './modules/apim.bicep' = {
     retentionInDays: 30
     workspaceId: azMonitorModule.outputs.workspaceId
     privateDnsZoneName: privateDnsZone.name
-    hubVnetId: hubVirtualNetworkModule.outputs.vnet.vnetRef
-    spokeVnetId: spokeVirtualNetworkModule.outputs.vnet.vnetRef
+    hubVnetId: vNetsModule[0].outputs.vnetRef
+    spokeVnetId: vNetsModule[1].outputs.vnetRef
     apimSku: {
       name: 'Developer'
       capacity: 1
@@ -180,7 +239,7 @@ module apiManagementModule './modules/apim.bicep' = {
     managementHostName: 'management.${privateDomainName}'
     certificate: cert.CertValue
     certificatePassword: cert.CertPassword
-    subnetId: hubVirtualNetworkModule.outputs.vnet.subnetRefs[4].id
+    subnetId: vNetsModule[0].outputs.subnetRefs[4].id
   }
 }
 
@@ -196,6 +255,7 @@ module apiManagementModule './modules/apim.bicep' = {
   }
 } */
 
+// Application Gateway
 module applicationGatewayModule './modules/appgateway.bicep' = {
   dependsOn: [
     azMonitorModule
@@ -204,6 +264,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
   name: 'applicationGatewayDeployment'
   params: {
     suffix: suffix
+    location: location
     privateDnsZoneName: privateDomainName
     workspaceId: azMonitorModule.outputs.workspaceId
     apimGatewaySslCertPassword: cert.CertPassword
@@ -218,7 +279,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     internalManagementHostName: 'management.${privateDomainName}'
     rootSslCert: rootCert.CertValue
     apimGatewaySslCert: cert.CertValue
-    apimPrivateIpAddress: '10.1.0.200' //appGwyPrivateIpAddress
+    apimPrivateIpAddress: appGwyPrivateIpAddress
     gatewaySku: {
       name: 'WAF_v2'
       tier: 'WAF_v2'
@@ -226,10 +287,11 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     }
     requestTimeOut: 180
     skuName: 'Standard'
-    subnetId: hubVirtualNetworkModule.outputs.vnet.subnetRefs[0].id
+    subnetId: vNetsModule[0].outputs.subnetRefs[0].id
   }
 }
 
+// NSG Update
 module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   name: 'nsgUpdateDeployment'
   params: {
@@ -239,6 +301,7 @@ module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   }
 }
 
+// Azure Public DNS records
 module appGwyApiPublicDnsRecord 'modules/publicdns.bicep' = {
   scope: resourceGroup('external-dns-zones-rg')
   name: 'deployAppGwyPublicDnsRecord'
@@ -278,5 +341,3 @@ output funcAppName string = funcAppModule.outputs.funcAppName
 output funcAppUri string = funcAppModule.outputs.funcAppUrl
 output apimName string = apiManagementModule.outputs.apimName
 output apimManagedIdentity string = apiManagementModule.outputs.apimManagedIdentityPrincipalId
-/* output apiName string = apiModule.outputs.apiName
-output apiId string = apiModule.outputs.apiId */
