@@ -46,11 +46,7 @@ type CompleteTodoItem struct {
 func main() {
 	defer db.Close()
 
-	if db.Debug().HasTable(&TodoItemEntity{}) {
-		db.Debug().AutoMigrate(&TodoItemEntity{})
-	} else {
-		db.Debug().DropTableIfExists(&TodoItemEntity{})
-	}
+	db.Debug().AutoMigrate(&TodoItemEntity{})
 
 	funcPrefix := "/api"
 	listenAddr := ":8080"

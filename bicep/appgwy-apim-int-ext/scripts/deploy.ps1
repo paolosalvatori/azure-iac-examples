@@ -113,9 +113,3 @@ az rest `
     --method POST `
     --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$($deployment.Outputs.apimManagedIdentity.Value)/appRoleAssignments" `
     --headers 'Content-Type=application/json' --body "@body.json"
-
-# test the external api
-curl -k -X POST https://api.kainiindustries.net/external/api/todos -H "Content-Type: application/json" -d '{"description":"feed the dogs"}'
-curl -k https://api.kainiindustries.net/external/api/todos/incomplete
-curl -k -d '{"completed":"true"}' -X POST https://api.kainiindustries.net/external/api/item
-curl -k https://api.kainiindustries.net/external/api/items/completed
