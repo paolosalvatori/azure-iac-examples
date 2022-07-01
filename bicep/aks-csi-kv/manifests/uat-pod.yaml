@@ -2,8 +2,8 @@
 kind: Pod
 apiVersion: v1
 metadata:
-  name: ""
-  namespace: ""
+  name: "busybox-uat-user-msi"
+  namespace: "uat"
 spec:
   containers:
     - name: busybox
@@ -12,13 +12,13 @@ spec:
         - "/bin/sleep"
         - "10000"
       volumeMounts:
-      - name: secrets-store01-inline
-        mountPath: "/mnt/secrets-store"
-        readOnly: true
+        - name: secrets-store01-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
   volumes:
     - name: secrets-store01-inline
       csi:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: ""
+          secretProviderClass: "azure-uat-msi"

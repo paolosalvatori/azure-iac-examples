@@ -1,7 +1,7 @@
 param location string
 param adminGroupObjectID string
 param tags object
-param environment string
+param prefix string
 param aksVersion string = '1.23.3'
 param vmSku string = 'Standard_F8s_v2'
 param addressPrefix string
@@ -11,7 +11,7 @@ param sshPublicKey string
 module wks './modules/wks.bicep' = {
   name: 'wksDeploy'
   params: {
-    prefix: environment
+    prefix: prefix
     tags: tags
     location: location
     retentionInDays: 30
@@ -39,7 +39,7 @@ module uatKeyvault 'modules/kv.bicep' = {
 module vnet './modules/vnet.bicep' = {
   name: 'vnetDeploy'
   params: {
-    prefix: environment
+    prefix: prefix
     tags: tags
     addressPrefix: addressPrefix
     location: location
@@ -51,7 +51,7 @@ module acr './modules/acr.bicep' = {
   name: 'acrDeploy'
   params: {
     location: location
-    prefix: environment
+    prefix: prefix
     tags: tags
   }
 }
@@ -64,9 +64,9 @@ module aks './modules/aks.bicep' = {
   ]
   params: {
     location: location
-    prefix: environment
+    prefix: prefix
     logAnalyticsWorkspaceId: wks.outputs.workspaceId
-    aksDnsPrefix: environment
+    aksDnsPrefix: prefix
     aksAgentOsDiskSizeGB: 60
     aksDnsServiceIP: '10.100.0.10'
     aksDockerBridgeCIDR: '172.17.0.1/16'
@@ -108,3 +108,5 @@ module aks './modules/aks.bicep' = {
 output aksClusterName string = aks.outputs.aksClusterName
 output aksClusterFqdn string = aks.outputs.aksControlPlaneFQDN
 output aksClusterApiServerUri string = aks.outputs.aksApiServerUri
+output devKeyVaultName string = devKeyvault.outputs.keyVaultName
+output uatKeyVaultName string = uatKeyvault.outputs.keyVaultName
