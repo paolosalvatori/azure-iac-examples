@@ -1,5 +1,5 @@
 variable "resource_group_name" {
-    type = string
+  type = string
 }
 
 variable "location" {
@@ -7,11 +7,11 @@ variable "location" {
 }
 
 variable "environment" {
-    type = string
+  type = string
 }
 
 variable "tenant_id" {
-    type = string
+  type = string
 }
 
 variable "admin_group_object_ids" {
@@ -19,7 +19,7 @@ variable "admin_group_object_ids" {
 }
 
 variable "vm_sku" {
-    type = string
+  type = string
   default = "Standard_F8s_v2"
 }
 
@@ -29,7 +29,7 @@ variable "admin_username" {
 }
 
 variable "ssh_key" {
-    type = string
+  type = string
 }
 
 variable "tags" {
@@ -40,8 +40,8 @@ variable "tags" {
 }
 
 variable "vnet_address_space" {
-    type = list(string)
-    default = ["192.168.0.0/16"]
+  type = list(string)
+  default = ["192.168.0.0/16"]
 }
 
 variable "subnet_1_name" {
@@ -54,17 +54,27 @@ variable "subnet_2_name" {
   default = "aks-user-subnet"
 }
 
+variable "subnet_3_name" {
+  type = string
+  default = "new-subnet"
+}
+
 variable "subnet_1_cidr" {
     type = list(string)
     default = ["192.168.1.0/24"]
 }
 
 variable "subnet_2_cidr" {
-    type = list(string)
-    default = ["192.168.2.0/24"]
+  type = list(string)
+  default = ["192.168.2.0/24"]
+}
+
+variable "subnet_3_cidr" {
+  type = list(string)
+  default = ["192.168.3.0/24"]
 }
 
 variable "zones" {
-    type = list(string)
-    default = ["1", "2", "3"]  
+  type = list(string)
+  default = ["1", "2", "3"]  
 }

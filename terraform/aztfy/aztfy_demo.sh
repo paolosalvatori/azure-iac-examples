@@ -4,9 +4,12 @@
 # install AzTfy
 # https://github.com/Azure/aztfy
 
+# set Azure subscription & resource group
 AZTFY_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-AZTFY_BACKEND_CONFIG=""
 RG_NAME="aztfydemo-rg"
 
-mkdir ./output
-aztfy --output-dir ./output $RG_NAME 
+# create output directory
+mkdir ./output -p
+
+# run aztfy against resource group
+aztfy --output-dir ./output $RG_NAME

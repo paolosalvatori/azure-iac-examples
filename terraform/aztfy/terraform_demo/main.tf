@@ -57,6 +57,17 @@ resource "azurerm_subnet" "subnet-2" {
   ]
 }
 
+/* resource "azurerm_subnet" "subnet-3" {
+  address_prefixes                               = var.subnet_3_cidr
+  enforce_private_link_endpoint_network_policies = true
+  name                                           = var.subnet_3_name
+  resource_group_name                            = azurerm_resource_group.rg.name
+  virtual_network_name                           = azurerm_virtual_network.vnet.name
+  depends_on = [
+    azurerm_virtual_network.vnet,
+  ]
+} */
+
 resource "azurerm_kubernetes_cluster" "aks" {
   azure_policy_enabled = true
   dns_prefix           = "aks${var.environment}"
@@ -77,6 +88,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     min_count           = 1
     name                = "system"
     os_disk_type        = "Ephemeral"
+    type                = "VirtualMachineScaleSets"
     tags                = var.tags
     vm_size             = var.vm_sku
     vnet_subnet_id      = azurerm_subnet.subnet-1.id
@@ -95,23 +107,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   depends_on = [
     azurerm_subnet.subnet-1,
     azurerm_subnet.subnet-2,
-  ]
-}
-
-resource "azurerm_kubernetes_cluster_node_pool" "nodepool-system" {
-  enable_auto_scaling   = true
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
-  max_count             = 10
-  min_count             = 1
-  name                  = "system"
-  os_disk_type          = "Ephemeral"
-  tags                  = var.tags
-  vm_size               = var.vm_sku
-  vnet_subnet_id        = azurerm_subnet.subnet-1.id
-  zones                 = var.zones
-  depends_on = [
-    azurerm_kubernetes_cluster.aks,
-    azurerm_subnet.subnet-1,
   ]
 }
 
