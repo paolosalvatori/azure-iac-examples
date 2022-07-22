@@ -13,3 +13,6 @@ mkdir ./output -p
 
 # run aztfy against resource group
 aztfy --output-dir ./output $RG_NAME
+
+# 'skipped' resources need to have the type and name specified, e.g.
+# azurerm_kubernetes_cluster.myaks

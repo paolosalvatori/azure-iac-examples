@@ -57,7 +57,7 @@ resource "azurerm_subnet" "subnet-2" {
   ]
 }
 
-/* resource "azurerm_subnet" "subnet-3" {
+resource "azurerm_subnet" "subnet-3" {
   address_prefixes                               = var.subnet_3_cidr
   enforce_private_link_endpoint_network_policies = true
   name                                           = var.subnet_3_name
@@ -66,7 +66,7 @@ resource "azurerm_subnet" "subnet-2" {
   depends_on = [
     azurerm_virtual_network.vnet,
   ]
-} */
+}
 
 resource "azurerm_kubernetes_cluster" "aks" {
   azure_policy_enabled = true
@@ -98,12 +98,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
   identity {
     type = "SystemAssigned"
   }
+
   linux_profile {
     admin_username = var.admin_username
     ssh_key {
       key_data = var.ssh_key
     }
   }
+
   depends_on = [
     azurerm_subnet.subnet-1,
     azurerm_subnet.subnet-2,
