@@ -2,7 +2,7 @@ RG_NAME='ag-apim-aks-australiaeast-rg'
 ACR_NAME=$(az deployment group show --resource-group $RG_NAME --name 'ag-apim-aks-deploy' --query properties.outputs.acrName.value -o tsv)
 
 ENVIRONMENT=dev
-SEMVER=0.1.0
+SEMVER=0.1.2
 TAG="$ENVIRONMENT-$SEMVER"
 
 ORDER_API_IMAGE="order:$TAG"

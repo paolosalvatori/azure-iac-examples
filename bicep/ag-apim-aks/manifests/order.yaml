@@ -34,6 +34,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: debug
+        imagePullPolicy: Always
         resources:
           limits:
             cpu: "500m"
@@ -41,7 +42,7 @@ spec:
           requests:
             cpu: "250m"
             memory: "32Mi"
-        image: acr5xaacqhgxhjqa.azurecr.io/order:dev-0.1.0
+        image: IMAGE_TAG
         ports:
         - containerPort: 8080
           name: http
