@@ -14,7 +14,7 @@ export const msalConfig = {
     auth: {
         clientId: "91064216-326e-4375-aa0f-e241562b5454",
         authority: "https://login.microsoftonline.com/common",
-        redirectUri: "http://localhost:3000"
+        redirectUri: "https://spa.aksdemo.kainiindustries.net"
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -53,14 +53,6 @@ export const msalConfig = {
  */
 export const loginRequest = {
     scopes: ["User.Read"]
-};
-
-/**
- * Add here the scopes to request when obtaining an access token for MS Graph API. For more information, see:
- * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/resources-and-scopes.md
- */
-export const graphConfig = {
-    graphMeEndpoint: "https://graph.microsoft.com/v1.0/me"
 };
 
 export const apiConfig = {

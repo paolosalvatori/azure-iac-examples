@@ -34,7 +34,7 @@ $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 New-AzResourceGroupDeployment `
     -Name 'ag-apim-aks-deploy' `
     -ResourceGroupName $rg.ResourceGroupName `
-    -TemplateParameterFile  ../main.parameters.json `
+    -TemplateParameterFile  ../infra/main.parameters.json `
     -Mode Incremental `
     -templateFile ../main.bicep `
     -location $location `

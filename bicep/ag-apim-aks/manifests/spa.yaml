@@ -13,45 +13,37 @@ spec:
       port: 80
       targetPort: 80
   selector:
-    app: react-spa
+    app: spa
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: react-spa
-    labels:
-        app: react-spa
+  namespace: apis
+  name: spa
 spec:
-    replicas: 2
-    selector:
-        matchLabels:
-            app: react-spa
-    template:
-        metadata:
-        labels:
-            app: react-spa
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spa
+  template:
+    metadata:
+      labels:
+        app: spa
     spec:
-        containers:
-        -   name: react-spa
-            image: 
-            ports:
-            -   containerPort: 80
-            resources:
-                limits:
-                    memory: '128Mi'
-                    cpu: '200m'
-            livenessProbe:
-                 httpGet:
-                     path: /index.html
-                     port: 80
-                 initialDelaySeconds: 15
-                 timeoutSeconds: 2
-                 periodSeconds: 5
-                 failureThreshold: 1
-            readinessProbe:
-                 httpGet:
-                     path: /index.html
-                     port: 80
-                 initialDelaySeconds: 15
-                 periodSeconds: 5
-                 failureThreshold: 1
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: debug
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "64Mi"
+          requests:
+            cpu: "250m"
+            memory: "32Mi"
+        image: IMAGE_TAG
+        ports:
+        - containerPort: 80
+          name: http
+      
