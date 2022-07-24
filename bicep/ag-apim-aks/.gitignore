@@ -1,2 +1,3 @@
 # exclude certs dir
 /certs
+/scripts/oauthconfig.txt

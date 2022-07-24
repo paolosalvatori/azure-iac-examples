@@ -13,8 +13,8 @@ import { LogLevel } from "@azure/msal-browser";
 export const msalConfig = {
     auth: {
         clientId: "91064216-326e-4375-aa0f-e241562b5454",
-        authority: "https://login.microsoftonline.com/common",
-        redirectUri: "https://spa.aksdemo.kainiindustries.net"
+        authority: "https://login.microsoftonline.com/kainiindustries.net",
+        redirectUri: "https://spa.aksdemo.kainiindustries.net" //"http://localhost:3000"   
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -52,10 +52,14 @@ export const msalConfig = {
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
 export const loginRequest = {
-    scopes: ["User.Read"]
+    scopes: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Read"]
 };
 
 export const apiConfig = {
     orderApiEndpoint:"https://api.aksdemo.kainiindustries.net/order-api/orders",
-    productApiEndpoint:"https://api.aksdemo.kainiindustries.net/product-api/products"
+    productApiEndpoint:"https://api.aksdemo.kainiindustries.net/product-api/products",
+    orderApiReadScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Read"],
+    orderApiWriteScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Write"],
+    productApiReadScope: ["api://3c0926b2-5449-46dd-aa8a-704367230582/Read"],
+    productApiWriteScope: ["api://3c0926b2-5449-46dd-aa8a-704367230582/Write"]
 }
