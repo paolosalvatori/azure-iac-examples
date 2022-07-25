@@ -5,10 +5,8 @@ trigger:
     - master
     - develop
   paths:
-    include:
-    - terraform/aks-csi-provider/terraform/*
     exclude:
-    - terraform/aks-csi-provider/azure-pipelines.yml
+    - terraform/aks-csi-provider/*
   
 variables:
   # ADO_SERVICE_CONNECTION_NAME: # variable set in variable group 'aks_terraform_vars'
