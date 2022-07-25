@@ -37,3 +37,22 @@ export async function getOrder(accessToken, id) {
         .then(response => response.json())
         .catch(error => console.log(error));
 }
+
+export async function updateOrder(accessToken, id, data) {
+    const headers = new Headers();
+    const bearer = `Bearer ${accessToken}`;
+
+    headers.append("Authorization", bearer);
+    headers.append("Content-Type", "application/json");
+
+    const options = {
+        method: "POST",
+        headers: headers,
+        body: data
+    };
+
+    url = apiConfig.orderApiEndpoint + "/" + id
+    return fetch(url, options)
+        .then(response => response.json())
+        .catch(error => console.log(error));
+}

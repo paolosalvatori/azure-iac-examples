@@ -14,7 +14,7 @@ export const msalConfig = {
     auth: {
         clientId: "91064216-326e-4375-aa0f-e241562b5454",
         authority: "https://login.microsoftonline.com/kainiindustries.net",
-        redirectUri: "https://spa.aksdemo.kainiindustries.net" //"http://localhost:3000"   
+        redirectUri: "https://api.aksdemo.kainiindustries.net" //"http://localhost:3000"   
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -56,8 +56,8 @@ export const loginRequest = {
 };
 
 export const apiConfig = {
-    orderApiEndpoint:"https://api.aksdemo.kainiindustries.net/order-api/orders",
-    productApiEndpoint:"https://api.aksdemo.kainiindustries.net/product-api/products",
+    orderApiEndpoint:"https://api.aksdemo.kainiindustries.net/api/order/orders",
+    productApiEndpoint:"https://api.aksdemo.kainiindustries.net/api/product/products",
     orderApiReadScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Read"],
     orderApiWriteScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Write"],
     productApiReadScope: ["api://3c0926b2-5449-46dd-aa8a-704367230582/Read"],
