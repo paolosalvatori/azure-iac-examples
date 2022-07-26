@@ -3,7 +3,7 @@ import { getOrders } from '../orderService';
 import MaterialTable from "material-table";
 import tableIcons from "./MaterialTableIcons";
 import { useMsal } from "@azure/msal-react";
-import { apiConfig } from "../authConfig";
+import { orderApi } from "../authConfig";
 
 const columns = [
     { field: 'ID', title: 'ID', type: 'numeric' },
@@ -17,7 +17,7 @@ export const OrderGrid = () => {
 
     useEffect(() => {
         instance.acquireTokenSilent({
-            ...apiConfig.orderApiReadScope,
+            scopes: orderApi.scopes,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;
@@ -117,20 +117,20 @@ export const OrderGrid = () => {
                 columns={columns}
                 data={tableData}
                 icons={tableIcons}
-/*                 editable={{
-                    onRowUpdate: (newData, oldData) =>
-                        new Promise((resolve) => {
-                            handleRowUpdate(newData, oldData, resolve);
-                        }),
-                    onRowAdd: (newData) =>
-                        new Promise((resolve) => {
-                            handleRowAdd(newData, resolve)
-                        }),
-                    onRowDelete: (oldData) =>
-                        new Promise((resolve) => {
-                            handleRowDelete(oldData, resolve)
-                        }),
-                }} */
+            /*                 editable={{
+                                onRowUpdate: (newData, oldData) =>
+                                    new Promise((resolve) => {
+                                        handleRowUpdate(newData, oldData, resolve);
+                                    }),
+                                onRowAdd: (newData) =>
+                                    new Promise((resolve) => {
+                                        handleRowAdd(newData, resolve)
+                                    }),
+                                onRowDelete: (oldData) =>
+                                    new Promise((resolve) => {
+                                        handleRowDelete(oldData, resolve)
+                                    }),
+                            }} */
             />
         </div>
     )
