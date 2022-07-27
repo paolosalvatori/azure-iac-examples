@@ -65,7 +65,7 @@ param sshPublicKey string
 
 var aksClusterName = 'aks-${prefix}'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-03-01' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
   name: aksClusterName
   location: location
   identity: {
@@ -229,4 +229,4 @@ resource aksDiagnostics 'Microsoft.Insights/diagnosticSettings@2017-05-01-previe
 }
 
 output aksFqdn string = enablePrivateCluster ? aksCluster.properties.privateFQDN : aksCluster.properties.fqdn
-output aksClusterName string = aksClusterName
+output aksClusterName string = aksCluster.name

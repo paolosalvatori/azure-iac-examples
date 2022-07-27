@@ -3,31 +3,21 @@ param tags object
 param location string
 param cert object
 param rootCert object
-param winVmPassword string
 param vNets array
 param sshPublicKey string
 param aksAdminGroupObjectId string
 
 var privateDomainName = 'internal.${domainName}'
 var suffix = uniqueString(resourceGroup().id)
-var keyVaultName = 'kv-${suffix}'
-var azSeparatedAddressprefix = split(vNets[0].subnets[2].addressPrefix, '.')
+// var keyVaultName = 'kv-${suffix}'
 var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
-var azFirewallPrivateIpAddress = '${azSeparatedAddressprefix[0]}.${azSeparatedAddressprefix[1]}.${azSeparatedAddressprefix[2]}.4'
 var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
 
 module azMonitorModule './modules/azmon.bicep' = {
   name: 'modules-azmon'
   params: {
     suffix: suffix
-  }
-}
-
-module udrModule './modules/udr.bicep' = {
-  name: 'module-udr'
-  params: {
-    suffix: suffix
-    azureFirewallPrivateIpAddress: azFirewallPrivateIpAddress
+    location: location
   }
 }
 
@@ -51,7 +41,6 @@ module vNetsModule './modules/vnets.bicep' = [for (item, i) in vNets: {
     tags: tags
   }
   dependsOn: [
-    udrModule
     nsgModule
   ]
 }]
@@ -80,7 +69,7 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
-// KeyVault
+/* // KeyVault
 module keyvault 'modules/keyvault.bicep' = {
   name: 'module-keyvault'
   params: {
@@ -90,34 +79,17 @@ module keyvault 'modules/keyvault.bicep' = {
   }
 }
 
-// Azure Firewall
-/* module azureFirewallModule './modules/azfirewall.bicep' = {
-  name: 'module-azureFirewall'
-  params: {
-    suffix: suffix
-    location: location
-    retentionInDays: 7
-    workspaceId: azMonitorModule.outputs.workspaceId
-    firewallSubnetRef: vNetsModule[0].outputs.subnetRefs[2].id
-    sourceAddressRangePrefix: [
-      '10.0.0.0/8'
-    ]
-  }
-} */
-
 // Azure Bastion
 module bastionModule './modules/bastion.bicep' = {
-  dependsOn: [
-    //azureFirewallModule
-  ]
   name: 'module-bastion'
   params: {
     location: location
     subnetId: vNetsModule[0].outputs.subnetRefs[3].id
     suffix: suffix
   }
-}
+} */
 
+/* 
 // Windows VM
 module winVmModule './modules/winvm.bicep' = {
   dependsOn: [
@@ -146,7 +118,7 @@ module linuxVM './modules/linuxvm.bicep' = {
     sshKey: sshPublicKey
   }
 }
-
+ */
 // Private DNS zones
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
@@ -236,6 +208,15 @@ module aks 'modules/aks.bicep' = {
   }
 }
 
+// acrPull role assignment to AKS cluster identity
+/* module acrPullRoleAssignment 'modules/acr_pull_role.bicep' = {
+  name: 'module-acr-pull-role-assignment'
+  params: {
+    acrName: acr.outputs.registryName
+    aksClusterName: aks.outputs.aksClusterName
+  }
+}
+ */
 // NSG Update
 module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   name: 'module-nsgupdate'

@@ -1,10 +1,10 @@
 param suffix string
-
+param location string
 var workspaceName = 'ws-${suffix}'
 
 resource azureMonitorWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: workspaceName
-  location: resourceGroup().location
+  location: location
   properties: {
     sku: {
       name: 'PerGB2018'
