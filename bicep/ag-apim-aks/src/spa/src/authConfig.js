@@ -12,36 +12,36 @@ import { LogLevel } from "@azure/msal-browser";
  */
 export const msalConfig = {
     auth: {
-        clientId: "91064216-326e-4375-aa0f-e241562b5454",
+        clientId: "7c718b9b-f834-4e0a-afe7-0f8efe64c49d", //"91064216-326e-4375-aa0f-e241562b5454",
         authority: "https://login.microsoftonline.com/kainiindustries.net",
-        redirectUri: "https://api.aksdemo.kainiindustries.net" //"http://localhost:3000"   
+        redirectUri: "http://localhost:3000" //"https://api.aksdemo.kainiindustries.net" //"http://localhost:3000"   
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
         storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
     },
-    system: {	
-        loggerOptions: {	
-            loggerCallback: (level, message, containsPii) => {	
-                if (containsPii) {		
-                    return;		
-                }		
-                switch (level) {		
-                    case LogLevel.Error:		
-                        console.error(message);		
-                        return;		
-                    case LogLevel.Info:		
-                        console.info(message);		
-                        return;		
-                    case LogLevel.Verbose:		
-                        console.debug(message);		
-                        return;		
-                    case LogLevel.Warning:		
-                        console.warn(message);		
-                        return;		
-                }	
-            }	
-        }	
+    system: {
+        loggerOptions: {
+            loggerCallback: (level, message, containsPii) => {
+                if (containsPii) {
+                    return;
+                }
+                switch (level) {
+                    case LogLevel.Error:
+                        console.error(message);
+                        return;
+                    case LogLevel.Info:
+                        console.info(message);
+                        return;
+                    case LogLevel.Verbose:
+                        console.debug(message);
+                        return;
+                    case LogLevel.Warning:
+                        console.warn(message);
+                        return;
+                }
+            }
+        }
     }
 };
 
@@ -52,14 +52,24 @@ export const msalConfig = {
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
 export const loginRequest = {
-    scopes: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Read"]
+    scopes: [`${msalConfig.auth.clientId}/.default`]
 };
 
+export const orderApi = {
+    scopes: [
+        "api://53699ced-3870-4078-b44e-b2fab9c65ce3/Order.Read",
+        "api://53699ced-3870-4078-b44e-b2fab9c65ce3/Order.Write"
+    ],
+}
+
+export const productApi = {
+    scopes: [
+        "api://5c160889-49cb-4448-a6cf-56050a0ad4aa/Product.Read",
+        "api://5c160889-49cb-4448-a6cf-56050a0ad4aa/Product.Write"
+    ],
+}
+
 export const apiConfig = {
-    orderApiEndpoint:"https://api.aksdemo.kainiindustries.net/api/order/orders",
-    productApiEndpoint:"https://api.aksdemo.kainiindustries.net/api/product/products",
-    orderApiReadScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Read"],
-    orderApiWriteScope: ["api://13e29a9f-91d4-4761-acfa-acb2f3976bb1/Write"],
-    productApiReadScope: ["api://3c0926b2-5449-46dd-aa8a-704367230582/Read"],
-    productApiWriteScope: ["api://3c0926b2-5449-46dd-aa8a-704367230582/Write"]
+    orderApiEndpoint: "https://api.aksdemo.kainiindustries.net/api/order/orders",
+    productApiEndpoint: "https://api.aksdemo.kainiindustries.net/api/product/products"
 }
