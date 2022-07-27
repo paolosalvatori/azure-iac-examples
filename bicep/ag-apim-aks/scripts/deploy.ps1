@@ -262,6 +262,7 @@ function New-AppRegistrations {
 
 $InformationPreference = 'continue'
 
+# create self-signed certificates
 if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
     Write-Information -MessageData "Creating new Self-Signed CA Certificate"
     $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
@@ -309,68 +310,6 @@ $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -R
 Write-Information -MessageData "Stopping & starting App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
 Start-AzApplicationGateway -ApplicationGateway $appgwy
-
-#########################################
-# import OpenApi definitions into APIM
-#########################################
-
-# get APIM context
-$apimContext = New-AzApiManagementContext -ResourceGroupName $rg.ResourceGroupName -ServiceName $deployment.Outputs.apimName.Value
-
-# generate API policy XML documents
-Write-Information -MessageData "Generating APIM policy XML files"
-$xml = Get-Content .\api-policy-template.xml     
-
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.orderapi.AppId `
-    -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
-    -replace "{{TENANT_NAME}}", $domainName > ./order-api-policy.xml
-
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.productapi.AppId `
-    -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
-    -replace "{{TENANT_NAME}}", $domainName > ./product-api-policy.xml
-
-# import OpenApi definitions
-if ($null -eq (Get-AzApiManagementApi -Context $apimContext -Name $orderApiName)) {
-    Write-Information -MessageData "Importing Order API into APIM"
-    $newApi = Import-AzApiManagementApi -Context $apimContext `
-        -ApiId $orderApiName `
-        -SpecificationFormat OpenApi `
-        -SpecificationPath $orderApiSpecPath `
-        -Path $orderApiPath`
-        -Protocol Https `
-        -ApiType Http `
-        -Verbose
-
-    $api = Get-AzApiManagementApi -Context $apimContext -Name $newApi.Name
-    $api.SubscriptionRequired = $false
-    Set-AzApiManagementApi -InputObject $api -Verbose
-
-    # set api policy
-    $policyBody = Get-Content ./order-api-policy.xml
-    Set-AzApiManagementPolicy -Context $apimContext -ApiId $api.ApiId -Policy "$policyBody" -Verbose
-}
-
-if ($null -eq (Get-AzApiManagementApi -Context $apimContext -Name $productApiName)) {
-    Write-Information -MessageData "Importing Order API into APIM"
-    $newApi = Import-AzApiManagementApi -Context $apimContext `
-        -ApiId $productApiName `
-        -SpecificationFormat OpenApi `
-        -SpecificationPath $productApiSpecPath `
-        -Path $productApiPath `
-        -Protocol Https `
-        -ApiType Http `
-        -Verbose
-
-    $api = Get-AzApiManagementApi -Context $apimContext -Name $newApi.Name
-    $api.SubscriptionRequired = $false
-    Set-AzApiManagementApi -InputObject $api -Verbose
-
-    # set api policy
-    $policyBody = Get-Content ./product-api-policy.xml
-    Set-AzApiManagementPolicy -Context $apimContext -ApiId $api.ApiId -Policy "$policyBody" -Verbose
-}
 
 ### TODO 
 # 1. Patch react authConfig.json file with scopes, tenant name, endpoints, clientId & redirectUri

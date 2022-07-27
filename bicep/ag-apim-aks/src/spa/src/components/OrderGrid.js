@@ -3,7 +3,7 @@ import { getOrders } from '../orderService';
 import MaterialTable from "material-table";
 import tableIcons from "./MaterialTableIcons";
 import { useMsal } from "@azure/msal-react";
-import { apiConfig } from "../authConfig";
+import { orderApi } from "../authConfig";
 
 const columns = [
     { field: 'ID', title: 'ID', type: 'numeric' },
@@ -17,7 +17,7 @@ export const OrderGrid = () => {
 
     useEffect(() => {
         instance.acquireTokenSilent({
-            ...apiConfig.orderApiReadScope,
+            scope: orderApi.scopes,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;
