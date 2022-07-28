@@ -43,6 +43,10 @@ func (o *OrderStore) GetOrders(ctx echo.Context) error {
 		result = append(result, order)
 	}
 
+	if result = nil {
+		result = []string{}
+	}
+	
 	return ctx.JSON(http.StatusOK, result)
 }
 

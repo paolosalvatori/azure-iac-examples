@@ -16,9 +16,9 @@ export const OrderGrid = () => {
     const [tableData, setTableData] = useState([])
 
     useEffect(() => {
-        console.log(orderApi.scopes)
+        console.log(orderApi)
         instance.acquireTokenSilent({
-            ...orderApi.scopes,
+            ...orderApi,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;
@@ -109,7 +109,7 @@ export const OrderGrid = () => {
             })
     }
 
-    console.log(tableData)
+    console.log("tableData: " + tableData)
 
     return (
         <div style={{ height: 500, width: '90%', margin: 'auto' }}>

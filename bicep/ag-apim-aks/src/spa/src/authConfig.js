@@ -14,7 +14,7 @@ export const msalConfig = {
     auth: {
         clientId: "e37d5b5b-e238-4040-9854-f891aa241a9a",
         authority: "https://login.microsoftonline.com/kainiindustries.net",
-        redirectUri: "https://api.aksdemo.kainiindustries.net" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
+        redirectUri: "http://localhost:3000" //"https://api.aksdemo.kainiindustries.net" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -52,8 +52,8 @@ export const msalConfig = {
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
 export const loginRequest = {
-    scopes: [`${msalConfig.auth.clientId}/.default`]
-    //scopes: ["api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Read"]
+    //scopes: [`${msalConfig.auth.clientId}/.default`]
+    scopes: ["api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Read"]
 };
 
 export const orderApi = {

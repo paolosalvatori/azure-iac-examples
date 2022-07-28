@@ -43,6 +43,10 @@ func (o *ProductStore) GetProducts(ctx echo.Context) error {
 		result = append(result, product)
 	}
 
+	if result = nil {
+		result = []string{}
+	}
+
 	return ctx.JSON(http.StatusOK, result)
 }
 
