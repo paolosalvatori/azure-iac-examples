@@ -37,14 +37,10 @@ func (o *ProductStore) GetProducts(ctx echo.Context) error {
 	o.Lock.Lock()
 	defer o.Lock.Unlock()
 
-	var result []spec.Product
+	result := []spec.Product{}
 
 	for _, product := range o.Products {
 		result = append(result, product)
-	}
-
-	if result = nil {
-		result = []string{}
 	}
 
 	return ctx.JSON(http.StatusOK, result)
