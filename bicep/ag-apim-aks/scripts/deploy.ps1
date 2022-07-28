@@ -10,34 +10,188 @@ $sshPublicKey = $(cat ~/.ssh/id_rsa.pub)
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
-$productAppName = 'demo-product-api'
-$orderAppName = 'demo-order-api'
-$reactAppName = 'demo-react-spa'
-
-$orderApiName = 'order-api'
-$productApiName = 'product-api'
-$orderApiPath = "api/order"
-$productApiPath = "api/product"
-
-$orderApiSpecPath = '../src/order/openapi.yaml'
-$productApiSpecPath = '../src/product/openapi.yaml'
+#$productAppName = 'demo-product-api'
+#$orderAppName = 'demo-order-api'
+#$reactAppName = 'demo-react-spa'
 
 $deploymentName = 'ag-apim-aks-deploy'
-$redirectUris = @("http://localhost:3000", "https://api.aksdemo.kainiindustries.net")
-$orderApiSvcIp = '10.2.1.4'
-$productApiSvcIp = '10.2.1.5'
+$redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
+$orderApiSvcIp = '10.2.2.4'
+$productApiSvcIp = '10.2.2.5'
+
+$environment = 'dev'
+$semver = '0.1.2'
+$tag = "$environment-$semver"
+
+$spaImageName = "spa:$tag"
+$orderApiImageName = "order:$tag"
+$orderApiPort = "8080"
+$productApiImageName = "product:$tag"
+$productApiPort = "8081"
+
 $cert = @{}
 $root = @{}
+$appRegHash = @{}
+
+$appRegArray = @(
+    @{
+        Name          = 'demo-order-api'
+        Type          = 'api'
+        ApiDefinition = @{
+            RequestedAccessTokenVersion = 2
+            Oauth2PermissionScopes      = @(
+                @{
+                    Value                   = "Order.Read"
+                    AdminConsentDisplayName = "Read order API"
+                    AdminConsentDescription = "Allows the app to read orders"
+                    Id                      = (New-Guid).Guid
+                    IsEnabled               = $True
+                    Type                    = "Admin"
+                    UserConsentDisplayName  = "read orders"
+                    UserConsentDescription  = "allows app to read orders"
+                },
+                @{
+                    Value                   = "Order.Write"
+                    AdminConsentDisplayName = "Write order API"
+                    AdminConsentDescription = "Allows the app to write orders"
+                    Id                      = (New-Guid).Guid
+                    IsEnabled               = $True
+                    Type                    = "Admin"
+                    UserConsentDisplayName  = "write orders"
+                    UserConsentDescription  = "allows app to write orders"
+                }
+            )
+        }
+        ApiRoles      = @(
+            @{
+                AllowedMemberTypes = @("User")
+                Description        = "Order Reader Role"
+                DisplayName        = "Reader Role"
+                Id                 = (New-Guid).Guid
+                IsEnabled          = $True
+                Value              = "Order.Role.Read"
+            },
+            @{
+                AllowedMemberTypes = @("User")
+                Description        = "Order Writer Role"
+                DisplayName        = "Order Writer Role"
+                Id                 = (New-Guid).Guid
+                IsEnabled          = $True
+                Value              = "Order.Role.Write"
+            }
+        )
+    },
+    @{
+        Name          = 'demo-product-api'
+        Type          = 'api'
+        ApiDefinition = @{
+            RequestedAccessTokenVersion = 2
+            Oauth2PermissionScopes      = @(
+                @{
+                    Value                   = "Product.Read"
+                    AdminConsentDisplayName = "Read product API"
+                    AdminConsentDescription = "Allows the app to read products"
+                    Id                      = (New-Guid).Guid
+                    IsEnabled               = $True
+                    Type                    = "Admin"
+                    UserConsentDisplayName  = "read products"
+                    UserConsentDescription  = "allows app to read products"
+                },
+                @{
+                    Value                   = "Product.Write"
+                    AdminConsentDisplayName = "Write product API"
+                    AdminConsentDescription = "Allows the app to write products"
+                    Id                      = (New-Guid).Guid
+                    IsEnabled               = $True
+                    Type                    = "Admin"
+                    UserConsentDisplayName  = "write products"
+                    UserConsentDescription  = "allows app to write products"
+                }
+            )
+        }
+        ApiRoles      = @(
+            @{
+                AllowedMemberTypes = @("User")
+                Description        = "Product Reader Role"
+                DisplayName        = "Product Reader Role"
+                Id                 = (New-Guid).Guid
+                IsEnabled          = $True
+                Value              = "Product.Role.Read"
+            },
+            @{
+                AllowedMemberTypes = @("User")
+                Description        = "Product Writer Role"
+                DisplayName        = "Product Writer Role"
+                Id                 = (New-Guid).Guid
+                IsEnabled          = $True
+                Value              = "Product.Role.Write"
+            }
+        )
+    }
+    @{
+        Name           = 'demo-react-spa'
+        Type           = 'client'
+        ResourceAccess = @()
+        RedirectUris   = $redirectUris
+    }
+)
 
 #############
 # functions
 #############
 
+function New-ApiAppRegistration {
+    Param (
+        $Name,
+        $ApiDefinition,
+        $ApiRoles
+    )
+    
+    if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
+        $appReg = New-MgApplication `
+            -DisplayName $Name `
+            -SignInAudience AzureADandPersonalMicrosoftAccount `
+            -Api $ApiDefinition `
+            -AppRoles $ApiRoles `
+            -Verbose
+
+        Update-MgApplication -ApplicationId $appReg.Id -IdentifierUris "api://$($appReg.AppId)"
+        New-MgServicePrincipal -AppId $appReg.AppId
+    }
+    else {
+        Write-Information -MessageData "application '$($appReg.DisplayName)' already registered"
+    }
+    return $appReg
+}
+
+function New-ClientAppRegistration {
+    Param (
+        $Name,
+        $RequiredResourceAccess
+    )
+
+    if (!($clientAppReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
+        $clientAppReg = New-MgApplication `
+            -DisplayName $Name `
+            -SignInAudience AzureADandPersonalMicrosoftAccount `
+            -Spa @{ RedirectUris = $redirectUris } `
+            -RequiredResourceAccess $RequiredResourceAccess `
+            -Verbose
+
+        New-MgServicePrincipal -AppId $clientAppReg.AppId
+    }
+    else {
+        Write-Information -MessageData "application '$($clientAppReg.Name)' already registered"
+    }
+    return $clientAppReg
+}
+
 function New-AppRegistrations {
 
     Param(
         [string]$TenantId,
-        [switch]$RemoveAppRegistrations
+        [switch]$RemoveAppRegistrations,
+        [array]$AppRegistrations
     )
 
     #Requires -Modules Microsoft.Graph.Applications
@@ -55,178 +209,52 @@ function New-AppRegistrations {
     Connect-MgGraph -TenantId $TenantId -Scopes "Application.ReadWrite.All"
 
     if ($RemoveAppRegistrations) {
-        Write-Information -MessageData "Removing App Registrations..."
-        if ($($orderApi = $(Get-MgApplication -filter "DisplayName eq '$orderAppName'"))) {
-            Write-Information -MessageData "Removing $orderAppName App Registrations..."
-            Remove-MgApplication -ApplicationId $orderApi.Id
-        }
-        else {
-            Write-Information -MessageData "App Registrations $orderAppName not found"
-        }
-
-        if ($($productApi = $(Get-MgApplication -filter "DisplayName eq '$productAppName'"))) {
-            Write-Information -MessageData "Removing $productAppName App Registrations..."
-            Remove-MgApplication -ApplicationId $productApi
-        }
-        else {
-            Write-Information -MessageData "App Registrations $productAppName not found"
-        }
-
-        if ($($reactSpa = $(Get-MgApplication -filter "DisplayName eq '$reactAppName'"))) {
-            Write-Information -MessageData "Removing '$reactAppName' App Registrations..."
-            Remove-MgApplication -ApplicationId $reactSpa.Id
-        }
-        else {
-            Write-Information -MessageData "App Registrations '$reactAppName' not found"
+        foreach ($appRegName in $AppRegistrations.Name) {
+            Write-Information -MessageData "Removing App Registration '$appRegName'"
+            if ($($appReg = $(Get-MgApplication -filter "DisplayName eq '$appRegName'"))) {
+                Write-Information -MessageData "Removing $appRegName App Registrations..."
+                Remove-MgApplication -ApplicationId $appReg.Id
+            }
+            else {
+                Write-Information -MessageData "App Registrations $appRegName not found"
+            }
         }
         return
     }
 
-    # define app roles
-    $orderApiAppRoles = @(
-        @{
-            AllowedMemberTypes = @("User")
-            Description        = "Order Reader Role"
-            DisplayName        = "Reader Role"
-            Id                 = (New-Guid).Guid
-            IsEnabled          = $True
-            Value              = "Order.Role.Read"
-        },
-        @{
-            AllowedMemberTypes = @("User")
-            Description        = "Order Writer Role"
-            DisplayName        = "Order Writer Role"
-            Id                 = (New-Guid).Guid
-            IsEnabled          = $True
-            Value              = "Order.Role.Write"
-        }
-    )
-
-    $productApiAppRoles = @(
-        @{
-            AllowedMemberTypes = @("User")
-            Description        = "Product Reader Role"
-            DisplayName        = "Product Reader Role"
-            Id                 = (New-Guid).Guid
-            IsEnabled          = $True
-            Value              = "Product.Role.Read"
-        },
-        @{
-            AllowedMemberTypes = @("User")
-            Description        = "Product Writer Role"
-            DisplayName        = "Product Writer Role"
-            Id                 = (New-Guid).Guid
-            IsEnabled          = $True
-            Value              = "Product.Role.Write"
-        }
-    )
-
-    # define api scopes
-    $orderApiDefinition = @{
-        RequestedAccessTokenVersion = 2
-        Oauth2PermissionScopes      = @(
-            @{
-                Value                   = "Order.Read"
-                AdminConsentDisplayName = "Read order API"
-                AdminConsentDescription = "Allows the app to read orders"
-                Id                      = (New-Guid).Guid
-                IsEnabled               = $True
-                Type                    = "Admin"
-                UserConsentDisplayName  = "read orders"
-                UserConsentDescription  = "allows app to read orders"
-            },
-            @{
-                Value                   = "Order.Write"
-                AdminConsentDisplayName = "Write order API"
-                AdminConsentDescription = "Allows the app to write orders"
-                Id                      = (New-Guid).Guid
-                IsEnabled               = $True
-                Type                    = "Admin"
-                UserConsentDisplayName  = "write orders"
-                UserConsentDescription  = "allows app to write orders"
-            }
-        )
-    }
-
-    $productApiDefinition = @{
-        RequestedAccessTokenVersion = 2
-        Oauth2PermissionScopes      = @(
-            @{
-                Value                   = "Product.Read"
-                AdminConsentDisplayName = "Read product API"
-                AdminConsentDescription = "Allows the app to read products"
-                Id                      = (New-Guid).Guid
-                IsEnabled               = $True
-                Type                    = "Admin"
-                UserConsentDisplayName  = "read products"
-                UserConsentDescription  = "allows app to read products"
-            },
-            @{
-                Value                   = "Product.Write"
-                AdminConsentDisplayName = "Write product API"
-                AdminConsentDescription = "Allows the app to write products"
-                Id                      = (New-Guid).Guid
-                IsEnabled               = $True
-                Type                    = "Admin"
-                UserConsentDisplayName  = "write products"
-                UserConsentDescription  = "allows app to write products"
-            }
-        )
-    }
+    $appRegArray = @()
 
     # create api app registrations
-    if (!($orderApiApp = $(Get-MgApplication -filter "DisplayName eq '$orderAppName'"))) {
-        $orderApiApp = New-MgApplication `
-            -DisplayName $orderAppName `
-            -SignInAudience AzureADandPersonalMicrosoftAccount `
-            -Api $orderApiDefinition `
-            -AppRoles $orderApiAppRoles `
-            -Verbose
-
-        Update-MgApplication -ApplicationId $orderApiApp.Id -IdentifierUris "api://$($orderApiApp.AppId)"
-        New-MgServicePrincipal -AppId $orderApiApp.AppId
-    } else {
-        Write-Information -MessageData "application '$orderAppName' already registered"
-    }
-
-    if (!($productApiApp = $(Get-MgApplication -filter "DisplayName eq '$productAppName'"))) {
-        $productApiApp = New-MgApplication `
-            -DisplayName $productAppName `
-            -SignInAudience AzureADandPersonalMicrosoftAccount `
-            -Api $productApiDefinition `
-            -AppRoles $productApiAppRoles `
-            -Verbose
-
-        Update-MgApplication -ApplicationId $productApiApp.Id -IdentifierUris "api://$($productApiApp.AppId)"
-        New-MgServicePrincipal -AppId $productApiApp.AppId
-    } else {
-        Write-Information -MessageData "application '$productAppName' already registered"
+    foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'api') {
+        $newAppReg = New-ApiAppRegistration -Name $appReg.Name -ApiDefinition $appReg.ApiDefinition -ApiRoles $appReg.ApiRoles
+        $appRegArray += $newAppReg
+        $appRegHash[$newAppReg.DisplayName] = $newAppReg
     }
 
     # define resource access
     $requiredResourceAccess = @(
         @{
-            ResourceAppId  = $orderApiApp.AppId
+            ResourceAppId  = $appRegArray[0].AppId
             ResourceAccess = @(
                 @{
-                    Id   = $orderApiDefinition.Oauth2PermissionScopes[0].Id
+                    Id   = $appRegArray[0].Api.Oauth2PermissionScopes[0].Id
                     Type = "Scope"
                 },
                 @{
-                    Id   = $orderApiDefinition.Oauth2PermissionScopes[1].Id
+                    Id   = $appRegArray[0].Api.Oauth2PermissionScopes[1].Id
                     Type = "Scope"
                 }
             )
         },
         @{
-            ResourceAppId  = $productApiApp.AppId
+            ResourceAppId  = $appRegArray[1].AppId
             ResourceAccess = @(
                 @{
-                    Id   = $productApiDefinition.Oauth2PermissionScopes[0].Id
+                    Id   = $appRegArray[1].Api.Oauth2PermissionScopes[0].Id
                     Type = "Scope"
                 },
                 @{
-                    Id   = $productApiDefinition.Oauth2PermissionScopes[1].Id
+                    Id   = $appRegArray[1].Api.Oauth2PermissionScopes[1].Id
                     Type = "Scope"
                 }
             )
@@ -234,24 +262,20 @@ function New-AppRegistrations {
     )
 
     # create spa app registration
-    if (!($reactApp = $(Get-MgApplication -filter "DisplayName eq '$reactAppName'"))) {
-        $reactApp = New-MgApplication `
-            -DisplayName $reactAppName `
-            -SignInAudience AzureADandPersonalMicrosoftAccount `
-            -Spa @{ RedirectUris = $redirectUris } `
-            -RequiredResourceAccess $requiredResourceAccess `
-            -Verbose
-
-        New-MgServicePrincipal -AppId $reactApp.AppId
-    } else {
-        Write-Information -MessageData "application '$reactAppName' already registered"
+    foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'client') {
+        $appReg.ResourceAccess = $requiredResourceAccess
+        $newClientAppReg = New-ClientAppRegistration -Name $appReg.Name -RequiredResourceAccess $appReg.ResourceAccess
+        $appRegHash[$newClientAppReg.DisplayName] = $newClientAppReg
     }
 
-    $result = [PSCustomObject]@{
-        orderapi   = $orderApiApp
-        productapi = $productApiApp
-        reactspa   = $reactApp
-    }
+    $result = $appRegHash
+
+    #$result = [PSCustomObject]@{
+    #    orderApi   = $orderApiApp
+    #    productApi = $productApiApp
+    #    reactSpa   = $reactApp
+    #orderApiScopes = $orderApiDefinition
+    #productApiScopes = $productApiDefinition
 
     return $result
 }
@@ -280,7 +304,21 @@ $clearBytes = $pfxCert.Export($pkcs12ContentType, $password)
 $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
 $cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
 
-$appRegistrations = New-AppRegistrations -TenantId $tenant.Id
+$appRegistrations = New-AppRegistrations -AppRegistrations $appRegArray -TenantId $tenant.Id
+
+# generate API policy XML documents
+Write-Information -MessageData "Generating APIM policy XML files"
+$xml = Get-Content .\api-policy-template.xml     
+
+$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
+    -replace "{{AUDIENCE_API}}", $appRegistrations.'demo-order-api'.AppId `
+    -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
+    -replace "{{TENANT_NAME}}", $domainName > ./order-api-policy.xml
+
+$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
+    -replace "{{AUDIENCE_API}}", $appRegistrations.'demo-product-api'.AppId `
+    -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
+    -replace "{{TENANT_NAME}}", $domainName > ./product-api-policy.xml
 
 # deploy bicep templates
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
@@ -298,6 +336,11 @@ New-AzResourceGroupDeployment `
     -rootCert $root `
     -sshPublicKey $sshPublicKey `
     -aksAdminGroupObjectId $aksAdminGroupObjectId `
+    -kubernetesSpaIpAddress '10.2.2.6' `
+    -orderApiYaml $(Get-Content -Raw -Path ../src/order/openapi.yaml) `
+    -productApiYaml $(Get-Content -Raw -Path ../src/product/openapi.yaml) `
+    -orderApiPoicyXml $(Get-Content -Raw -Path ./order-api-policy.xml) `
+    -productApiPoicyXml $(Get-Content -Raw -Path ./product-api-policy.xml) `
     -Verbose
 
 # get deployment output
@@ -306,71 +349,63 @@ $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroup
 # stop & start the app gateway for it to get the updated DNS zone!!!!
 $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
-Write-Information -MessageData "Stopping & starting App Gateway"
+<#
+Write-Information -MessageData "Stopping App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
+Write-Information -MessageData "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
+#>
 
 #########################################
-# import OpenApi definitions into APIM
+# Patch react authConfig.json file with 
+# scopes, tenant name, endpoints, 
+# clientId & redirectUri
 #########################################
 
-# get APIM context
-$apimContext = New-AzApiManagementContext -ResourceGroupName $rg.ResourceGroupName -ServiceName $deployment.Outputs.apimName.Value
+Write-Information -MessageData "patching react authConfig.js file"
+$authConfig = Get-Content ../src/spa/src/authConfig_template.js
+$authConfig `
+    -replace "{{CLIENT_ID}}", $appRegistrations.'demo-react-spa'.AppId `
+    -replace "{{DOMAIN_NAME}}", $domainName `
+    -replace "{{ORDER_READ}}", "$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[0].Id)/$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{ORDER_WRITE}}", "$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[1].Id)/$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{PRODUCT_READ}}", "$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[0].Id)/$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{PRODUCT_WRITE}}", "$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[1].Id)/$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childDomainName/api/order/orders" `
+    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childDomainName/api/product/products" `
+    -replace "{{REDIRECT_URI}}", "https://api.$childDomainName" > ../src/spa/src/authConfig.js
 
-# generate API policy XML documents
-Write-Information -MessageData "Generating APIM policy XML files"
-$xml = Get-Content .\api-policy-template.xml     
+# build container images in ACR
+Write-Information -MessageData "Bulding Order container image"
+az acr build -r $deployment.Outputs.acrName.value `
+    -t $orderApiImageName `
+    --build-arg SERVICE_PORT=$orderApiPort `
+    -f ../src/Dockerfile ../src/order
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.orderapi.AppId `
-    -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
-    -replace "{{TENANT_NAME}}", $domainName > ./order-api-policy.xml
+Write-Information -MessageData "Bulding Product container image"
+az acr build -r $deployment.Outputs.acrName.value `
+    -t $productApiImageName `
+    --build-arg SERVICE_PORT=$productApiPort `
+    -f ../src/Dockerfile ../src/product
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.productapi.AppId `
-    -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
-    -replace "{{TENANT_NAME}}", $domainName > ./product-api-policy.xml
+Write-Information -MessageData "Bulding Reaxt Spa container image"
+az acr build -r $deployment.Outputs.acrName.value `
+    -t $spaImageName `
+    -f ../src/spa/Dockerfile ../src/spa
 
-# import OpenApi definitions
-if ($null -eq (Get-AzApiManagementApi -Context $apimContext -Name $orderApiName)) {
-    Write-Information -MessageData "Importing Order API into APIM"
-    $newApi = Import-AzApiManagementApi -Context $apimContext `
-        -ApiId $orderApiName `
-        -SpecificationFormat OpenApi `
-        -SpecificationPath $orderApiSpecPath `
-        -Path $orderApiPath`
-        -Protocol Https `
-        -ApiType Http `
-        -Verbose
+# apply kubernetes manifests
+Write-Information -MessageData "Applying Kubernetes manifests"
+Import-AzAksCredential -ResourceGroupName $rg.ResourceGroupName -Name $deployment.Outputs.aksClusterName.Value -Admin -Force
 
-    $api = Get-AzApiManagementApi -Context $apimContext -Name $newApi.Name
-    $api.SubscriptionRequired = $false
-    Set-AzApiManagementApi -InputObject $api -Verbose
+kubectl apply -f ../manifests/namespace.yaml
 
-    # set api policy
-    $policyBody = Get-Content ./order-api-policy.xml
-    Set-AzApiManagementPolicy -Context $apimContext -ApiId $api.ApiId -Policy "$policyBody" -Verbose
-}
+$(Get-Content -Path ../manifests/order.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$orderApiImageName" | kubectl apply -f -
+$(Get-Content -Path ../manifests/product.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$productApiImageName" | kubectl apply -f -
+$(Get-Content -Path ../manifests/spa.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$spaImageName" | kubectl apply -f -
 
-if ($null -eq (Get-AzApiManagementApi -Context $apimContext -Name $productApiName)) {
-    Write-Information -MessageData "Importing Order API into APIM"
-    $newApi = Import-AzApiManagementApi -Context $apimContext `
-        -ApiId $productApiName `
-        -SpecificationFormat OpenApi `
-        -SpecificationPath $productApiSpecPath `
-        -Path $productApiPath `
-        -Protocol Https `
-        -ApiType Http `
-        -Verbose
-
-    $api = Get-AzApiManagementApi -Context $apimContext -Name $newApi.Name
-    $api.SubscriptionRequired = $false
-    Set-AzApiManagementApi -InputObject $api -Verbose
-
-    # set api policy
-    $policyBody = Get-Content ./product-api-policy.xml
-    Set-AzApiManagementPolicy -Context $apimContext -ApiId $api.ApiId -Policy "$policyBody" -Verbose
-}
-
-### TODO 
-# 1. Patch react authConfig.json file with scopes, tenant name, endpoints, clientId & redirectUri
+# TODO
+# fix acrPull role assignemt to ACR for AKS cluster...
+# assign agent-pool user mid acrPull role
+# assign aks system mid user mid contributor role to MC_ resource group
+# add admin consent for rct spa app registration
+# add AG httpsetting & backend for react spa to bicep

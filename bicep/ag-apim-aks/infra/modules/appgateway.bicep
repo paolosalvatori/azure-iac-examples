@@ -30,6 +30,7 @@ param externalManagementHostName string
 param internalProxyHostName string
 param internalPortalHostName string
 param internalManagementHostName string
+param kubernetesSpaIpAddress string
 
 var appGwyPipName = 'appgwy-pip-${suffix}'
 var appGwyName = 'appgwy-${suffix}'
@@ -160,6 +161,16 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         }
       }
       {
+        name: 'kubernetes-spa-backend'
+        properties: {
+          backendAddresses: [
+            {
+              fqdn: kubernetesSpaIpAddress
+            }
+          ]
+        }
+      }
+      {
         name: 'sinkpool'
         properties: {
           backendAddresses: []
@@ -222,6 +233,16 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-portal-probe')
           }
+        }
+      }
+      {
+        name: 'kubernetes-spa-http-settings'
+        properties: {
+          port: 80
+          protocol: 'Http'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: false
+          requestTimeout: requestTimeOut
         }
       }
     ]
@@ -311,16 +332,30 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           pathRules: [
             {
-              name: 'external'
+              name: 'api'
               properties: {
                 paths: [
-                  '/*'
+                  '/api/*'
                 ]
                 backendAddressPool: {
                   id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-proxy-backend')
                 }
                 backendHttpSettings: {
                   id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-proxy-http-settings')
+                }
+              }
+            }
+            {
+              name: 'kubernetes-spa-config'
+              properties: {
+                paths: [
+                  '/*'
+                ]
+                backendAddressPool: {
+                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'kubernetes-spa-backend')
+                }
+                backendHttpSettings: {
+                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'kubernetes-spa-http-settings')
                 }
               }
             }

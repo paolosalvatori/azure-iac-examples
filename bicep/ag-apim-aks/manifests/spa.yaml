@@ -5,8 +5,10 @@ metadata:
   name: spa-svc
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "aksLoadBalancerSubnet"
 spec:
   type: LoadBalancer
+  loadBalancerIP: 10.2.2.6
   ports:
     - name: http
       protocol: TCP

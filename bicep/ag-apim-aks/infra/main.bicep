@@ -6,10 +6,14 @@ param rootCert object
 param vNets array
 param sshPublicKey string
 param aksAdminGroupObjectId string
+param orderApiYaml string
+param productApiYaml string
+param orderApiPoicyXml string
+param productApiPoicyXml string
+param kubernetesSpaIpAddress string
 
 var privateDomainName = 'internal.${domainName}'
 var suffix = uniqueString(resourceGroup().id)
-// var keyVaultName = 'kv-${suffix}'
 var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
 var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
 
@@ -131,6 +135,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
     azMonitorModule
+    vNetsModule
   ]
   name: 'module-apim'
   params: {
@@ -155,9 +160,39 @@ module apiManagementModule './modules/apim.bicep' = {
   }
 }
 
+// Import Open Api Definitions
+module orderOpenApiDefinition 'modules/api.bicep' = {
+  name: 'module-order-api'
+  params: {
+    apimName: apiManagementModule.outputs.apimName
+    apiName: 'order-api'
+    apiPath: 'api/order'
+    backendUrl: 'http://10.2.1.4'
+    displayName: 'Order API'
+    isSubscriptionRequired: false
+    openApiYaml: orderApiYaml
+    xmlPolicy: orderApiPoicyXml
+  }
+}
+
+module productOpenApiDefinition 'modules/api.bicep' = {
+  name: 'module-product-api'
+  params: {
+    apimName: apiManagementModule.outputs.apimName
+    apiName: 'product-api'
+    apiPath: 'api/product'
+    backendUrl: 'http://10.2.1.5'
+    displayName: 'Product API'
+    isSubscriptionRequired: false
+    openApiYaml: productApiYaml
+    xmlPolicy: productApiPoicyXml
+  }
+}
+
 // Application Gateway
 module applicationGatewayModule './modules/appgateway.bicep' = {
   dependsOn: [
+    vNetsModule
     azMonitorModule
     privateDnsZone
   ]
@@ -165,6 +200,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
   params: {
     suffix: suffix
     location: location
+    kubernetesSpaIpAddress: kubernetesSpaIpAddress
     privateDnsZoneName: privateDomainName
     workspaceId: azMonitorModule.outputs.workspaceId
     apimGatewaySslCertPassword: cert.CertPassword
@@ -217,6 +253,7 @@ module aks 'modules/aks.bicep' = {
   }
 }
  */
+
 // NSG Update
 module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   name: 'module-nsgupdate'

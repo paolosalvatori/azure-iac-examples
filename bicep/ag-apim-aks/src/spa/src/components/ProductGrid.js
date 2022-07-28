@@ -3,7 +3,7 @@ import { getProducts } from '../productService';
 import MaterialTable from "material-table";
 import tableIcons from "./MaterialTableIcons";
 import { useMsal } from "@azure/msal-react";
-import { apiConfig } from "../authConfig";
+import { productApi } from "../authConfig";
 
 const columns = [
     { field: 'ID', title: 'ID', type: "numeric" },
@@ -16,8 +16,9 @@ export const ProductGrid = () => {
     const [tableData, setTableData] = useState([])
 
     useEffect(() => {
+        console.log(productApi.scopes)
         instance.acquireTokenSilent({
-            ...apiConfig.productApiReadScope,
+            scope: productApi.scopes,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;

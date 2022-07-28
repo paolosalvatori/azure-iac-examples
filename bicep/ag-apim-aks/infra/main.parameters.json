@@ -105,6 +105,16 @@
                             "privateLinkServiceNetworkPolicies": "Enabled",
                             "serviceEndpoints": null,
                             "delegations": null
+                        },
+                        {
+                            "name": "AksLoadBalancerSubnet",
+                            "addressPrefix": "10.2.2.0/24",
+                            "udrName": null,
+                            "nsgName": null,
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "serviceEndpoints": null,
+                            "delegations": null
                         }
                     ]
                 }

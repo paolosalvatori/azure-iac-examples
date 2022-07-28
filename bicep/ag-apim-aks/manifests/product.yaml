@@ -5,9 +5,10 @@ metadata:
   name: product-svc
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "aksLoadBalancerSubnet"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.2.1.5
+  loadBalancerIP: 10.2.2.5
   ports:
     - name: http
       protocol: TCP

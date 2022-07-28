@@ -1,7 +1,7 @@
 <policies>
     <inbound>
         <base />
-        <set-backend-service base-url="http://10.2.1.5" />
+        <set-backend-service base-url="http://10.2.2.5" />
         <cors allow-credentials="true">
             <allowed-origins>
                 <origin>https://api.aksdemo.kainiindustries.net</origin>
@@ -18,7 +18,7 @@
             <openid-config url="https://login.microsoftonline.com/kainiindustries.net/v2.0/.well-known/openid-configuration" />
             <required-claims>
                 <claim name="aud">
-                    <value>6e4ade2b-ea3e-4657-bd0d-da9a4d1c15df</value>
+                    <value>ddbcb46c-7741-46d3-b0cf-7b4e5ba5464d</value>
                 </claim>
             </required-claims>
         </validate-jwt>
