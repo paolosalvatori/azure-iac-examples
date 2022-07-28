@@ -37,14 +37,10 @@ func (o *OrderStore) GetOrders(ctx echo.Context) error {
 	o.Lock.Lock()
 	defer o.Lock.Unlock()
 
-	var result []spec.Order
+	result := []spec.Order{}
 
 	for _, order := range o.Orders {
 		result = append(result, order)
-	}
-
-	if result = nil {
-		result = []string{}
 	}
 	
 	return ctx.JSON(http.StatusOK, result)
