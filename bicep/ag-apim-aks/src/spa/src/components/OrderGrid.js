@@ -18,7 +18,7 @@ export const OrderGrid = () => {
     useEffect(() => {
         console.log(orderApi.scopes)
         instance.acquireTokenSilent({
-            scope: orderApi.scopes,
+            ...orderApi.scopes,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;

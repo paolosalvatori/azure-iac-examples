@@ -52,8 +52,8 @@ export const msalConfig = {
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
 export const loginRequest = {
-    // scopes: [`${msalConfig.auth.clientId}/.default`]
-    scopes: ["api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Read"]
+    scopes: [`${msalConfig.auth.clientId}/.default`]
+    //scopes: ["api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Read"]
 };
 
 export const orderApi = {

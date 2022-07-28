@@ -18,7 +18,7 @@ export const ProductGrid = () => {
     useEffect(() => {
         console.log(productApi.scopes)
         instance.acquireTokenSilent({
-            scope: productApi.scopes,
+            ...productApi.scopes,
             account: accounts[0]
         }).then((response) => {
             let accessToken = response.accessToken;
