@@ -7,8 +7,8 @@ import { productApi } from "../authConfig";
 
 const columns = [
     { field: 'ID', title: 'ID', type: "numeric" },
-    { field: 'Name', title: 'Name', width: 300 },
-    { field: 'Description', title: 'Description', width: 600 }
+    { field: 'Name', title: 'Name' },
+    { field: 'Description', title: 'Description' }
 ]
 
 export const ProductGrid = () => {
@@ -27,8 +27,6 @@ export const ProductGrid = () => {
                 .then((data) => setTableData(data));
         })
     }, [])
-
-    console.log(tableData)
 
     const handleRowUpdate = (newData, oldData, resolve) => {
         //validation
@@ -111,6 +109,8 @@ export const ProductGrid = () => {
             })
     }
 
+    console.log("tableData: " + tableData)
+    
     return (
         <div style={{ height: 500, width: '90%', margin: 'auto' }}>
             <MaterialTable
