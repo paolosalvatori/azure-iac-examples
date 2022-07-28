@@ -16,7 +16,6 @@ export const OrderGrid = () => {
     const [tableData, setTableData] = useState([])
 
     useEffect(() => {
-        console.log(orderApi)
         instance.acquireTokenSilent({
             ...orderApi,
             account: accounts[0]

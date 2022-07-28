@@ -16,7 +16,6 @@ export const ProductGrid = () => {
     const [tableData, setTableData] = useState([])
 
     useEffect(() => {
-        console.log(productApi.scopes)
         instance.acquireTokenSilent({
             ...productApi,
             account: accounts[0]
