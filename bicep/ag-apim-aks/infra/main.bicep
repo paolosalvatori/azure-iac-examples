@@ -16,7 +16,12 @@ var privateDomainName = 'internal.${domainName}'
 var suffix = uniqueString(resourceGroup().id)
 var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
 var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
+var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
+var networkContributorRoleDefinitionName = '4d97b98b-1d4f-4787-a291-c67834d212e7'
+var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${networkContributorRoleDefinitionName}'
 
+// Azure Monitor Workspace
 module azMonitorModule './modules/azmon.bicep' = {
   name: 'modules-azmon'
   params: {
@@ -25,6 +30,7 @@ module azMonitorModule './modules/azmon.bicep' = {
   }
 }
 
+// Network Security Groups
 module nsgModule './modules/nsg.bicep' = {
   name: 'module-nsg'
   params: {
@@ -63,7 +69,7 @@ module peeringModule './modules/peering.bicep' = {
   ]
 }
 
-// ACR 
+// Azure Container Registry
 module acr 'modules/acr.bicep' = {
   name: 'module-acr'
   params: {
@@ -73,56 +79,6 @@ module acr 'modules/acr.bicep' = {
   }
 }
 
-/* // KeyVault
-module keyvault 'modules/keyvault.bicep' = {
-  name: 'module-keyvault'
-  params: {
-    location: location
-    name: keyVaultName
-    tenantId: tenant().tenantId
-  }
-}
-
-// Azure Bastion
-module bastionModule './modules/bastion.bicep' = {
-  name: 'module-bastion'
-  params: {
-    location: location
-    subnetId: vNetsModule[0].outputs.subnetRefs[3].id
-    suffix: suffix
-  }
-} */
-
-/* 
-// Windows VM
-module winVmModule './modules/winvm.bicep' = {
-  dependsOn: [
-    bastionModule
-  ]
-  name: 'module-winvm'
-  params: {
-    windowsOSVersion: '2016-Datacenter'
-    adminPassword: winVmPassword
-    adminUserName: 'localadmin'
-    location: location
-    subnetId: vNetsModule[0].outputs.subnetRefs[1].id
-    suffix: suffix
-    vmSize: 'Standard_D2_v3'
-  }
-}
-
-// Linux VM
-module linuxVM './modules/linuxvm.bicep' = {
-  name: 'module-linuxvm'
-  params: {
-    location: location
-    subnetId: vNetsModule[0].outputs.subnetRefs[1].id
-    adminUserName: 'azureuser'
-    suffix: suffix
-    sshKey: sshPublicKey
-  }
-}
- */
 // Private DNS zones
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
@@ -131,7 +87,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   properties: {}
 }
 
-// APIM
+// API Management
 module apiManagementModule './modules/apim.bicep' = {
   dependsOn: [
     azMonitorModule
@@ -227,6 +183,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
   }
 }
 
+// Azure Kubernetes Service
 module aks 'modules/aks.bicep' = {
   name: 'module-aks'
   params: {
@@ -244,17 +201,29 @@ module aks 'modules/aks.bicep' = {
   }
 }
 
-// acrPull role assignment to AKS cluster identity
-/* module acrPullRoleAssignment 'modules/acr_pull_role.bicep' = {
-  name: 'module-acr-pull-role-assignment'
-  params: {
-    acrName: acr.outputs.registryName
-    aksClusterName: aks.outputs.aksClusterName
+// Assign 'AcrPull' role to AKS cluster kubelet identity
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid(resourceGroup().id, aks.name, 'acrPullRoleAssignment')
+  properties: {
+    principalId: aks.outputs.aksKubeletIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: acrPullRoleId
+    description: 'Assign AcrPull role to AKS cluster'
   }
 }
- */
 
-// NSG Update
+// Assign 'Network Contributor' role to AKS cluster system managed identity
+resource aksNetworkContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid(resourceGroup().id, aks.name, 'aksNetworkContributorRoleAssignment')
+  properties: {
+    principalId: aks.outputs.aksClusterManagedIdentity
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: networkContributorRoleId
+    description: 'Assign Netowkr Contributor role to AKS cluster Managed Identity'
+  }
+}
+
+// Update Application Gateway Public IP in NSG
 module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
   name: 'module-nsgupdate'
   params: {

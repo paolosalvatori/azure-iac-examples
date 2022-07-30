@@ -12,9 +12,9 @@ import { LogLevel } from "@azure/msal-browser";
  */
 export const msalConfig = {
     auth: {
-        clientId: "e37d5b5b-e238-4040-9854-f891aa241a9a",
+        clientId: "c17d2d6d-71df-401a-aa47-86210a7ce1ad",
         authority: "https://login.microsoftonline.com/kainiindustries.net",
-        redirectUri: "http://localhost:3000" //"https://api.aksdemo.kainiindustries.net" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
+        redirectUri: "https://api.aksdemo.kainiindustries.net" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -57,15 +57,15 @@ export const loginRequest = {
 
 export const orderApi = {
     scopes: [
-        "api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Write",
-        "api://e45052cf-71d3-4626-bd54-8d534bb930a2/Order.Read"
+        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Write",
+        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Read"
     ],
 }
 
 export const productApi = {
     scopes: [
-        "api://ddbcb46c-7741-46d3-b0cf-7b4e5ba5464d/Product.Write",
-        "api://ddbcb46c-7741-46d3-b0cf-7b4e5ba5464d/Product.Read"
+        "api://ab37d9b5-d081-4774-aab2-49cb5336f3a0/Product.Write",
+        "api://ab37d9b5-d081-4774-aab2-49cb5336f3a0/Product.Read"
     ],
 }
 

@@ -3,21 +3,19 @@ $location = 'australiaeast'
 $domainName = 'kainiindustries.net'
 $tenant = (Get-AzDomain $domainName)
 $childDomainName = "aksdemo.$domainName"
-$rgName = "ag-apim-aks-$location-2-rg"
+$rgName = "ag-apim-aks-$location-3-rg"
+$deploymentName = 'ag-apim-aks-deploy'
 $aksAdminGroupObjectId = 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
 $sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "proxy.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
 $sshPublicKey = $(cat ~/.ssh/id_rsa.pub)
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
-#$productAppName = 'demo-product-api'
-#$orderAppName = 'demo-order-api'
-#$reactAppName = 'demo-react-spa'
-
-$deploymentName = 'ag-apim-aks-deploy'
 $redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
 $orderApiSvcIp = '10.2.2.4'
 $productApiSvcIp = '10.2.2.5'
+$reactSpaSvcIp = '10.2.2.6'
+$identityPrefix = 'aks'
 
 $environment = 'dev'
 $semver = '0.1.2'
@@ -25,17 +23,18 @@ $tag = "$environment-$semver"
 
 $spaImageName = "spa:$tag"
 $orderApiImageName = "order:$tag"
-$orderApiPort = "8080"
 $productApiImageName = "product:$tag"
+
+$orderApiPort = "8080"
 $productApiPort = "8081"
 
 $cert = @{}
 $root = @{}
 $appRegHash = @{}
 
-$appRegArray = @(
+$appRegistrationDefinitions = @(
     @{
-        Name          = 'demo-order-api'
+        Name          = "$identityPrefix-order-api"
         Type          = 'api'
         ApiDefinition = @{
             RequestedAccessTokenVersion = 2
@@ -82,7 +81,7 @@ $appRegArray = @(
         )
     },
     @{
-        Name          = 'demo-product-api'
+        Name          = "$identityPrefix-product-api"
         Type          = 'api'
         ApiDefinition = @{
             RequestedAccessTokenVersion = 2
@@ -129,7 +128,7 @@ $appRegArray = @(
         )
     }
     @{
-        Name           = 'demo-react-spa'
+        Name           = "$identityPrefix-react-spa"
         Type           = 'client'
         ResourceAccess = @()
         RedirectUris   = $redirectUris
@@ -170,20 +169,21 @@ function New-ClientAppRegistration {
         $RequiredResourceAccess
     )
 
-    if (!($clientAppReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
-        $clientAppReg = New-MgApplication `
+    if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
+        Write-Information -MessageData "creating application '$($Name)'"
+        $appReg = New-MgApplication `
             -DisplayName $Name `
             -SignInAudience AzureADandPersonalMicrosoftAccount `
             -Spa @{ RedirectUris = $redirectUris } `
             -RequiredResourceAccess $RequiredResourceAccess `
             -Verbose
 
-        New-MgServicePrincipal -AppId $clientAppReg.AppId
+        New-MgServicePrincipal -AppId $appReg.AppId
     }
     else {
-        Write-Information -MessageData "application '$($clientAppReg.Name)' already registered"
+        Write-Information -MessageData "application '$($appReg.DisplayName)' already registered"
     }
-    return $clientAppReg
+    return $appReg
 }
 
 function New-AppRegistrations {
@@ -216,45 +216,45 @@ function New-AppRegistrations {
                 Remove-MgApplication -ApplicationId $appReg.Id
             }
             else {
-                Write-Information -MessageData "App Registrations $appRegName not found"
+                Write-Information -MessageData "App Registration '$appRegName' not found"
             }
         }
         return
     }
 
-    $appRegArray = @()
+    $appRegistrationDefinitions = @()
 
     # create api app registrations
     foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'api') {
         $newAppReg = New-ApiAppRegistration -Name $appReg.Name -ApiDefinition $appReg.ApiDefinition -ApiRoles $appReg.ApiRoles
-        $appRegArray += $newAppReg
+        $appRegistrationDefinitions += $newAppReg
         $appRegHash[$newAppReg.DisplayName] = $newAppReg
     }
 
     # define resource access
     $requiredResourceAccess = @(
         @{
-            ResourceAppId  = $appRegArray[0].AppId
+            ResourceAppId  = $appRegistrationDefinitions[0].AppId
             ResourceAccess = @(
                 @{
-                    Id   = $appRegArray[0].Api.Oauth2PermissionScopes[0].Id
+                    Id   = $appRegistrationDefinitions[0].Api.Oauth2PermissionScopes[0].Id
                     Type = "Scope"
                 },
                 @{
-                    Id   = $appRegArray[0].Api.Oauth2PermissionScopes[1].Id
+                    Id   = $appRegistrationDefinitions[0].Api.Oauth2PermissionScopes[1].Id
                     Type = "Scope"
                 }
             )
         },
         @{
-            ResourceAppId  = $appRegArray[1].AppId
+            ResourceAppId  = $appRegistrationDefinitions[1].AppId
             ResourceAccess = @(
                 @{
-                    Id   = $appRegArray[1].Api.Oauth2PermissionScopes[0].Id
+                    Id   = $appRegistrationDefinitions[1].Api.Oauth2PermissionScopes[0].Id
                     Type = "Scope"
                 },
                 @{
-                    Id   = $appRegArray[1].Api.Oauth2PermissionScopes[1].Id
+                    Id   = $appRegistrationDefinitions[1].Api.Oauth2PermissionScopes[1].Id
                     Type = "Scope"
                 }
             )
@@ -269,14 +269,6 @@ function New-AppRegistrations {
     }
 
     $result = $appRegHash
-
-    #$result = [PSCustomObject]@{
-    #    orderApi   = $orderApiApp
-    #    productApi = $productApiApp
-    #    reactSpa   = $reactApp
-    #orderApiScopes = $orderApiDefinition
-    #productApiScopes = $productApiDefinition
-
     return $result
 }
 
@@ -305,23 +297,38 @@ $clearBytes = $pfxCert.Export($pkcs12ContentType, $password)
 $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
 $cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
 
-$appRegistrations = New-AppRegistrations -AppRegistrations $appRegArray -TenantId $tenant.Id
+# create pplication registrations
+$appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
+
+# patch react authConfig.json file 
+Write-Information -MessageData "patching react authConfig.js file"
+$authConfig = Get-Content ../src/spa/src/authConfig_template.js
+$authConfig `
+    -replace "{{CLIENT_ID}}", $appRegistrations."$identityPrefix-react-spa".AppId `
+    -replace "{{DOMAIN_NAME}}", $domainName `
+    -replace "{{ORDER_READ}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{ORDER_WRITE}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{PRODUCT_READ}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{PRODUCT_WRITE}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childDomainName/api/order/orders" `
+    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childDomainName/api/product/products" `
+    -replace "{{REDIRECT_URI}}", "https://api.$childDomainName" > ../src/spa/src/authConfig.js
 
 # generate API policy XML documents
 Write-Information -MessageData "Generating APIM policy XML files"
 $xml = Get-Content .\api-policy-template.xml     
 
 $xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.'demo-order-api'.AppId `
+    -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-order-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
     -replace "{{TENANT_NAME}}", $domainName > ./order-api-policy.xml
 
 $xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations.'demo-product-api'.AppId `
+    -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-product-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
     -replace "{{TENANT_NAME}}", $domainName > ./product-api-policy.xml
 
-# deploy bicep templates
+# deploy bicep template
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 
 Write-Information -MessageData "Deploying infrastructure"
@@ -337,7 +344,7 @@ New-AzResourceGroupDeployment `
     -rootCert $root `
     -sshPublicKey $sshPublicKey `
     -aksAdminGroupObjectId $aksAdminGroupObjectId `
-    -kubernetesSpaIpAddress '10.2.2.6' `
+    -kubernetesSpaIpAddress $reactSpaSvcIp `
     -orderApiYaml $(Get-Content -Raw -Path ../src/order/openapi.yaml) `
     -productApiYaml $(Get-Content -Raw -Path ../src/product/openapi.yaml) `
     -orderApiPoicyXml $(Get-Content -Raw -Path ./order-api-policy.xml) `
@@ -347,34 +354,16 @@ New-AzResourceGroupDeployment `
 # get deployment output
 $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
 
+<#
 # stop & start the app gateway for it to get the updated DNS zone!!!!
 $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
-<#
 Write-Information -MessageData "Stopping App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
+
 Write-Information -MessageData "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
 #>
-
-#########################################
-# Patch react authConfig.json file with 
-# scopes, tenant name, endpoints, 
-# clientId & redirectUri
-#########################################
-
-Write-Information -MessageData "patching react authConfig.js file"
-$authConfig = Get-Content ../src/spa/src/authConfig_template.js
-$authConfig `
-    -replace "{{CLIENT_ID}}", $appRegistrations.'demo-react-spa'.AppId `
-    -replace "{{DOMAIN_NAME}}", $domainName `
-    -replace "{{ORDER_READ}}", "$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[0].Id)/$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[0].Value)" `
-    -replace "{{ORDER_WRITE}}", "$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[1].Id)/$($appRegistrations.'demo-order-api'.Api.Oauth2PermissionScopes[1].Value)" `
-    -replace "{{PRODUCT_READ}}", "$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[0].Id)/$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[0].Value)" `
-    -replace "{{PRODUCT_WRITE}}", "$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[1].Id)/$($appRegistrations.'demo-product-api'.Api.Oauth2PermissionScopes[1].Value)" `
-    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childDomainName/api/order/orders" `
-    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childDomainName/api/product/products" `
-    -replace "{{REDIRECT_URI}}", "https://api.$childDomainName" > ../src/spa/src/authConfig.js
 
 # build container images in ACR
 Write-Information -MessageData "Bulding Order container image"
@@ -398,15 +387,13 @@ az acr build -r $deployment.Outputs.acrName.value `
 Write-Information -MessageData "Applying Kubernetes manifests"
 Import-AzAksCredential -ResourceGroupName $rg.ResourceGroupName -Name $deployment.Outputs.aksClusterName.Value -Admin -Force
 
+# create k8s namespace
 kubectl apply -f ../manifests/namespace.yaml
 
-$(Get-Content -Path ../manifests/order.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$orderApiImageName" | kubectl apply -f -
-$(Get-Content -Path ../manifests/product.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$productApiImageName" | kubectl apply -f -
-$(Get-Content -Path ../manifests/spa.yaml) -replace "IMAGE_TAG", "$($deployment.Outputs.acrName.Value).azurecr.io/$spaImageName" | kubectl apply -f -
+# apply k8s manifests
+$(Get-Content -Path ../manifests/order.yaml) -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$orderApiImageName" -replace "{{SVC_IP_ADDRESS}}", $orderApiSvcIp | kubectl apply -f -
+$(Get-Content -Path ../manifests/product.yaml) -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$productApiImageName" -replace "{{SVC_IP_ADDRESS}}", $oproductApiSvcIp | kubectl apply -f -
+$(Get-Content -Path ../manifests/spa.yaml) -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$spaImageName" -replace "{{SVC_IP_ADDRESS}}", $reactSpaSvcIp | kubectl apply -f -
 
 # TODO
-# fix acrPull role assignemt to ACR for AKS cluster...
-# assign agent-pool user mid acrPull role
-# assign aks system mid user mid contributor role to MC_ resource group
 # add admin consent for rct spa app registration
-# add AG httpsetting & backend for react spa to bicep

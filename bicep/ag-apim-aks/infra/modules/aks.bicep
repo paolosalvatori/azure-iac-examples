@@ -230,3 +230,6 @@ resource aksDiagnostics 'Microsoft.Insights/diagnosticSettings@2017-05-01-previe
 
 output aksFqdn string = enablePrivateCluster ? aksCluster.properties.privateFQDN : aksCluster.properties.fqdn
 output aksClusterName string = aksCluster.name
+output aksKubeletIdentityObjectId string = aksCluster.properties.identityProfile.kubeletIdentity.objectId
+output aksResourceId string = aksCluster.id
+output aksClusterManagedIdentity string = aksCluster.identity.principalId

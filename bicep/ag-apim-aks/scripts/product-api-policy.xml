@@ -18,7 +18,7 @@
             <openid-config url="https://login.microsoftonline.com/kainiindustries.net/v2.0/.well-known/openid-configuration" />
             <required-claims>
                 <claim name="aud">
-                    <value>ddbcb46c-7741-46d3-b0cf-7b4e5ba5464d</value>
+                    <value>ab37d9b5-d081-4774-aab2-49cb5336f3a0</value>
                 </claim>
             </required-claims>
         </validate-jwt>

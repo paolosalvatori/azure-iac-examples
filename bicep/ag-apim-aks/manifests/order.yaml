@@ -8,7 +8,7 @@ metadata:
     service.beta.kubernetes.io/azure-load-balancer-internal-subnet: "aksLoadBalancerSubnet"
 spec:
   type: LoadBalancer
-  loadBalancerIP: 10.2.2.4
+  loadBalancerIP: "{{SVC_IP_ADDRESS}}"
   ports:
     - name: http
       protocol: TCP
@@ -35,7 +35,7 @@ spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-      - name: debug
+      - name: order-api
         imagePullPolicy: Always
         resources:
           limits:
@@ -44,7 +44,7 @@ spec:
           requests:
             cpu: "250m"
             memory: "32Mi"
-        image: IMAGE_TAG
+        image: "{{IMAGE_TAG}}"
         ports:
         - containerPort: 8080
           name: http
