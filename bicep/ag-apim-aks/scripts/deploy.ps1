@@ -354,7 +354,6 @@ New-AzResourceGroupDeployment `
 # get deployment output
 $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
 
-<#
 # stop & start the app gateway for it to get the updated DNS zone!!!!
 $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
@@ -363,7 +362,6 @@ Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
 Write-Information -MessageData "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
-#>
 
 # build container images in ACR
 Write-Information -MessageData "Bulding Order container image"
