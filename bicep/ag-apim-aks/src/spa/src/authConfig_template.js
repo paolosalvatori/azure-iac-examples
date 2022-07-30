@@ -14,7 +14,7 @@ export const msalConfig = {
     auth: {
         clientId: "{{CLIENT_ID}}",
         authority: "https://login.microsoftonline.com/{{DOMAIN_NAME}}",
-        redirectUri: "{{REDIRECT_URI}}" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
+        redirectUri: "{{REDIRECT_URI}}"
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored

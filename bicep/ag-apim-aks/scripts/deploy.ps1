@@ -3,7 +3,7 @@ $location = 'australiaeast'
 $domainName = 'kainiindustries.net'
 $tenant = (Get-AzDomain $domainName)
 $childDomainName = "aksdemo.$domainName"
-$rgName = "ag-apim-aks-$location-3-rg"
+$rgName = "ag-apim-aks-$location-rg"
 $deploymentName = 'ag-apim-aks-deploy'
 $aksAdminGroupObjectId = 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
 $sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "proxy.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
@@ -154,11 +154,18 @@ function New-ApiAppRegistration {
             -AppRoles $ApiRoles `
             -Verbose
 
+        $newAppReg = $null
+        while ($null -ne $newAppReg) {
+            Write-Host -Object "waiting for app registration to complete..."
+            Get-MgApplication -filter "DisplayName eq '$Name'"
+            Start-Sleep -Seconds 1
+        }
+
         Update-MgApplication -ApplicationId $appReg.Id -IdentifierUris "api://$($appReg.AppId)"
         New-MgServicePrincipal -AppId $appReg.AppId
     }
     else {
-        Write-Information -MessageData "application '$($appReg.DisplayName)' already registered"
+        Write-Host -Object "application '$($appReg.DisplayName)' already registered"
     }
     return $appReg
 }
@@ -170,7 +177,7 @@ function New-ClientAppRegistration {
     )
 
     if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
-        Write-Information -MessageData "creating application '$($Name)'"
+        Write-Host -Object "creating application '$($Name)'"
         $appReg = New-MgApplication `
             -DisplayName $Name `
             -SignInAudience AzureADandPersonalMicrosoftAccount `
@@ -181,7 +188,7 @@ function New-ClientAppRegistration {
         New-MgServicePrincipal -AppId $appReg.AppId
     }
     else {
-        Write-Information -MessageData "application '$($appReg.DisplayName)' already registered"
+        Write-Host -Object "application '$($appReg.DisplayName)' already registered"
     }
     return $appReg
 }
@@ -210,13 +217,13 @@ function New-AppRegistrations {
 
     if ($RemoveAppRegistrations) {
         foreach ($appRegName in $AppRegistrations.Name) {
-            Write-Information -MessageData "Removing App Registration '$appRegName'"
+            Write-Host -Object "Removing App Registration '$appRegName'"
             if ($($appReg = $(Get-MgApplication -filter "DisplayName eq '$appRegName'"))) {
-                Write-Information -MessageData "Removing $appRegName App Registrations..."
+                Write-Host -Object "Removing $appRegName App Registrations..."
                 Remove-MgApplication -ApplicationId $appReg.Id
             }
             else {
-                Write-Information -MessageData "App Registration '$appRegName' not found"
+                Write-Host -Object "App Registration '$appRegName' not found"
             }
         }
         return
@@ -226,7 +233,8 @@ function New-AppRegistrations {
 
     # create api app registrations
     foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'api') {
-        $newAppReg = New-ApiAppRegistration -Name $appReg.Name -ApiDefinition $appReg.ApiDefinition -ApiRoles $appReg.ApiRoles
+        New-ApiAppRegistration -Name $appReg.Name -ApiDefinition $appReg.ApiDefinition -ApiRoles $appReg.ApiRoles
+        $newAppReg = Get-MgApplication -Filter "DisplayName eq '$($appReg.Name)'"
         $appRegistrationDefinitions += $newAppReg
         $appRegHash[$newAppReg.DisplayName] = $newAppReg
     }
@@ -276,11 +284,9 @@ function New-AppRegistrations {
 # Main
 #############
 
-$InformationPreference = 'continue'
-
 # create self-signed certificates
 if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
-    Write-Information -MessageData "Creating new Self-Signed CA Certificate"
+    Write-Host -Object "Creating new Self-Signed CA Certificate"
     $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
 }
 
@@ -289,7 +295,7 @@ $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
 $root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
 
 if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certificate' }))) {
-    Write-Information -MessageData "Creating new Self-Signed Client Certificate"
+    Write-Host -Object "Creating new Self-Signed Client Certificate"
     $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certificate'
 }
 
@@ -297,11 +303,11 @@ $clearBytes = $pfxCert.Export($pkcs12ContentType, $password)
 $fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
 $cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
 
-# create pplication registrations
+# create application registrations
 $appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
 
 # patch react authConfig.json file 
-Write-Information -MessageData "patching react authConfig.js file"
+Write-Host -Object "patching react authConfig.js file"
 $authConfig = Get-Content ../src/spa/src/authConfig_template.js
 $authConfig `
     -replace "{{CLIENT_ID}}", $appRegistrations."$identityPrefix-react-spa".AppId `
@@ -315,7 +321,7 @@ $authConfig `
     -replace "{{REDIRECT_URI}}", "https://api.$childDomainName" > ../src/spa/src/authConfig.js
 
 # generate API policy XML documents
-Write-Information -MessageData "Generating APIM policy XML files"
+Write-Host -Object "Generating APIM policy XML files"
 $xml = Get-Content .\api-policy-template.xml     
 
 $xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
@@ -331,7 +337,7 @@ $xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
 # deploy bicep template
 $rg = New-AzResourceGroup -Name $rgName -Location $location -Force
 
-Write-Information -MessageData "Deploying infrastructure"
+Write-Host -Object "Deploying infrastructure"
 New-AzResourceGroupDeployment `
     -Name $deploymentName `
     -ResourceGroupName $rg.ResourceGroupName `
@@ -357,32 +363,32 @@ $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroup
 # stop & start the app gateway for it to get the updated DNS zone!!!!
 $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
-Write-Information -MessageData "Stopping App Gateway"
+Write-Host -Object "Stopping App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
-Write-Information -MessageData "Starting App Gateway"
+Write-Host -Object "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
 
 # build container images in ACR
-Write-Information -MessageData "Bulding Order container image"
+Write-Host -Object "Bulding Order container image"
 az acr build -r $deployment.Outputs.acrName.value `
     -t $orderApiImageName `
     --build-arg SERVICE_PORT=$orderApiPort `
     -f ../src/Dockerfile ../src/order
 
-Write-Information -MessageData "Bulding Product container image"
+Write-Host -Object "Bulding Product container image"
 az acr build -r $deployment.Outputs.acrName.value `
     -t $productApiImageName `
     --build-arg SERVICE_PORT=$productApiPort `
     -f ../src/Dockerfile ../src/product
 
-Write-Information -MessageData "Bulding Reaxt Spa container image"
+Write-Host -Object "Bulding Reaxt Spa container image"
 az acr build -r $deployment.Outputs.acrName.value `
     -t $spaImageName `
     -f ../src/spa/Dockerfile ../src/spa
 
 # apply kubernetes manifests
-Write-Information -MessageData "Applying Kubernetes manifests"
+Write-Host -Object "Applying Kubernetes manifests"
 Import-AzAksCredential -ResourceGroupName $rg.ResourceGroupName -Name $deployment.Outputs.aksClusterName.Value -Admin -Force
 
 # create k8s namespace

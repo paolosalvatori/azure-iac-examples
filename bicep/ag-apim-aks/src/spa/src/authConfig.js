@@ -12,7 +12,7 @@ import { LogLevel } from "@azure/msal-browser";
  */
 export const msalConfig = {
     auth: {
-        clientId: "c17d2d6d-71df-401a-aa47-86210a7ce1ad",
+        clientId: "",
         authority: "https://login.microsoftonline.com/kainiindustries.net",
         redirectUri: "https://api.aksdemo.kainiindustries.net" //"http://localhost:3000" //"https://api.aksdemo.kainiindustries.net"  
     },
@@ -53,22 +53,22 @@ export const msalConfig = {
  */
 export const loginRequest = {
     scopes: [
-        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Write",
-        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Read"
+        "api://884f182c-de06-4811-a1f5-bba2ae782e66/Order.Write",
+        "api://884f182c-de06-4811-a1f5-bba2ae782e66/Order.Read"
     ]
 };
 
 export const orderApi = {
     scopes: [
-        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Write",
-        "api://929c1bb7-86e4-4289-8256-2be0830b3806/Order.Read"
+        "api://884f182c-de06-4811-a1f5-bba2ae782e66/Order.Write",
+        "api://884f182c-de06-4811-a1f5-bba2ae782e66/Order.Read"
     ],
 }
 
 export const productApi = {
     scopes: [
-        "api://ab37d9b5-d081-4774-aab2-49cb5336f3a0/Product.Write",
-        "api://ab37d9b5-d081-4774-aab2-49cb5336f3a0/Product.Read"
+        "api://d08a3928-5afb-4240-ba7a-f823ac0e0a71/Product.Write",
+        "api://d08a3928-5afb-4240-ba7a-f823ac0e0a71/Product.Read"
     ],
 }
 
