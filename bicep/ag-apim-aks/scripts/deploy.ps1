@@ -394,4 +394,4 @@ $(Get-Content -Path ../manifests/product.yaml) -replace "{{IMAGE_TAG}}", "$($dep
 $(Get-Content -Path ../manifests/spa.yaml) -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$spaImageName" -replace "{{SVC_IP_ADDRESS}}", $reactSpaSvcIp | kubectl apply -f -
 
 # add admin consent for rct spa app registration
-az ad app permission admin-consent --id $appRegistrations."$identityPrefix-product-api".AppId
+az ad app permission admin-consent --id $appRegistrations."$identityPrefix-react-spa".AppId
