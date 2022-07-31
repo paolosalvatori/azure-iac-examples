@@ -147,19 +147,13 @@ function New-ApiAppRegistration {
     )
     
     if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
+        Write-Host -Object "creating application '$($Name)'"
         $appReg = New-MgApplication `
             -DisplayName $Name `
             -SignInAudience AzureADandPersonalMicrosoftAccount `
             -Api $ApiDefinition `
             -AppRoles $ApiRoles `
             -Verbose
-
-        $newAppReg = $null
-        while ($null -ne $newAppReg) {
-            Write-Host -Object "waiting for app registration to complete..."
-            Get-MgApplication -filter "DisplayName eq '$Name'"
-            Start-Sleep -Seconds 1
-        }
 
         Update-MgApplication -ApplicationId $appReg.Id -IdentifierUris "api://$($appReg.AppId)"
         New-MgServicePrincipal -AppId $appReg.AppId
@@ -169,7 +163,6 @@ function New-ApiAppRegistration {
     }
     return $appReg
 }
-
 function New-ClientAppRegistration {
     Param (
         $Name,
@@ -192,7 +185,6 @@ function New-ClientAppRegistration {
     }
     return $appReg
 }
-
 function New-AppRegistrations {
 
     Param(
@@ -216,7 +208,7 @@ function New-AppRegistrations {
     Connect-MgGraph -TenantId $TenantId -Scopes "Application.ReadWrite.All"
 
     if ($RemoveAppRegistrations) {
-        foreach ($appRegName in $AppRegistrations.Name) {
+        foreach ($appRegName in $AppRegistrations) {
             Write-Host -Object "Removing App Registration '$appRegName'"
             if ($($appReg = $(Get-MgApplication -filter "DisplayName eq '$appRegName'"))) {
                 Write-Host -Object "Removing $appRegName App Registrations..."
@@ -272,8 +264,9 @@ function New-AppRegistrations {
     # create spa app registration
     foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'client') {
         $appReg.ResourceAccess = $requiredResourceAccess
-        $newClientAppReg = New-ClientAppRegistration -Name $appReg.Name -RequiredResourceAccess $appReg.ResourceAccess
-        $appRegHash[$newClientAppReg.DisplayName] = $newClientAppReg
+        New-ClientAppRegistration -Name $appReg.Name -RequiredResourceAccess $appReg.ResourceAccess
+        $newAppReg = Get-MgApplication -Filter "DisplayName eq '$($appReg.Name)'"
+        $appRegHash[$newAppReg.DisplayName] = $newAppReg
     }
 
     $result = $appRegHash
@@ -283,6 +276,10 @@ function New-AppRegistrations {
 #############
 # Main
 #############
+
+# create app registrations
+Write-Host "Connecting Microsoft Graph"
+Connect-MgGraph -TenantId $tenant.Id -Scopes "Application.ReadWrite.All"
 
 # create self-signed certificates
 if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
@@ -361,13 +358,13 @@ New-AzResourceGroupDeployment `
 $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
 
 # stop & start the app gateway for it to get the updated DNS zone!!!!
-$appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
+<# $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
 Write-Host -Object "Stopping App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
 Write-Host -Object "Starting App Gateway"
-Start-AzApplicationGateway -ApplicationGateway $appgwy
+Start-AzApplicationGateway -ApplicationGateway $appgwy #>
 
 # build container images in ACR
 Write-Host -Object "Bulding Order container image"

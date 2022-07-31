@@ -1,3 +1,6 @@
 # exclude certs dir
 /certs
 /scripts/oauthconfig.txt
+/src/spa/src/authConfig.js
+/scripts/order-api-policy.xml
+/scripts/product-api-policy.xml
