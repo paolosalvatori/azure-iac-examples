@@ -1,21 +1,24 @@
-$password = 'M1cr0soft1234567890'
+$password = $(Get-Content .\env.json | ConvertFrom-Json).password
+$aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
+
 $location = 'australiaeast'
 $domainName = 'kainiindustries.net'
 $tenant = (Get-AzDomain $domainName)
 $childDomainName = "aksdemo.$domainName"
-$rgName = "ag-apim-aks-$location-rg"
+$rgName = "ag-apim-aks-$location-2-rg"
 $deploymentName = 'ag-apim-aks-deploy'
-$aksAdminGroupObjectId = 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
+$identityPrefix = 'aks'
 $sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "proxy.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
 $sshPublicKey = $(Get-Content ~/.ssh/id_rsa.pub)
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
 $redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
-$orderApiSvcIp = '10.2.2.4'
-$productApiSvcIp = '10.2.2.5'
-$reactSpaSvcIp = '10.2.2.6'
-$identityPrefix = 'aks'
+$aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
+$first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
+$orderApiSvcIp = $first3Octets, '4' -join '.'
+$productApiSvcIp = $first3Octets, '5' -join '.'
+$reactSpaSvcIp = $first3Octets, '6' -join '.'
 
 $environment = 'dev'
 $semver = '0.1.2'
