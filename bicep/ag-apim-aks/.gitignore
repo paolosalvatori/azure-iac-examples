@@ -1,4 +1,5 @@
 /scripts/oauthconfig.txt
+/scripts/env.json
 /src/spa/src/authConfig.js
 /scripts/order-api-policy.xml
 /scripts/product-api-policy.xml
