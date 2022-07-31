@@ -107,9 +107,9 @@ module apiManagementModule './modules/apim.bicep' = {
       capacity: 1
     }
     deployCertificates: true
-    proxyHostName: 'proxy.${privateDomainName}'
-    portalHostName: 'portal.${privateDomainName}'
-    managementHostName: 'management.${privateDomainName}'
+    gatewayHostName: 'gateway.${privateDomainName}'
+    //portalHostName: 'portal.${privateDomainName}'
+    //managementHostName: 'management.${privateDomainName}'
     certificate: cert.CertValue
     certificatePassword: cert.CertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
@@ -123,7 +123,6 @@ module orderOpenApiDefinition 'modules/api.bicep' = {
     apimName: apiManagementModule.outputs.apimName
     apiName: 'order-api'
     apiPath: 'api/order'
-    backendUrl: 'http://10.2.1.4'
     displayName: 'Order API'
     isSubscriptionRequired: false
     openApiYaml: orderApiYaml
@@ -137,7 +136,6 @@ module productOpenApiDefinition 'modules/api.bicep' = {
     apimName: apiManagementModule.outputs.apimName
     apiName: 'product-api'
     apiPath: 'api/product'
-    backendUrl: 'http://10.2.1.5'
     displayName: 'Product API'
     isSubscriptionRequired: false
     openApiYaml: productApiYaml
@@ -163,12 +161,12 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     frontEndPort: 443
     internalFrontendPort: 8080
     retentionInDays: 7
-    externalProxyHostName: 'api.${domainName}'
-    externalPortalHostName: 'portal.${domainName}'
-    externalManagementHostName: 'management.${domainName}'
-    internalProxyHostName: 'proxy.${privateDomainName}'
-    internalPortalHostName: 'portal.${privateDomainName}'
-    internalManagementHostName: 'management.${privateDomainName}'
+    externalGatewayHostName: 'api.${domainName}'
+    //externalPortalHostName: 'portal.${domainName}'
+    //externalManagementHostName: 'management.${domainName}'
+    internalGatewayHostName: 'gateway.${privateDomainName}'
+    //internalPortalHostName: 'portal.${privateDomainName}'
+    //internalManagementHostName: 'management.${privateDomainName}'
     rootSslCert: rootCert.CertValue
     apimGatewaySslCert: cert.CertValue
     apimPrivateIpAddress: appGwyPrivateIpAddress

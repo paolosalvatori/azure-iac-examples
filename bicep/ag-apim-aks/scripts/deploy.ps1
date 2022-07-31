@@ -1,19 +1,22 @@
 $password = $(Get-Content .\env.json | ConvertFrom-Json).password
 $aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
+$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
 
 $location = 'australiaeast'
 $domainName = 'kainiindustries.net'
 $tenant = (Get-AzDomain $domainName)
 $childDomainName = "aksdemo.$domainName"
-$rgName = "ag-apim-aks-$location-2-rg"
+$rgName = "ag-apim-aks-$location-test-rg"
 $deploymentName = 'ag-apim-aks-deploy'
 $identityPrefix = 'aks'
-$sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "proxy.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
+$sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "gateway.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
 $sshPublicKey = $(Get-Content ~/.ssh/id_rsa.pub)
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
 $redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
+
+# calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
 $aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
 $first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
 $orderApiSvcIp = $first3Octets, '4' -join '.'

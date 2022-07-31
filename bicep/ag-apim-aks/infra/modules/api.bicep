@@ -1,7 +1,7 @@
 param apimName string
 param apiName string
 param apiPath string
-param backendUrl string
+//param backendUrl string
 param openApiYaml string
 param displayName string
 param xmlPolicy string
@@ -16,7 +16,6 @@ resource openApi 'Microsoft.ApiManagement/service/apis@2021-12-01-preview' = {
   name: apiName
   properties: {
     displayName: displayName
-    serviceUrl: backendUrl
     apiType: 'http'
     format: 'openapi'
     path: apiPath

@@ -24,12 +24,8 @@ param rootSslCert string
 param frontEndPort int = 443
 param internalFrontendPort int = 8080
 param requestTimeOut int = 180
-param externalProxyHostName string
-param externalPortalHostName string
-param externalManagementHostName string
-param internalProxyHostName string
-param internalPortalHostName string
-param internalManagementHostName string
+param externalGatewayHostName string
+param internalGatewayHostName string
 param kubernetesSpaIpAddress string
 
 var appGwyPipName = 'appgwy-pip-${suffix}'
@@ -77,7 +73,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     sslCertificates: [
       {
-        name: 'apim-proxy-cert'
+        name: 'apim-gateway-cert'
         properties: {
           data: apimGatewaySslCert
           password: apimGatewaySslCertPassword
@@ -131,31 +127,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     backendAddressPools: [
       {
-        name: 'apim-proxy-backend'
+        name: 'apim-gateway-backend'
         properties: {
           backendAddresses: [
             {
-              fqdn: internalProxyHostName
-            }
-          ]
-        }
-      }
-      {
-        name: 'apim-portal-backend'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: internalPortalHostName
-            }
-          ]
-        }
-      }
-      {
-        name: 'apim-management-backend'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: internalManagementHostName
+              fqdn: internalGatewayHostName
             }
           ]
         }
@@ -179,13 +155,13 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     backendHttpSettingsCollection: [
       {
-        name: 'apim-proxy-http-settings'
+        name: 'apim-gateway-http-settings'
         properties: {
           port: frontEndPort
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
           pickHostNameFromBackendAddress: false
-          hostName: internalProxyHostName
+          hostName: internalGatewayHostName
           requestTimeout: requestTimeOut
           trustedRootCertificates: [
             {
@@ -193,45 +169,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
             }
           ]
           probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-proxy-probe')
-          }
-        }
-      }
-      {
-        name: 'apim-management-http-settings'
-        properties: {
-          port: frontEndPort
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
-          hostName: internalManagementHostName
-          requestTimeout: requestTimeOut
-          trustedRootCertificates: [
-            {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'root-cert')
-            }
-          ]
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-management-probe')
-          }
-        }
-      }
-      {
-        name: 'apim-portal-http-settings'
-        properties: {
-          port: frontEndPort
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
-          hostName: internalPortalHostName
-          requestTimeout: requestTimeOut
-          trustedRootCertificates: [
-            {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'root-cert')
-            }
-          ]
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-portal-probe')
+            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-gateway-probe')
           }
         }
       }
@@ -248,7 +186,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     httpListeners: [
       {
-        name: 'apim-proxy-listener'
+        name: 'apim-gateway-listener'
         properties: {
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'frontend')
@@ -258,51 +196,15 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-proxy-cert')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
           }
-          hostName: externalProxyHostName
+          hostName: externalGatewayHostName
           requireServerNameIndication: true
           customErrorConfigurations: []
         }
       }
       {
-        name: 'apim-management-listener'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'frontend')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'frontend-port')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-proxy-cert')
-          }
-          hostName: externalManagementHostName
-          requireServerNameIndication: true
-          customErrorConfigurations: []
-        }
-      }
-      {
-        name: 'apim-portal-listener'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'frontend')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'frontend-port')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-proxy-cert')
-          }
-          hostName: externalPortalHostName
-          requireServerNameIndication: true
-          customErrorConfigurations: []
-        }
-      }
-      {
-        name: 'apim-proxy-internal-listener'
+        name: 'apim-gateway-internal-listener'
         properties: {
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'internal-frontend')
@@ -312,9 +214,9 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-proxy-cert')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
           }
-          hostName: internalProxyHostName
+          hostName: internalGatewayHostName
           requireServerNameIndication: true
           customErrorConfigurations: []
         }
@@ -325,10 +227,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'apim-external-urlpathmapconfig'
         properties: {
           defaultBackendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-proxy-backend')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-gateway-backend')
           }
           defaultBackendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-proxy-http-settings')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
           }
           pathRules: [
             {
@@ -338,10 +240,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
                   '/api/*'
                 ]
                 backendAddressPool: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-proxy-backend')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-gateway-backend')
                 }
                 backendHttpSettings: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-proxy-http-settings')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
                 }
               }
             }
@@ -366,10 +268,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'apim-internal-urlpathmapconfig'
         properties: {
           defaultBackendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-proxy-backend')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-gateway-backend')
           }
           defaultBackendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-proxy-http-settings')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
           }
           pathRules: [
             {
@@ -379,10 +281,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
                   '/*'
                 ]
                 backendAddressPool: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-proxy-backend')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-gateway-backend')
                 }
                 backendHttpSettings: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-proxy-http-settings')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
                 }
               }
             }
@@ -392,11 +294,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     requestRoutingRules: [
       {
-        name: 'apim-proxy-external-rule'
+        name: 'apim-gateway-external-rule'
         properties: {
           ruleType: 'PathBasedRouting'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-proxy-listener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-gateway-listener')
           }
           urlPathMap: {
             id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', appGwyName, 'apim-external-urlpathmapconfig')
@@ -404,41 +306,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         }
       }
       {
-        name: 'apim-portal-rule'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-portal-listener')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-portal-http-settings')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-portal-backend')
-          }
-        }
-      }
-      {
-        name: 'apim-management-rule'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-management-listener')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-management-http-settings')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'apim-management-backend')
-          }
-        }
-      }
-      {
-        name: 'apim-proxy-internal-rule'
+        name: 'apim-gateway-internal-rule'
         properties: {
           ruleType: 'PathBasedRouting'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-proxy-internal-listener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'apim-gateway-internal-listener')
           }
           urlPathMap: {
             id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', appGwyName, 'apim-internal-urlpathmapconfig')
@@ -448,36 +320,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     probes: [
       {
-        name: 'apim-proxy-probe'
+        name: 'apim-gateway-probe'
         properties: {
           protocol: 'Https'
           path: '/status-0123456789abcdef'
-          interval: 30
-          timeout: 120
-          unhealthyThreshold: 8
-          pickHostNameFromBackendHttpSettings: true
-          minServers: 0
-          match: {}
-        }
-      }
-      {
-        name: 'apim-management-probe'
-        properties: {
-          protocol: 'Https'
-          path: '/ServiceStatus'
-          interval: 30
-          timeout: 120
-          unhealthyThreshold: 8
-          pickHostNameFromBackendHttpSettings: true
-          minServers: 0
-          match: {}
-        }
-      }
-      {
-        name: 'apim-portal-probe'
-        properties: {
-          protocol: 'Https'
-          path: '/signin'
           interval: 30
           timeout: 120
           unhealthyThreshold: 8

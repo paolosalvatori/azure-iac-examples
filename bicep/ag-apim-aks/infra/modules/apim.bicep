@@ -2,9 +2,7 @@ param apimSku object = {
   name: 'Developer'
   capacity: 1
 }
-param proxyHostName string = 'proxy'
-param portalHostName string = 'portal'
-param managementHostName string = 'management'
+param gatewayHostName string = 'proxy'
 param certificatePassword string
 param certificate string
 param subnetId string
@@ -24,23 +22,7 @@ var hostNameConfigurations = [
     type: 'Proxy'
     encodedCertificate: certificate
     defaultSslBinding: true
-    hostName: proxyHostName
-    negotiateClientCertificate: false
-    certificatePassword: certificatePassword
-  }
-  {
-    type: 'Portal'
-    encodedCertificate: certificate
-    defaultSslBinding: false
-    hostName: portalHostName
-    negotiateClientCertificate: false
-    certificatePassword: certificatePassword
-  }
-  {
-    type: 'Management'
-    encodedCertificate: certificate
-    defaultSslBinding: false
-    hostName: managementHostName
+    hostName: gatewayHostName
     negotiateClientCertificate: false
     certificatePassword: certificatePassword
   }
@@ -76,20 +58,6 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   dependsOn: []
 }
 
-resource apimProduct 'Microsoft.ApiManagement/service/products@2021-01-01-preview' = {
-  name: '${apimName}/myProduct'
-  properties: {
-    displayName: 'My Product'
-    description: 'My Product'
-    terms: 'Terms for example product'
-    subscriptionRequired: false
-    state: 'published'
-  }
-  dependsOn: [
-    apim
-  ]
-}
-
 resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
   name: privateDnsZoneName
 }
@@ -97,32 +65,6 @@ resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' exist
 resource apimProxyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
   name: 'proxy'
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: apim.properties.privateIPAddresses[0]
-      }
-    ]
-    ttl: 3600
-  }
-}
-
-resource apimPortalDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: apimPrivateDnsZone
-  name: 'portal'
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: apim.properties.privateIPAddresses[0]
-      }
-    ]
-    ttl: 3600
-  }
-}
-
-resource apimManagementDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: apimPrivateDnsZone
-  name: 'management'
   properties: {
     aRecords: [
       {
@@ -157,7 +99,7 @@ resource ApimSpokeVirtualNetworkDnsZoneLink 'Microsoft.Network/privateDnsZones/v
   }
 }
 
-resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource apimDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'apim-diagnostics'
   scope: apim
   properties: {
