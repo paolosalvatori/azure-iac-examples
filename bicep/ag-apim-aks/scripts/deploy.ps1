@@ -7,7 +7,7 @@ $rgName = "ag-apim-aks-$location-rg"
 $deploymentName = 'ag-apim-aks-deploy'
 $aksAdminGroupObjectId = 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
 $sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "proxy.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
-$sshPublicKey = $(cat ~/.ssh/id_rsa.pub)
+$sshPublicKey = $(Get-Content ~/.ssh/id_rsa.pub)
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
