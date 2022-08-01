@@ -22,7 +22,7 @@ export const ProductGrid = () => {
         }).then((response) => {
             let accessToken = response.accessToken;
             getProducts(accessToken)
-                .catch(error => console.log(error))
+            .catch(error => console.log(error), (data = '[]') => setTableData(data))
                 .then((data) => setTableData(data));
         })
     }, [])

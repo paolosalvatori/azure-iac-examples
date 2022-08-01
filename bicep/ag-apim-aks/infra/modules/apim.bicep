@@ -64,7 +64,7 @@ resource apimPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' exist
 
 resource apimProxyDnsRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   parent: apimPrivateDnsZone
-  name: 'proxy'
+  name: 'gateway'
   properties: {
     aRecords: [
       {

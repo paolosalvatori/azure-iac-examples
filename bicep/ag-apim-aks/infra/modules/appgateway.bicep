@@ -232,6 +232,9 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           defaultBackendHttpSettings: {
             id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
           }
+          defaultRewriteRuleSet: {
+            id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', appGwyName, 'cross-origin')
+          }
           pathRules: [
             {
               name: 'api'
@@ -244,6 +247,9 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
                 }
                 backendHttpSettings: {
                   id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'apim-gateway-http-settings')
+                }
+                rewriteRuleSet: {
+                  id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', appGwyName, 'cross-origin')
                 }
               }
             }
@@ -258,6 +264,9 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
                 }
                 backendHttpSettings: {
                   id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'kubernetes-spa-http-settings')
+                }
+                rewriteRuleSet: {
+                  id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', appGwyName, 'cross-origin')
                 }
               }
             }
@@ -333,7 +342,45 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         }
       }
     ]
-    rewriteRuleSets: []
+    rewriteRuleSets: [
+      {
+        name: 'cross-origin'
+        properties: {
+          rewriteRules: [
+            {
+              ruleSequence: 100
+              conditions: []
+              name: 'cross-origin-rewrite-rule'
+              actionSet: {
+                requestHeaderConfigurations: []
+                responseHeaderConfigurations: [
+                  {
+                    headerName: 'Access-Control-Allow-Origin'
+                    headerValue: 'https://api.aksdemo.kainiindustries.net'
+                  }
+                  {
+                    headerName: 'Access-Control-Allow-Origin'
+                    headerValue: 'http://localhost:3000'
+                  }
+                  {
+                    headerName: 'Access-Control-Allow-Credentials'
+                    headerValue: 'true'
+                  }
+                  {
+                    headerName: 'Access-Control-Allow-Headers'
+                    headerValue: '*'
+                  }
+                  {
+                    headerName: 'Access-Control-Allow-Methods'
+                    headerValue: '*'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
     redirectConfigurations: []
     webApplicationFirewallConfiguration: {
       enabled: true
