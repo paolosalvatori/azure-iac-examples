@@ -1,18 +1,18 @@
-param domainName string
 param tags object
 param location string
 param cert object
 param rootCert object
 param vNets array
-param sshPublicKey string
 param aksAdminGroupObjectId string
 param orderApiYaml string
 param productApiYaml string
 param orderApiPoicyXml string
 param productApiPoicyXml string
 param kubernetesSpaIpAddress string
+param childPublicDnsZoneName string
+param privateDnsZoneName string
+param publicDnsZoneResourceGroup string
 
-var privateDomainName = 'internal.${domainName}'
 var suffix = uniqueString(resourceGroup().id)
 var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
 var appGwyPrivateIpAddress = '${appGwySeparatedAddressprefix[0]}.${appGwySeparatedAddressprefix[1]}.${appGwySeparatedAddressprefix[2]}.200'
@@ -20,6 +20,15 @@ var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
 var networkContributorRoleDefinitionName = '4d97b98b-1d4f-4787-a291-c67834d212e7'
 var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${networkContributorRoleDefinitionName}'
+
+// create public DNS zone
+module publicDnsZone 'modules/publicDnsZone.bicep' = {
+  name: 'module-public-dns-zone'
+  params: {
+    zoneName: childPublicDnsZoneName
+    tags: tags
+  }
+}
 
 // Azure Monitor Workspace
 module azMonitorModule './modules/azmon.bicep' = {
@@ -43,7 +52,6 @@ module nsgModule './modules/nsg.bicep' = {
 // Virtual Networks
 module vNetsModule './modules/vnets.bicep' = [for (item, i) in vNets: {
   name: 'module-vnet-${i}'
-  scope: resourceGroup(resourceGroup().name)
   params: {
     suffix: suffix
     location: location
@@ -58,7 +66,6 @@ module vNetsModule './modules/vnets.bicep' = [for (item, i) in vNets: {
 // Virtual Network Peering
 module peeringModule './modules/peering.bicep' = {
   name: 'module-peering'
-  scope: resourceGroup(resourceGroup().name)
   params: {
     suffix: suffix
     vNets: vNets
@@ -83,8 +90,7 @@ module acr 'modules/acr.bicep' = {
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   location: 'global'
   tags: tags
-  name: privateDomainName
-  properties: {}
+  name: privateDnsZoneName
 }
 
 // API Management
@@ -107,7 +113,7 @@ module apiManagementModule './modules/apim.bicep' = {
       capacity: 1
     }
     deployCertificates: true
-    gatewayHostName: 'gateway.${privateDomainName}'
+    gatewayHostName: 'gateway.${privateDnsZoneName}'
     certificate: cert.CertValue
     certificatePassword: cert.CertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
@@ -153,14 +159,14 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     suffix: suffix
     location: location
     kubernetesSpaIpAddress: kubernetesSpaIpAddress
-    privateDnsZoneName: privateDomainName
+    privateDnsZoneName: privateDnsZoneName
     workspaceId: azMonitorModule.outputs.workspaceId
     apimGatewaySslCertPassword: cert.CertPassword
     frontEndPort: 443
     internalFrontendPort: 8080
     retentionInDays: 7
-    externalGatewayHostName: 'api.${domainName}'
-    internalGatewayHostName: 'gateway.${privateDomainName}'
+    externalGatewayHostName: 'api.${childPublicDnsZoneName}'
+    internalGatewayHostName: 'gateway.${privateDnsZoneName}'
     rootSslCert: rootCert.CertValue
     apimGatewaySslCert: cert.CertValue
     apimPrivateIpAddress: appGwyPrivateIpAddress
@@ -187,9 +193,7 @@ module aks 'modules/aks.bicep' = {
     aksUserSubnetId: vNetsModule[1].outputs.subnetRefs[1].id
     prefix: suffix
     logAnalyticsWorkspaceId: azMonitorModule.outputs.workspaceId
-    sshPublicKey: sshPublicKey
     adminGroupObjectID: aksAdminGroupObjectId
-    linuxAdminUserName: 'aksuser'
   }
 }
 
@@ -226,33 +230,13 @@ module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
 }
 
 // Azure Public DNS records
-module appGwyApiPublicDnsRecord 'modules/publicdns.bicep' = {
-  scope: resourceGroup('external-dns-zones-rg')
+module appGwyApiPublicDnsRecord 'modules/publicDnsRecord.bicep' = {
+  scope: resourceGroup(publicDnsZoneResourceGroup)
   name: 'module-appgwy-public-dns-record'
   params: {
-    zoneName: domainName
+    zoneName: childPublicDnsZoneName
     ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress
     recordName: 'api'
-  }
-}
-
-module appGwyApimPortalPublicDnsRecord 'modules/publicdns.bicep' = {
-  scope: resourceGroup('external-dns-zones-rg')
-  name: 'module-appgwy-apim-portal-public-dns-record'
-  params: {
-    zoneName: domainName
-    ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress
-    recordName: 'portal'
-  }
-}
-
-module appGwyApimManagementPublicDnsRecord 'modules/publicdns.bicep' = {
-  scope: resourceGroup('external-dns-zones-rg')
-  name: 'module-appgwy-apim-management-public-dns-record'
-  params: {
-    zoneName: domainName
-    ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress
-    recordName: 'management'
   }
 }
 

@@ -1,16 +1,19 @@
-$location = 'australiaeast'
-$domainName = 'kainiindustries.net'
-$tenant = (Get-AzDomain $domainName)
-$childDomainName = "aksdemo.$domainName"
-$rgName = "ag-apim-aks-$location-test-rg"
+Param (
+    [string]$Location = 'australiaeast',
+    [string]$AADTenant = 'kainiindustries.net',
+    [string]$PublicDnsZone = 'kainiindustries.net'
+)
+
+$tenant = (Get-AzDomain $AADTenant)
+$childPublicDnsZoneName = "aksdemo.$PublicDnsZone"
+$rgName = "ag-apim-aks-$Location-test-rg"
 $deploymentName = 'ag-apim-aks-deploy'
 $identityPrefix = 'aks'
-$sans = "api.$childDomainName", "portal.$childDomainName", "management.$childDomainName", "gateway.internal.$childDomainName", "portal.internal.$childDomainName", "management.internal.$childDomainName"
-$sshPublicKey = $(Get-Content ~/.ssh/id_rsa.pub)
+$sans = "api.$childPublicDnsZoneName", "portal.$childPublicDnsZoneName", "management.$childPublicDnsZoneName", "gateway.internal.$childPublicDnsZoneName", "portal.internal.$childPublicDnsZoneName", "management.internal.$childPublicDnsZoneName"
 $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
-$redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
+$redirectUris = @("http://localhost:3000", "https://api.$childPublicDnsZoneName")
 
 $password = $(Get-Content .\env.json | ConvertFrom-Json).password
 $aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
@@ -314,35 +317,35 @@ Write-Host -Object "patching react authConfig.js file"
 $authConfig = Get-Content ../src/spa/src/authConfig_template.js
 $authConfig `
     -replace "{{CLIENT_ID}}", $appRegistrations."$identityPrefix-react-spa".AppId `
-    -replace "{{DOMAIN_NAME}}", $domainName `
+    -replace "{{DOMAIN_NAME}}", $AADTenant `
     -replace "{{ORDER_READ}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[0].Value)" `
     -replace "{{ORDER_WRITE}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[1].Value)" `
     -replace "{{PRODUCT_READ}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[0].Value)" `
     -replace "{{PRODUCT_WRITE}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[1].Value)" `
-    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childDomainName/api/order/orders" `
-    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childDomainName/api/product/products" `
-    -replace "{{REDIRECT_URI}}", "https://api.$childDomainName" > ../src/spa/src/authConfig.js
+    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childPublicDnsZoneName/api/order/orders" `
+    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childPublicDnsZoneName/api/product/products" `
+    -replace "{{REDIRECT_URI}}", "https://api.$childPublicDnsZoneName" > ../src/spa/src/authConfig.js
 
 # generate API policy XML documents
 Write-Host -Object "Generating APIM policy XML files"
 $xml = Get-Content .\api-policy-template.xml     
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
+$xml -replace "{{APP_GWY_FQDN}}", "api.$childPublicDnsZoneName" `
     -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-order-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Order.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Order.Role.Write" `
-    -replace "{{TENANT_NAME}}", $domainName > ./order-api-policy.xml
+    -replace "{{TENANT_NAME}}", $AADTenant > ./order-api-policy.xml
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childDomainName" `
+$xml -replace "{{APP_GWY_FQDN}}", "api.$childPublicDnsZoneName" `
     -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-product-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Product.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Product.Role.Write" `
-    -replace "{{TENANT_NAME}}", $domainName > ./product-api-policy.xml
+    -replace "{{TENANT_NAME}}", $AADTenant > ./product-api-policy.xml
 
 # deploy bicep template
-$rg = New-AzResourceGroup -Name $rgName -Location $location -Force
+$rg = New-AzResourceGroup -Name $rgName -Location $Location -Force
 
 Write-Host -Object "Deploying infrastructure"
 New-AzResourceGroupDeployment `
@@ -351,11 +354,12 @@ New-AzResourceGroupDeployment `
     -TemplateParameterFile  ../infra/main.parameters.json `
     -Mode Incremental `
     -templateFile ../infra/main.bicep `
-    -location $location `
-    -domainName $childDomainName `
+    -location $Location `
+    -childPublicDnsZoneName $childPublicDnsZoneName `
+    -privateDnsZoneName "internal.$childPublicDnsZoneName" `
+    -publicDnsZoneResourceGroup "external-dns-zones-rg" `
     -cert $cert `
     -rootCert $root `
-    -sshPublicKey $sshPublicKey `
     -aksAdminGroupObjectId $aksAdminGroupObjectId `
     -kubernetesSpaIpAddress $reactSpaSvcIp `
     -orderApiYaml $(Get-Content -Raw -Path ../src/order/openapi.yaml) `

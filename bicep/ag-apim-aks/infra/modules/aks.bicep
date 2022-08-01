@@ -60,8 +60,6 @@ param addOns object
 param tags object
 param enablePodSecurityPolicy bool = false
 param enablePrivateCluster bool = false
-param linuxAdminUserName string
-param sshPublicKey string
 
 var aksClusterName = 'aks-${prefix}'
 
@@ -79,16 +77,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-05-02-previ
     addonProfiles: addOns
     apiServerAccessProfile: {
       enablePrivateCluster: enablePrivateCluster
-    }
-    linuxProfile: {
-      adminUsername: linuxAdminUserName
-      ssh: {
-        publicKeys: [
-          {
-            keyData: sshPublicKey
-          }
-        ]
-      }
     }
     agentPoolProfiles: [
       {

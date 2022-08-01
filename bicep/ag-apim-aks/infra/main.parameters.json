@@ -8,16 +8,19 @@
         "cert": {
             "value": null
         },
-        "domainName": {
+        "childPublicDnsZoneName": {
             "value": null
+        },
+        "privateDnsZoneName": {
+            "value": null
+        },
+        "publicDnsZoneResourceGroup": {
+            "value": null 
         },
         "location": {
             "value": null
         },
         "rootCert": {
-            "value": null
-        },
-        "sshPublicKey": {
             "value": null
         },
         "vNets": {
