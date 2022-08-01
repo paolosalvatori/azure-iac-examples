@@ -108,8 +108,6 @@ module apiManagementModule './modules/apim.bicep' = {
     }
     deployCertificates: true
     gatewayHostName: 'gateway.${privateDomainName}'
-    //portalHostName: 'portal.${privateDomainName}'
-    //managementHostName: 'management.${privateDomainName}'
     certificate: cert.CertValue
     certificatePassword: cert.CertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
@@ -162,11 +160,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     internalFrontendPort: 8080
     retentionInDays: 7
     externalGatewayHostName: 'api.${domainName}'
-    //externalPortalHostName: 'portal.${domainName}'
-    //externalManagementHostName: 'management.${domainName}'
     internalGatewayHostName: 'gateway.${privateDomainName}'
-    //internalPortalHostName: 'portal.${privateDomainName}'
-    //internalManagementHostName: 'management.${privateDomainName}'
     rootSslCert: rootCert.CertValue
     apimGatewaySslCert: cert.CertValue
     apimPrivateIpAddress: appGwyPrivateIpAddress

@@ -1,7 +1,3 @@
-$password = $(Get-Content .\env.json | ConvertFrom-Json).password
-$aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
-$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
-
 $location = 'australiaeast'
 $domainName = 'kainiindustries.net'
 $tenant = (Get-AzDomain $domainName)
@@ -15,6 +11,10 @@ $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentT
 $cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
 
 $redirectUris = @("http://localhost:3000", "https://api.$childDomainName")
+
+$password = $(Get-Content .\env.json | ConvertFrom-Json).password
+$aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
+$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
 
 # calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
 $aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
@@ -71,7 +71,7 @@ $appRegistrationDefinitions = @(
             @{
                 AllowedMemberTypes = @("User")
                 Description        = "Order Reader Role"
-                DisplayName        = "Reader Role"
+                DisplayName        = "Order Reader Role"
                 Id                 = (New-Guid).Guid
                 IsEnabled          = $True
                 Value              = "Order.Role.Read"
