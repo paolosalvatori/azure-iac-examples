@@ -1,25 +1,23 @@
 Param (
     [string]$Location = 'australiaeast',
     [string]$AADTenant = 'kainiindustries.net',
-    [string]$PublicDnsZone = 'kainiindustries.net'
+    [string]$PublicDnsZone = 'kainiindustries.net',
+    [string]$PublicDnsZoneResourceGroup = 'external-dns-zones-rg',
+    [string]$Prefix = 'aks',
+    [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
+    [string]$CertificateName = 'star.kainiindustries.net.cer',
+    [SecureString]$CertificatePassword,
+    [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
+    [string]$ResourceGroupName = "ag-apim-aks-$Location-7-rg"
 )
 
 $tenant = (Get-AzDomain $AADTenant)
-$childPublicDnsZoneName = "aksdemo.$PublicDnsZone"
-$rgName = "ag-apim-aks-$Location-test-rg"
 $deploymentName = 'ag-apim-aks-deploy'
-$identityPrefix = 'aks'
-$sans = "api.$childPublicDnsZoneName", "portal.$childPublicDnsZoneName", "management.$childPublicDnsZoneName", "gateway.internal.$childPublicDnsZoneName", "portal.internal.$childPublicDnsZoneName", "management.internal.$childPublicDnsZoneName"
-$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 
-$cerContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Cert
-
-$redirectUris = @("http://localhost:3000", "https://api.$childPublicDnsZoneName")
-
-$password = $(Get-Content .\env.json | ConvertFrom-Json).password
-$aksAdminGroupObjectId = $(Get-Content .\env.json | ConvertFrom-Json).aksAdminGroupObjectId
-$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
+$keyVaultDeploymentName = 'keyvault-deploy'
+$redirectUris = @("http://localhost:3000", "https://api.$PublicDnsZone")
 
 # calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
+$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
 $aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
 $first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
 $orderApiSvcIp = $first3Octets, '4' -join '.'
@@ -36,14 +34,13 @@ $productApiImageName = "product:$tag"
 
 $orderApiPort = "8080"
 $productApiPort = "8081"
-
-$cert = @{}
-$root = @{}
 $appRegHash = @{}
+
+$ErrorActionPreference = 'stop'
 
 $appRegistrationDefinitions = @(
     @{
-        Name          = "$identityPrefix-order-api"
+        Name          = "$Prefix-order-api"
         Type          = 'api'
         ApiDefinition = @{
             RequestedAccessTokenVersion = 2
@@ -90,7 +87,7 @@ $appRegistrationDefinitions = @(
         )
     },
     @{
-        Name          = "$identityPrefix-product-api"
+        Name          = "$Prefix-product-api"
         Type          = 'api'
         ApiDefinition = @{
             RequestedAccessTokenVersion = 2
@@ -137,7 +134,7 @@ $appRegistrationDefinitions = @(
         )
     }
     @{
-        Name           = "$identityPrefix-react-spa"
+        Name           = "$Prefix-react-spa"
         Type           = 'client'
         ResourceAccess = @()
         RedirectUris   = $redirectUris
@@ -147,7 +144,6 @@ $appRegistrationDefinitions = @(
 #############
 # functions
 #############
-
 function New-ApiAppRegistration {
     Param (
         $Name,
@@ -286,67 +282,80 @@ function New-AppRegistrations {
 # Main
 #############
 
-# create app registrations
+# generate CSR for wildcard certificate
+# openssl ecparam -out "$PublicDnsZone.key" -name prime256v1 -genkey
+# openssl req -new -subj "/C=AU/CN=*.$PublicDnsZone" -sha256 -key "$PublicDnsZone.key" -out "$PublicDnsZone.csr" # -config ./openssl.cnf -addext "subjectAltName=DNS:api.$PublicDnsZone,DNS:gateway.internal.$PublicDnsZone"
+
+# convert .key & .crt to .pfx
+# openssl pkcs12 -export -out ../certs/"star.$PublicDnsZone.pfx" -inkey ../certs/"$PublicDnsZone.key" -in ../certs/star.kainiindustries.net.crt
+
+# create resource group
+$rg = New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Force
+
+# create key vault & upload SSL certificate
+Write-Host -Object "Deploying Key Vault"
+New-AzResourceGroupDeployment `
+    -Name $keyVaultDeploymentName `
+    -ResourceGroupName $rg.ResourceGroupName `
+    -Mode Incremental `
+    -templateFile ../infra/modules/keyvault.bicep `
+    -keyVaultAdminObjectId $(Get-AzADUser -SignedIn | Select-Object -ExpandProperty Id) `
+    -location $Location `
+    -deployUserAccessPolicy $false
+
+# get deployment output
+$kvDeployment = Get-AzResourceGroupDeployment -Name $keyVaultDeploymentName -ResourceGroupName $rg.ResourceGroupName
+
+# upload certificates to Key Vault
+Write-Host -Object "Uploading TLS certificate to Key Vault"
+$tlsCertificate = Import-AzKeyVaultCertificate -VaultName $kvDeployment.Outputs.keyVaultName.value `
+    -Name 'public-ssl-certificate' `
+    -Password $CertificatePassword `
+    -FilePath ../certs/$PfxCertificateName
+
+Write-Host -Object "Uploading Trusted root certificate to Key Vault"
+$trustedRootCertificate = Set-AzKeyVaultSecret -VaultName $kvDeployment.Outputs.keyVaultName.value `
+    -Name 'trusted-root-certificate' `
+    -SecretValue $(Get-Content -Path ../certs/$CertificateName -Raw | ConvertTo-SecureString -AsPlainText -Force)
+
+# create AAD application registrations
 Write-Host "Connecting Microsoft Graph"
 Connect-MgGraph -TenantId $tenant.Id -Scopes "Application.ReadWrite.All"
-
-# create self-signed certificates
-if (!($rootCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Root CA Certificate' }))) {
-    Write-Host -Object "Creating new Self-Signed CA Certificate"
-    $rootCert = New-SelfSignedCertificate -CertStoreLocation 'cert:\CurrentUser\My' -TextExtension @("2.5.29.19={text}CA=true") -DnsName 'KainiIndustries CA' -Subject "SN=KainiIndustriesRootCA" -KeyUsageProperty All -KeyUsage CertSign, CRLSign, DigitalSignature -FriendlyName 'KainiIndustries Root CA Certificate'
-}
-
-$clearBytes = $rootCert.Export($cerContentType)
-$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-$root = @{CertName = $rootCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
-
-if (!($pfxCert = $(Get-ChildItem Cert:\CurrentUser\my | Where-Object { $_.friendlyName -eq 'KainiIndustries Client Certificate' }))) {
-    Write-Host -Object "Creating new Self-Signed Client Certificate"
-    $pfxCert = New-SelfSignedCertificate -certstorelocation 'cert:\CurrentUser\My' -dnsname $sans -Signer $rootCert -FriendlyName 'KainiIndustries Client Certificate'
-}
-
-$clearBytes = $pfxCert.Export($pkcs12ContentType, $password)
-$fileContentEncoded = [System.Convert]::ToBase64String($clearBytes)
-$cert = @{CertName = $pfxCert.Thumbprint; CertValue = $fileContentEncoded; CertPassword = $password }
-
-# create application registrations
 $appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
 
 # patch react authConfig.json file 
 Write-Host -Object "patching react authConfig.js file"
 $authConfig = Get-Content ../src/spa/src/authConfig_template.js
 $authConfig `
-    -replace "{{CLIENT_ID}}", $appRegistrations."$identityPrefix-react-spa".AppId `
+    -replace "{{CLIENT_ID}}", $appRegistrations."$Prefix-react-spa".AppId `
     -replace "{{DOMAIN_NAME}}", $AADTenant `
-    -replace "{{ORDER_READ}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[0].Value)" `
-    -replace "{{ORDER_WRITE}}", "$($appRegistrations."$identityPrefix-order-api".AppId)/$($appRegistrations."$identityPrefix-order-api".Api.Oauth2PermissionScopes[1].Value)" `
-    -replace "{{PRODUCT_READ}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[0].Value)" `
-    -replace "{{PRODUCT_WRITE}}", "$($appRegistrations."$identityPrefix-product-api".AppId)/$($appRegistrations."$identityPrefix-product-api".Api.Oauth2PermissionScopes[1].Value)" `
-    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$childPublicDnsZoneName/api/order/orders" `
-    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$childPublicDnsZoneName/api/product/products" `
-    -replace "{{REDIRECT_URI}}", "https://api.$childPublicDnsZoneName" > ../src/spa/src/authConfig.js
+    -replace "{{ORDER_READ}}", "$($appRegistrations."$Prefix-order-api".AppId)/$($appRegistrations."$Prefix-order-api".Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{ORDER_WRITE}}", "$($appRegistrations."$Prefix-order-api".AppId)/$($appRegistrations."$Prefix-order-api".Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{PRODUCT_READ}}", "$($appRegistrations."$Prefix-product-api".AppId)/$($appRegistrations."$Prefix-product-api".Api.Oauth2PermissionScopes[0].Value)" `
+    -replace "{{PRODUCT_WRITE}}", "$($appRegistrations."$Prefix-product-api".AppId)/$($appRegistrations."$Prefix-product-api".Api.Oauth2PermissionScopes[1].Value)" `
+    -replace "{{ORDER_API_ENDPOINT}}", "https://api.$PublicDnsZone/api/order/orders" `
+    -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$PublicDnsZone/api/product/products" `
+    -replace "{{REDIRECT_URI}}", "https://api.$PublicDnsZone" > ../src/spa/src/authConfig.js
 
 # generate API policy XML documents
 Write-Host -Object "Generating APIM policy XML files"
 $xml = Get-Content .\api-policy-template.xml     
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childPublicDnsZoneName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-order-api".AppId `
+$xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
+    -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-order-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Order.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Order.Role.Write" `
     -replace "{{TENANT_NAME}}", $AADTenant > ./order-api-policy.xml
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$childPublicDnsZoneName" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations."$identityPrefix-product-api".AppId `
+$xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
+    -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-product-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Product.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Product.Role.Write" `
     -replace "{{TENANT_NAME}}", $AADTenant > ./product-api-policy.xml
 
 # deploy bicep template
-$rg = New-AzResourceGroup -Name $rgName -Location $Location -Force
-
 Write-Host -Object "Deploying infrastructure"
 New-AzResourceGroupDeployment `
     -Name $deploymentName `
@@ -355,30 +364,32 @@ New-AzResourceGroupDeployment `
     -Mode Incremental `
     -templateFile ../infra/main.bicep `
     -location $Location `
-    -childPublicDnsZoneName $childPublicDnsZoneName `
-    -privateDnsZoneName "internal.$childPublicDnsZoneName" `
-    -publicDnsZoneResourceGroup "external-dns-zones-rg" `
-    -cert $cert `
-    -rootCert $root `
-    -aksAdminGroupObjectId $aksAdminGroupObjectId `
+    -publicDnsZoneName $PublicDnsZone `
+    -publicDnsZoneResourceGroup $PublicDnsZoneResourceGroup `
+    -privateDnsZoneName "internal.$PublicDnsZone" `
+    -aksAdminGroupObjectId $AksAdminGroupObjectId `
     -kubernetesSpaIpAddress $reactSpaSvcIp `
     -orderApiYaml $(Get-Content -Raw -Path ../src/order/openapi.yaml) `
     -productApiYaml $(Get-Content -Raw -Path ../src/product/openapi.yaml) `
     -orderApiPoicyXml $(Get-Content -Raw -Path ./order-api-policy.xml) `
     -productApiPoicyXml $(Get-Content -Raw -Path ./product-api-policy.xml) `
+    -keyVaultName $kvDeployment.Outputs.keyVaultName.value `
+    -tlsCertSecretId $tlsCertificate.SecretId `
+    -trustedRootCertSecretId $trustedRootCertificate.Id `
+    -tlsCertPassword $CertificatePassword `
     -Verbose
 
 # get deployment output
 $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
 
 # stop & start the app gateway for it to get the updated DNS zone!!!!
-<# $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
+$appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
 
 Write-Host -Object "Stopping App Gateway"
 Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
 Write-Host -Object "Starting App Gateway"
-Start-AzApplicationGateway -ApplicationGateway $appgwy #>
+Start-AzApplicationGateway -ApplicationGateway $appgwy
 
 # build container images in ACR
 Write-Host -Object "Bulding Order container image"
@@ -411,4 +422,4 @@ $(Get-Content -Path ../manifests/product.yaml) -replace "{{IMAGE_TAG}}", "$($dep
 $(Get-Content -Path ../manifests/spa.yaml) -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$spaImageName" -replace "{{SVC_IP_ADDRESS}}", $reactSpaSvcIp | kubectl apply -f -
 
 # add admin consent for react spa app registration
-az ad app permission admin-consent --id $appRegistrations."$identityPrefix-react-spa".AppId
+az ad app permission admin-consent --id $appRegistrations."$Prefix-react-spa".AppId

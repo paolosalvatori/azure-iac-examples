@@ -1,7 +1,9 @@
 param tags object
 param location string
-param cert object
-param rootCert object
+param tlsCertSecretId string
+param trustedRootCertSecretId string
+param tlsCertPassword string
+param keyVaultName string
 param vNets array
 param aksAdminGroupObjectId string
 param orderApiYaml string
@@ -9,7 +11,7 @@ param productApiYaml string
 param orderApiPoicyXml string
 param productApiPoicyXml string
 param kubernetesSpaIpAddress string
-param childPublicDnsZoneName string
+param publicDnsZoneName string
 param privateDnsZoneName string
 param publicDnsZoneResourceGroup string
 
@@ -21,15 +23,84 @@ var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/role
 var networkContributorRoleDefinitionName = '4d97b98b-1d4f-4787-a291-c67834d212e7'
 var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${networkContributorRoleDefinitionName}'
 
-// create public DNS zone
-module publicDnsZone 'modules/publicDnsZone.bicep' = {
-  name: 'module-public-dns-zone'
+resource kv 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
+  name: keyVaultName
+}
+
+// Create Managed Identities
+module appGatewayManagedIdentity 'modules/userManagedIdentity.bicep' = {
+  name: 'module-app-gateway-managed-id'
   params: {
-    zoneName: childPublicDnsZoneName
+    name: 'app-gateway-identity'
+    location: location
     tags: tags
   }
 }
 
+module apiManagementManagedIdentity 'modules/userManagedIdentity.bicep' = {
+  name: 'module-api-management-managed-id'
+  params: {
+    name: 'api-mgmt-identity'
+    location: location
+    tags: tags
+  }
+}
+
+// grant application gateway user managed identity keyvault access policy
+module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
+  name: 'module-keyvault-access-policy'
+  params: {
+    accessPolicies: [
+      {
+        permissions: {
+          keys: [
+            'get'
+            'list'
+          ]
+          secrets: [
+            'get'
+            'list'
+          ]
+          certificates: [
+            'get'
+            'list'
+          ]
+        }
+        tenantId: tenant().tenantId
+        objectId: appGatewayManagedIdentity.outputs.principalId
+      }
+      {
+        permissions: {
+          keys: [
+            'get'
+            'list'
+          ]
+          secrets: [
+            'get'
+            'list'
+          ]
+          certificates: [
+            'get'
+            'list'
+          ]
+        }
+        tenantId: tenant().tenantId
+        objectId: apiManagementManagedIdentity.outputs.principalId
+      }
+    ]
+    keyVaultName: kv.name
+  }
+}
+
+/* // create public DNS zone
+module publicDnsZone 'modules/publicDnsZone.bicep' = {
+  name: 'module-public-dns-zone'
+  params: {
+    zoneName: publicDnsZoneName
+    tags: tags
+  }
+}
+ */
 // Azure Monitor Workspace
 module azMonitorModule './modules/azmon.bicep' = {
   name: 'modules-azmon'
@@ -112,10 +183,65 @@ module apiManagementModule './modules/apim.bicep' = {
       name: 'Developer'
       capacity: 1
     }
+    deployCertificates: false
+    gatewayHostName: 'gateway.${privateDnsZoneName}'
+    keyVaultCertificateSecretId: tlsCertSecretId
+    certificatePassword: tlsCertPassword
+    subnetId: vNetsModule[0].outputs.subnetRefs[4].id
+  }
+}
+
+module apimKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
+  name: 'module-apim-keyvault-access-policy'
+  params: {
+    accessPolicies: [
+      {
+        permissions: {
+          keys: [
+            'get'
+            'list'
+          ]
+          secrets: [
+            'get'
+            'list'
+          ]
+          certificates: [
+            'get'
+            'list'
+          ]
+        }
+        tenantId: tenant().tenantId
+        objectId: apiManagementModule.outputs.apimManagedIdentityPrincipalId
+      }
+    ]
+    keyVaultName: kv.name
+  }
+}
+
+// Update API Management
+module updateApiManagementModule './modules/apim.bicep' = {
+  dependsOn: [
+    azMonitorModule
+    vNetsModule
+    apimKeyVaultPolicies
+  ]
+  name: 'module-update-apim'
+  params: {
+    tags: tags
+    location: location
+    retentionInDays: 30
+    workspaceId: azMonitorModule.outputs.workspaceId
+    privateDnsZoneName: privateDnsZone.name
+    hubVnetId: vNetsModule[0].outputs.vnetRef
+    spokeVnetId: vNetsModule[1].outputs.vnetRef
+    apimSku: {
+      name: 'Developer'
+      capacity: 1
+    }
     deployCertificates: true
     gatewayHostName: 'gateway.${privateDnsZoneName}'
-    certificate: cert.CertValue
-    certificatePassword: cert.CertPassword
+    keyVaultCertificateSecretId: tlsCertSecretId
+    certificatePassword: tlsCertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
   }
 }
@@ -132,6 +258,9 @@ module orderOpenApiDefinition 'modules/api.bicep' = {
     openApiYaml: orderApiYaml
     xmlPolicy: orderApiPoicyXml
   }
+  dependsOn: [
+    updateApiManagementModule
+  ]
 }
 
 module productOpenApiDefinition 'modules/api.bicep' = {
@@ -145,6 +274,9 @@ module productOpenApiDefinition 'modules/api.bicep' = {
     openApiYaml: productApiYaml
     xmlPolicy: productApiPoicyXml
   }
+  dependsOn: [
+    updateApiManagementModule
+  ]
 }
 
 // Application Gateway
@@ -153,22 +285,25 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     vNetsModule
     azMonitorModule
     privateDnsZone
+    appgatewayKeyVaultPolicies
   ]
   name: 'module-applicationGateway'
   params: {
     suffix: suffix
     location: location
+    umidResourceId: appGatewayManagedIdentity.outputs.id
     kubernetesSpaIpAddress: kubernetesSpaIpAddress
     privateDnsZoneName: privateDnsZoneName
     workspaceId: azMonitorModule.outputs.workspaceId
-    apimGatewaySslCertPassword: cert.CertPassword
     frontEndPort: 443
     internalFrontendPort: 8080
     retentionInDays: 7
-    externalGatewayHostName: 'api.${childPublicDnsZoneName}'
+    externalGatewayHostName: 'api.${publicDnsZoneName}'
     internalGatewayHostName: 'gateway.${privateDnsZoneName}'
-    rootSslCert: rootCert.CertValue
-    apimGatewaySslCert: cert.CertValue
+    tlsCertSecretId: tlsCertSecretId
+    tlsCertPassword: tlsCertPassword
+    trustedRootCertSecretId: trustedRootCertSecretId
+
     apimPrivateIpAddress: appGwyPrivateIpAddress
     gatewaySku: {
       name: 'WAF_v2'
@@ -234,7 +369,7 @@ module appGwyApiPublicDnsRecord 'modules/publicDnsRecord.bicep' = {
   scope: resourceGroup(publicDnsZoneResourceGroup)
   name: 'module-appgwy-public-dns-record'
   params: {
-    zoneName: childPublicDnsZoneName
+    zoneName: publicDnsZoneName
     ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress
     recordName: 'api'
   }

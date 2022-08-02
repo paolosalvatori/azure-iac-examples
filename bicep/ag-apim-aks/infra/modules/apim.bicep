@@ -4,7 +4,7 @@ param apimSku object = {
 }
 param gatewayHostName string = 'proxy'
 param certificatePassword string
-param certificate string
+param keyVaultCertificateSecretId string
 param subnetId string
 param location string
 param deployCertificates bool = false
@@ -18,13 +18,21 @@ param retentionInDays int = 30
 var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
 var hostNameConfigurations = [
-  {
+  /*   {
     type: 'Proxy'
     encodedCertificate: certificate
     defaultSslBinding: true
     hostName: gatewayHostName
     negotiateClientCertificate: false
     certificatePassword: certificatePassword
+  } */
+  {
+    type: 'Proxy'
+    hostName: gatewayHostName
+    certificateSource: 'KeyVault'
+    keyVaultId: keyVaultCertificateSecretId
+    certificatePassword: certificatePassword
+    defaultSslBinding: true
   }
 ]
 

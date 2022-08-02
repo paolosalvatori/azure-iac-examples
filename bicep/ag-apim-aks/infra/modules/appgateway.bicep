@@ -1,6 +1,7 @@
 param suffix string
 param skuName string = 'Standard'
 param apimPrivateIpAddress string
+param umidResourceId string
 param location string
 param gatewaySku object = {
   name: 'WAF_v2'
@@ -12,15 +13,12 @@ param privateDnsZoneName string
 param workspaceId string
 param retentionInDays int = 30
 param subnetId string
+param tlsCertSecretId string
+param tlsCertPassword string
 
 @secure()
-param apimGatewaySslCert string
+param trustedRootCertSecretId string
 
-@secure()
-param apimGatewaySslCertPassword string
-
-@secure()
-param rootSslCert string
 param frontEndPort int = 443
 param internalFrontendPort int = 8080
 param requestTimeOut int = 180
@@ -51,16 +49,22 @@ resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
   name: appGwyName
   location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${umidResourceId}': {}
+    }
+  }
   properties: {
     sku: gatewaySku
-    trustedRootCertificates: [
+    /* trustedRootCertificates: [
       {
-        name: 'root-cert'
+        name: 'trusted-root-certificate'
         properties: {
-          data: rootSslCert
+          keyVaultSecretId: trustedRootCertSecretId
         }
       }
-    ]
+    ] */
     gatewayIPConfigurations: [
       {
         name: 'gateway-ip'
@@ -73,10 +77,9 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
     ]
     sslCertificates: [
       {
-        name: 'apim-gateway-cert'
+        name: 'tls-certificate'
         properties: {
-          data: apimGatewaySslCert
-          password: apimGatewaySslCertPassword
+          keyVaultSecretId: tlsCertSecretId
         }
       }
     ]
@@ -114,14 +117,6 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'internal-frontend-port'
         properties: {
           port: internalFrontendPort
-        }
-      }
-    ]
-    trustedClientCertificates: [
-      {
-        name: 'rootCACert'
-        properties: {
-          data: rootSslCert
         }
       }
     ]
@@ -163,11 +158,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           pickHostNameFromBackendAddress: false
           hostName: internalGatewayHostName
           requestTimeout: requestTimeOut
-          trustedRootCertificates: [
+/*           trustedRootCertificates: [
             {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'root-cert')
+              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'trusted-root-certificate')
             }
-          ]
+          ] */
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-gateway-probe')
           }
@@ -196,7 +191,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'tls-certificate')
           }
           hostName: externalGatewayHostName
           requireServerNameIndication: true
@@ -214,7 +209,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'apim-gateway-cert')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'tls-certificate')
           }
           hostName: internalGatewayHostName
           requireServerNameIndication: true

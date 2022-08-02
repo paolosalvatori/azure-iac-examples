@@ -5,10 +5,16 @@
         "aksAdminGroupObjectId": {
             "value": null
         },
-        "cert": {
+        "trustedRootCertSecretId": {
             "value": null
         },
-        "childPublicDnsZoneName": {
+        "tlsCertSecretId": {
+            "value": null
+        },
+        "tlsCertPassword": {
+            "value": null
+        },
+        "publicDnsZoneName": {
             "value": null
         },
         "privateDnsZoneName": {
@@ -18,9 +24,6 @@
             "value": null 
         },
         "location": {
-            "value": null
-        },
-        "rootCert": {
             "value": null
         },
         "vNets": {
