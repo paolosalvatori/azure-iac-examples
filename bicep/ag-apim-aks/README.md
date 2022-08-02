@@ -19,7 +19,7 @@ The solution provisions the following resources:
 
 # Pre-requisites
 
-- Windows 10/11 OS machine
+- [openssl v3.0+](https://www.openssl.org/)
 - [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2)
 - [Microsoft.Graph.Applications PowerShell module](https://docs.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0)
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
@@ -31,8 +31,13 @@ The solution provisions the following resources:
 
 # Deployment
 
-- change working directory to `./scripts`
+- Change working directory to `./scripts`
   - `PS:\> cd ./scripts`
+- Generate a Public SSL certificate
+  - Copy `.key` & `.crt` files to `../certs` directory
+  - Generate .pfx file using `openssl`
+    - `PS:\scripts> openssl pkcs12 -export -out ../certs/my.pfx -inkey ../certs/my.key -in ../certs/my.crt`
+  - Rename `.crt` file extension to `.cer`
 - Ensure you have AAD RBAC role to create:
   - Application registrations
   - Enterprise applications (service principals)
@@ -40,11 +45,8 @@ The solution provisions the following resources:
   - `PS:\scripts> az login -tenant <AAD Tenant Id GUID>`
   - `PS:\scripts> Connect-AzAccount -TenantId <AAD Tenant Id GUID>`
 - Execute the script, passing the required parameters
-  - `PS:\scripts> ./deploy.ps1 -Location <Azure region name> -AADTenant <AAD Tenant name> -PublicDnsZone <public Dns zone name> -TlsCertificatePassword $(<Certificate password> | ConvertTo-SecureString -AsPlainText -Force) -AksAdminGroupObjectId <Aks Admin Group Object Id GUID>`
-    
-    Example:
+  - `PS:\scripts> ./deploy.ps1 -Location <Azure region name> -AADTenant <AAD Tenant name> -PublicDnsZone <public Dns zone name> -CertificatePassword $(<Certificate password> | ConvertTo-SecureString -AsPlainText -Force) -AksAdminGroupObjectId <Aks Admin Group Object Id GUID> -CertificateName <.cer filename> -PfxCertificateName <.pfx filename>`
 
-     `PS:\scripts> ./deploy.ps1 -Location australiaeast -AADTenant 'mytenant.com' -PublicDnsZone 'mydomain.com'`
 
-  # Notes
+# Notes
 
