@@ -2,6 +2,7 @@ param adminUsername string
 param adminPassword string
 param vmssInstanceCount int
 param pfxCert string
+param location string
 param pfxCertPassword string
 param appGwyHostName string
 param sshPublicKey string
@@ -41,9 +42,18 @@ var subnets = [
   }
 ]
 
+module azMonWks 'modules/azmon.bicep' = {
+  name: 'azMonDeployment'
+  params: {
+    location: location
+    suffix: prefix
+  }
+}
+
 module vnetMod './modules/vnet.bicep' = {
   name: 'vnetDeployment'
   params: {
+    location: location
     vnetName: vnetName
     subnets: subnets
     vnetAddressPrefixes: [
@@ -55,6 +65,7 @@ module vnetMod './modules/vnet.bicep' = {
 module bastionmod './modules/bastion.bicep' = {
   name: 'bastionDeployment'
   params: {
+    location: location
     subnetId: vnetMod.outputs.subnetList[3].id
   }
 }
@@ -62,6 +73,7 @@ module bastionmod './modules/bastion.bicep' = {
 module appGwyMod './modules/appGateway.bicep' = {
   name: 'appGwyDeployment'
   params: {
+    location: location
     probePath: '/'
     gatewaySku: 'WAF_v2'
     pfxCert: pfxCert
@@ -74,7 +86,11 @@ module appGwyMod './modules/appGateway.bicep' = {
 module vmssMod './modules/vmss.bicep' = {
   name: 'vmssDeployment'
   params: {
+    location: location
     sshPublicKey: sshPublicKey
+    workspaceId: azMonWks.outputs.workspaceId
+    workspaceResourceId: azMonWks.outputs.id
+    workspaceKey: azMonWks.outputs.workspaceKey
     storageAccountName: storageAccountName
     appGatewayResourceId: appGwyMod.outputs.appGatewayResourceId
     forceScriptUpdate: forceScriptUpdate
@@ -96,3 +112,5 @@ module dnsRecord './modules/dns.bicep' = {
     appGatewayIpAddress: appGwyMod.outputs.appGatewayFrontEndIpAddress
   }
 }
+
+output appGatewayUri string = 'https://${appGwyMod.outputs.appGatewayFqdn}'

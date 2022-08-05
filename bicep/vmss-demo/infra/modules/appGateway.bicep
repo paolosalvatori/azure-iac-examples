@@ -38,7 +38,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
 
 resource applicationGatewayWafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2020-08-01' = {
   name: wafPolicyName
-  location: resourceGroup().location
+  location: location
   properties: {
     managedRules: {
       exclusions: []
@@ -191,3 +191,4 @@ output appGatewayResourceId string = applicationGateway.id
 output appGatewayFrontEndIpAddressId string = publicIP.id
 output appGatewayFrontEndIpAddress string = publicIP.properties.ipAddress
 output appGatewayBeAddressPoolResourceId string = resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'backendPool')
+output appGatewayFqdn string = applicationGateway.properties.httpListeners[0].properties.hostName

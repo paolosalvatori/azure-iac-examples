@@ -1,6 +1,9 @@
-param vmSku string = 'Standard_D2_v4'
+param vmSku string = 'Standard_B2ms'
 param vmssSubnetId string
 param appGatewayResourceId string
+param workspaceId string
+param workspaceResourceId string
+param workspaceKey string
 param appGatewayBePoolResourceId string
 param sshPublicKey string
 param vmssExtensionCustomScriptUri string
@@ -183,6 +186,23 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
   }
 }
 
+resource logAnalyticsAgent 'Microsoft.Compute/virtualMachineScaleSets/extensions@2022-03-01' = {
+  parent: vmss
+  name: 'Microsoft.Insights.LogAnalyticsAgent'
+  properties: {
+    publisher: 'Microsoft.EnterpriseCloud.Monitoring'
+    type: 'OmsAgentForLinux'
+    typeHandlerVersion: '1.7'
+    autoUpgradeMinorVersion: true
+    settings: {
+      workspaceId: workspaceId
+    }
+    protectedSettings: {
+      workspaceKey: workspaceKey
+    }
+  }
+}
+
 resource existingStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
   name: storageAccountName
 }
@@ -204,13 +224,22 @@ resource appGatewayScaleSettings 'microsoft.insights/autoscalesettings@2015-04-0
     name: autoscaleName
     targetResourceUri: vmss.id
     enabled: true
+    notifications: [
+      {
+        operation: 'Scale'
+        email: {
+          sendToSubscriptionAdministrator: true
+          sendToSubscriptionCoAdministrators: true
+        }
+      }
+    ]
     profiles: [
       {
         name: autoscaleName
         capacity: {
-          minimum: '2'
+          minimum: '1'
           maximum: '10'
-          default: '2'
+          default: '1'
         }
         rules: [
           {
@@ -268,6 +297,36 @@ resource appGatewayScaleSettings 'microsoft.insights/autoscalesettings@2015-04-0
     ]
   }
 }
+
+/* resource vmssDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'vmss-diagnostics'
+  scope: vmss
+  properties: {
+    workspaceId: workspaceResourceId
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          days: 30
+          enabled: true
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        timeGrain: null
+        enabled: false
+        retentionPolicy: {
+          days: 0
+          enabled: false
+        }
+      }
+    ]
+  }
+} */
 
 /* resource autoScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
   name: autoscaleName

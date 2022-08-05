@@ -2,6 +2,7 @@ param storageSku string = 'Standard_LRS'
 param storageKind string = 'StorageV2'
 param containerName string = 'scripts'
 param sasTokenExpiry string
+param location string
 param accountSasProperties object = {
   signedServices: 'b'
   signedPermission: 'rwl'
@@ -18,7 +19,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
     name: storageSku
   }
   kind: storageKind
-  location: resourceGroup().location
+  location: location
   identity: {
     type: 'SystemAssigned'
   }

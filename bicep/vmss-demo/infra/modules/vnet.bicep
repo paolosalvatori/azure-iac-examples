@@ -1,10 +1,11 @@
 param vnetAddressPrefixes array
 param subnets array
 param vnetName string
+param location string 
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: vnetName
-  location: resourceGroup().location
+  location: location
   properties: {
     addressSpace: {
       addressPrefixes: vnetAddressPrefixes

@@ -1,7 +1,6 @@
 param tags object
 param location string
 param tlsCertSecretId string
-param trustedRootCertSecretId string
 param tlsCertPassword string
 param keyVaultName string
 param vNets array
@@ -92,15 +91,6 @@ module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
   }
 }
 
-/* // create public DNS zone
-module publicDnsZone 'modules/publicDnsZone.bicep' = {
-  name: 'module-public-dns-zone'
-  params: {
-    zoneName: publicDnsZoneName
-    tags: tags
-  }
-}
- */
 // Azure Monitor Workspace
 module azMonitorModule './modules/azmon.bicep' = {
   name: 'modules-azmon'
@@ -301,9 +291,6 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
     externalGatewayHostName: 'api.${publicDnsZoneName}'
     internalGatewayHostName: 'gateway.${privateDnsZoneName}'
     tlsCertSecretId: tlsCertSecretId
-    tlsCertPassword: tlsCertPassword
-    trustedRootCertSecretId: trustedRootCertSecretId
-
     apimPrivateIpAddress: appGwyPrivateIpAddress
     gatewaySku: {
       name: 'WAF_v2'

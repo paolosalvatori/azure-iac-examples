@@ -19,7 +19,7 @@ The solution provisions the following resources:
 
 # Pre-requisites
 
-- [openssl v3.0+](https://www.openssl.org/)
+- Public SSL certificate with '`internal.<certificate root domain>`' as an additional Subject Alternative Name (SAN)
 - [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2)
 - [Microsoft.Graph.Applications PowerShell module](https://docs.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0)
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
@@ -33,15 +33,10 @@ The solution provisions the following resources:
 
 - Change working directory to `./scripts`
   - `PS:\> cd ./scripts`
-- Generate a Public SSL certificate
-  - Copy `.key` & `.crt` files to `../certs` directory
-  - Generate .pfx file using `openssl`
-    - `PS:\scripts> openssl pkcs12 -export -out ../certs/my.pfx -inkey ../certs/my.key -in ../certs/my.crt`
-  - Rename `.crt` file extension to `.cer`
 - Ensure you have AAD RBAC role to create:
   - Application registrations
   - Enterprise applications (service principals)
-- Authenticate azcli & Azure Powershell
+- Authenticate to the Azure cli & Azure Powershell
   - `PS:\scripts> az login -tenant <AAD Tenant Id GUID>`
   - `PS:\scripts> Connect-AzAccount -TenantId <AAD Tenant Id GUID>`
 - Execute the script, passing the required parameters

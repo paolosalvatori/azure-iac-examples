@@ -6,7 +6,7 @@ Param (
     [string]$Prefix = 'aks',
     [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
     [string]$CertificateName = 'star.kainiindustries.net.cer',
-    [SecureString]$CertificatePassword,
+    [string]$CertificatePassword,
     [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
     [string]$ResourceGroupName = "ag-apim-aks-$Location-7-rg"
 )
@@ -282,13 +282,6 @@ function New-AppRegistrations {
 # Main
 #############
 
-# generate CSR for wildcard certificate
-# openssl ecparam -out "$PublicDnsZone.key" -name prime256v1 -genkey
-# openssl req -new -subj "/C=AU/CN=*.$PublicDnsZone" -sha256 -key "$PublicDnsZone.key" -out "$PublicDnsZone.csr" # -config ./openssl.cnf -addext "subjectAltName=DNS:api.$PublicDnsZone,DNS:gateway.internal.$PublicDnsZone"
-
-# convert .key & .crt to .pfx
-# openssl pkcs12 -export -out ../certs/"star.$PublicDnsZone.pfx" -inkey ../certs/"$PublicDnsZone.key" -in ../certs/star.kainiindustries.net.crt
-
 # create resource group
 $rg = New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Force
 
@@ -306,17 +299,12 @@ New-AzResourceGroupDeployment `
 # get deployment output
 $kvDeployment = Get-AzResourceGroupDeployment -Name $keyVaultDeploymentName -ResourceGroupName $rg.ResourceGroupName
 
-# upload certificates to Key Vault
+# upload public tls certificate to Key Vault
 Write-Host -Object "Uploading TLS certificate to Key Vault"
 $tlsCertificate = Import-AzKeyVaultCertificate -VaultName $kvDeployment.Outputs.keyVaultName.value `
-    -Name 'public-ssl-certificate' `
-    -Password $CertificatePassword `
+    -Name 'public-tls-certificate' `
+    -Password $($CertificatePassword | ConvertTo-SecureString -AsPlainText -Force) `
     -FilePath ../certs/$PfxCertificateName
-
-Write-Host -Object "Uploading Trusted root certificate to Key Vault"
-$trustedRootCertificate = Set-AzKeyVaultSecret -VaultName $kvDeployment.Outputs.keyVaultName.value `
-    -Name 'trusted-root-certificate' `
-    -SecretValue $(Get-Content -Path ../certs/$CertificateName -Raw | ConvertTo-SecureString -AsPlainText -Force)
 
 # create AAD application registrations
 Write-Host "Connecting Microsoft Graph"
@@ -375,7 +363,6 @@ New-AzResourceGroupDeployment `
     -productApiPoicyXml $(Get-Content -Raw -Path ./product-api-policy.xml) `
     -keyVaultName $kvDeployment.Outputs.keyVaultName.value `
     -tlsCertSecretId $tlsCertificate.SecretId `
-    -trustedRootCertSecretId $trustedRootCertificate.Id `
     -tlsCertPassword $CertificatePassword `
     -Verbose
 

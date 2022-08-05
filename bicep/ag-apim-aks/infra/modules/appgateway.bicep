@@ -14,11 +14,6 @@ param workspaceId string
 param retentionInDays int = 30
 param subnetId string
 param tlsCertSecretId string
-param tlsCertPassword string
-
-@secure()
-param trustedRootCertSecretId string
-
 param frontEndPort int = 443
 param internalFrontendPort int = 8080
 param requestTimeOut int = 180
@@ -57,14 +52,8 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
   }
   properties: {
     sku: gatewaySku
-    /* trustedRootCertificates: [
-      {
-        name: 'trusted-root-certificate'
-        properties: {
-          keyVaultSecretId: trustedRootCertSecretId
-        }
-      }
-    ] */
+    trustedRootCertificates: [
+    ]
     gatewayIPConfigurations: [
       {
         name: 'gateway-ip'
@@ -158,11 +147,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           pickHostNameFromBackendAddress: false
           hostName: internalGatewayHostName
           requestTimeout: requestTimeOut
-/*           trustedRootCertificates: [
-            {
+          trustedRootCertificates: [
+/*             {
               id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'trusted-root-certificate')
-            }
-          ] */
+            } */
+          ]
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-gateway-probe')
           }
