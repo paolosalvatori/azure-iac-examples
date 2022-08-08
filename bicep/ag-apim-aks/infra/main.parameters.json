@@ -8,9 +8,6 @@
         "tlsCertSecretId": {
             "value": null
         },
-        "tlsCertPassword": {
-            "value": null
-        },
         "publicDnsZoneName": {
             "value": null
         },

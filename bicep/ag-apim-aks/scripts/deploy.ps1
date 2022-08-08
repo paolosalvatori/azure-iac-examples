@@ -6,7 +6,7 @@ Param (
     [string]$Prefix = 'demo',
     [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
     [string]$CertificateName = 'star.kainiindustries.net.cer',
-    [string]$CertificatePassword,
+    [SecureString]$CertificatePassword,
     [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
     [string]$ResourceGroupName = "ag-apim-aks-$Location-8-rg"
 )
@@ -23,10 +23,13 @@ $orderApiImageName = "order:$tag"
 $productApiImageName = "product:$tag"
 $orderApiPort = "8080"
 $productApiPort = "8081"
-$appRegHash = @{}
 
 $ErrorActionPreference = 'stop'
 
+# import custom PS module
+Import-Module ./AppRegistration.psm1
+
+# app regiatration definitions
 $appRegistrationDefinitions = @(
     @{
         Name          = "$Prefix-order-api"
@@ -130,147 +133,6 @@ $appRegistrationDefinitions = @(
     }
 )
 
-#############
-# functions
-#############
-function New-ApiAppRegistration {
-    Param (
-        $Name,
-        $ApiDefinition,
-        $ApiRoles
-    )
-    
-    if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
-        Write-Host -Object "creating application '$($Name)'"
-        $appReg = New-MgApplication `
-            -DisplayName $Name `
-            -SignInAudience AzureADandPersonalMicrosoftAccount `
-            -Api $ApiDefinition `
-            -AppRoles $ApiRoles `
-            -Verbose
-
-        Update-MgApplication -ApplicationId $appReg.Id -IdentifierUris "api://$($appReg.AppId)"
-        New-MgServicePrincipal -AppId $appReg.AppId
-    }
-    else {
-        Write-Host -Object "application '$($appReg.DisplayName)' already registered"
-    }
-    return $appReg
-}
-function New-ClientAppRegistration {
-    Param (
-        $Name,
-        $RequiredResourceAccess
-    )
-
-    if (!($appReg = $(Get-MgApplication -filter "DisplayName eq '$Name'"))) {
-        Write-Host -Object "creating application '$($Name)'"
-        $appReg = New-MgApplication `
-            -DisplayName $Name `
-            -SignInAudience AzureADandPersonalMicrosoftAccount `
-            -Spa @{ RedirectUris = $redirectUris } `
-            -RequiredResourceAccess $RequiredResourceAccess `
-            -Verbose
-
-        New-MgServicePrincipal -AppId $appReg.AppId
-    }
-    else {
-        Write-Host -Object "application '$($appReg.DisplayName)' already registered"
-    }
-    return $appReg
-}
-function New-AppRegistrations {
-
-    Param(
-        [string]$TenantId,
-        [switch]$RemoveAppRegistrations,
-        [array]$AppRegistrations
-    )
-
-    #Requires -Modules Microsoft.Graph.Applications
-
-    # Pre-requisites
-    if ($null -eq (Get-Module -ListAvailable -Name "Microsoft.Graph.Applications")) {
-        Install-Module "Microsoft.Graph.Applications" -Scope CurrentUser 
-    }
-
-    Import-Module Microsoft.Graph.Applications
-    $ErrorActionPreference = "Stop"
-
-    # connect to MS Graph API
-    Write-Host "Connecting Microsoft Graph"
-    Connect-MgGraph -TenantId $TenantId -Scopes "Application.ReadWrite.All"
-
-    if ($RemoveAppRegistrations) {
-        foreach ($appRegName in $AppRegistrations) {
-            Write-Host -Object "Removing App Registration '$appRegName'"
-            if ($($appReg = $(Get-MgApplication -filter "DisplayName eq '$appRegName'"))) {
-                Write-Host -Object "Removing $appRegName App Registrations..."
-                Remove-MgApplication -ApplicationId $appReg.Id
-            }
-            else {
-                Write-Host -Object "App Registration '$appRegName' not found"
-            }
-        }
-        return
-    }
-
-    $appRegistrationDefinitions = @()
-
-    # create api app registrations
-    foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'api') {
-        New-ApiAppRegistration -Name $appReg.Name -ApiDefinition $appReg.ApiDefinition -ApiRoles $appReg.ApiRoles
-        $newAppReg = Get-MgApplication -Filter "DisplayName eq '$($appReg.Name)'"
-        $appRegistrationDefinitions += $newAppReg
-        $appRegHash[$newAppReg.DisplayName] = $newAppReg
-    }
-
-    # define resource access
-    $requiredResourceAccess = @(
-        @{
-            ResourceAppId  = $appRegistrationDefinitions[0].AppId
-            ResourceAccess = @(
-                @{
-                    Id   = $appRegistrationDefinitions[0].Api.Oauth2PermissionScopes[0].Id
-                    Type = "Scope"
-                },
-                @{
-                    Id   = $appRegistrationDefinitions[0].Api.Oauth2PermissionScopes[1].Id
-                    Type = "Scope"
-                }
-            )
-        },
-        @{
-            ResourceAppId  = $appRegistrationDefinitions[1].AppId
-            ResourceAccess = @(
-                @{
-                    Id   = $appRegistrationDefinitions[1].Api.Oauth2PermissionScopes[0].Id
-                    Type = "Scope"
-                },
-                @{
-                    Id   = $appRegistrationDefinitions[1].Api.Oauth2PermissionScopes[1].Id
-                    Type = "Scope"
-                }
-            )
-        }
-    )
-
-    # create spa app registration
-    foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'client') {
-        $appReg.ResourceAccess = $requiredResourceAccess
-        New-ClientAppRegistration -Name $appReg.Name -RequiredResourceAccess $appReg.ResourceAccess
-        $newAppReg = Get-MgApplication -Filter "DisplayName eq '$($appReg.Name)'"
-        $appRegHash[$newAppReg.DisplayName] = $newAppReg
-    }
-
-    $result = $appRegHash
-    return $result
-}
-
-#############
-# Main
-#############
-
 # calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
 $params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
 $aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
@@ -300,7 +162,7 @@ $kvDeployment = Get-AzResourceGroupDeployment -Name $keyVaultDeploymentName -Res
 Write-Host -Object "Uploading TLS certificate to Key Vault"
 $tlsCertificate = Import-AzKeyVaultCertificate -VaultName $kvDeployment.Outputs.keyVaultName.value `
     -Name 'public-tls-certificate' `
-    -Password $($CertificatePassword | ConvertTo-SecureString -AsPlainText -Force) `
+    -Password $CertificatePassword `
     -FilePath ../certs/$PfxCertificateName
 
 # create AAD application registrations
@@ -358,8 +220,7 @@ New-AzResourceGroupDeployment `
     -orderApiPoicyXml $(Get-Content -Raw -Path ./order-api-policy.xml) `
     -productApiPoicyXml $(Get-Content -Raw -Path ./product-api-policy.xml) `
     -keyVaultName $kvDeployment.Outputs.keyVaultName.value `
-    -tlsCertSecretId $tlsCertificate.SecretId `
-    -tlsCertPassword $CertificatePassword `
+    -tlsCertSecretId $($tlsCertificate.SecretId | ConvertTo-SecureString -AsPlainText -Force) `
     -Verbose
 
 # get deployment output
