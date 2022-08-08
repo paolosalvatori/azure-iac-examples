@@ -5,8 +5,6 @@ SEMVER=0.1.0
 TAG="$ENVIRONMENT-$SEMVER"
 IMAGE="func-api:$TAG"
 
-echo "IMAGE: $IMAGE"
-
 az group create --name $RG_NAME --location $LOCATION
 
 az deployment group create \
