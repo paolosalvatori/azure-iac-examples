@@ -3,35 +3,24 @@ Param (
     [string]$AADTenant = 'kainiindustries.net',
     [string]$PublicDnsZone = 'kainiindustries.net',
     [string]$PublicDnsZoneResourceGroup = 'external-dns-zones-rg',
-    [string]$Prefix = 'aks',
+    [string]$Prefix = 'demo',
     [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
     [string]$CertificateName = 'star.kainiindustries.net.cer',
     [string]$CertificatePassword,
     [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
-    [string]$ResourceGroupName = "ag-apim-aks-$Location-7-rg"
+    [string]$ResourceGroupName = "ag-apim-aks-$Location-8-rg"
 )
 
 $tenant = (Get-AzDomain $AADTenant)
 $deploymentName = 'ag-apim-aks-deploy'
-$keyVaultDeploymentName = 'keyvault-deploy'
+$keyVaultDeploymentName = 'kv-deploy'
 $redirectUris = @("http://localhost:3000", "https://api.$PublicDnsZone")
-
-# calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
-$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
-$aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
-$first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
-$orderApiSvcIp = $first3Octets, '4' -join '.'
-$productApiSvcIp = $first3Octets, '5' -join '.'
-$reactSpaSvcIp = $first3Octets, '6' -join '.'
-
 $environment = 'dev'
 $semver = '0.1.2'
 $tag = "$environment-$semver"
-
 $spaImageName = "spa:$tag"
 $orderApiImageName = "order:$tag"
 $productApiImageName = "product:$tag"
-
 $orderApiPort = "8080"
 $productApiPort = "8081"
 $appRegHash = @{}
@@ -282,6 +271,14 @@ function New-AppRegistrations {
 # Main
 #############
 
+# calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
+$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
+$aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
+$first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
+$orderApiSvcIp = $first3Octets, '4' -join '.'
+$productApiSvcIp = $first3Octets, '5' -join '.'
+$reactSpaSvcIp = $first3Octets, '6' -join '.'
+
 # create resource group
 $rg = New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Force
 
@@ -307,12 +304,11 @@ $tlsCertificate = Import-AzKeyVaultCertificate -VaultName $kvDeployment.Outputs.
     -FilePath ../certs/$PfxCertificateName
 
 # create AAD application registrations
-Write-Host "Connecting Microsoft Graph"
 Connect-MgGraph -TenantId $tenant.Id -Scopes "Application.ReadWrite.All"
 $appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
 
 # patch react authConfig.json file 
-Write-Host -Object "patching react authConfig.js file"
+Write-Host -Object "patching react 'authConfig.js' file"
 $authConfig = Get-Content ../src/spa/src/authConfig_template.js
 $authConfig `
     -replace "{{CLIENT_ID}}", $appRegistrations."$Prefix-react-spa".AppId `

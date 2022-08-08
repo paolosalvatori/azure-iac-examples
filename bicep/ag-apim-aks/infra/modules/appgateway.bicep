@@ -13,7 +13,10 @@ param privateDnsZoneName string
 param workspaceId string
 param retentionInDays int = 30
 param subnetId string
+
+@secure()
 param tlsCertSecretId string
+
 param frontEndPort int = 443
 param internalFrontendPort int = 8080
 param requestTimeOut int = 180
@@ -147,11 +150,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           pickHostNameFromBackendAddress: false
           hostName: internalGatewayHostName
           requestTimeout: requestTimeOut
-          trustedRootCertificates: [
-/*             {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'trusted-root-certificate')
-            } */
-          ]
+          trustedRootCertificates: []
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'apim-gateway-probe')
           }

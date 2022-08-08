@@ -3,7 +3,8 @@ param apimSku object = {
   capacity: 1
 }
 param gatewayHostName string = 'proxy'
-param certificatePassword string
+
+@secure()
 param keyVaultCertificateSecretId string
 param subnetId string
 param location string

@@ -1,7 +1,8 @@
 param tags object
 param location string
+
+@secure()
 param tlsCertSecretId string
-param tlsCertPassword string
 param keyVaultName string
 param vNets array
 param aksAdminGroupObjectId string
@@ -176,7 +177,6 @@ module apiManagementModule './modules/apim.bicep' = {
     deployCertificates: false
     gatewayHostName: 'gateway.${privateDnsZoneName}'
     keyVaultCertificateSecretId: tlsCertSecretId
-    certificatePassword: tlsCertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
   }
 }
@@ -231,7 +231,6 @@ module updateApiManagementModule './modules/apim.bicep' = {
     deployCertificates: true
     gatewayHostName: 'gateway.${privateDnsZoneName}'
     keyVaultCertificateSecretId: tlsCertSecretId
-    certificatePassword: tlsCertPassword
     subnetId: vNetsModule[0].outputs.subnetRefs[4].id
   }
 }
