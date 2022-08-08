@@ -1,0 +1,1 @@
+# Azure function custom handler API (Golang) in Azure Container Apps
