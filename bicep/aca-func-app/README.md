@@ -10,7 +10,7 @@ The example todo list application is written on Go and implemented using [Azure 
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 ## Deployment
-- clone this repo (azure-iac-examples)
+- clone this repo [azure-iac-examples](https://github.com/cbellee/azure-iac-examples)
 - change working directory to `./scripts` 
   - `$ cd ./bicep/aca-func-app/scripts`
 - optionally, modify the deployment location & resource group name
