@@ -1,14 +1,12 @@
-@description('location to deploy the storage account')
 param location string
 param suffix string
 param firewallSubnetRef string
 param sourceAddressRangePrefixes array
-param vmPrivateIp string
 param workspaceRef string
 
 var publicIpName = 'fw-pip-${suffix}'
 var firewallName = 'fw-${suffix}'
-var sourceAddresses = [for item in sourceAddressRangePrefixes: item.properties.addressPrefix]
+//var sourceAddresses = [for item in sourceAddressRangePrefixes: item.properties.addressPrefixes]
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2020-03-01' = {
   name: publicIpName
@@ -40,34 +38,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       }
     ]
     natRuleCollections: [
-      {
-        name: 'jumpbox'
-        properties: {
-          priority: 100
-          action: {
-            type: 'Dnat'
-          }
-          rules: [
-            {
-              name: 'dnat-to-jumpbox'
-              sourceAddresses: [
-                '*'
-              ]
-              destinationAddresses: [
-                publicIP.properties.ipAddress
-              ]
-              destinationPorts: [
-                '22'
-              ]
-              protocols: [
-                'TCP'
-              ]
-              translatedAddress: vmPrivateIp
-              translatedPort: '22'
-            }
-          ]
-        }
-      }
+
     ]
     applicationRuleCollections: [
       {
@@ -80,7 +51,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           rules: [
             {
               name: 'allow-aks'
-              sourceAddresses: sourceAddresses
+              sourceAddresses: sourceAddressRangePrefixes
               protocols: [
                 {
                   protocolType: 'Http'
@@ -91,52 +62,8 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
                   port: 443
                 }
               ]
-              targetFqdns: [
-                '*.azmk8s.io'
-                '*auth.docker.io'
-                '*cloudflare.docker.io'
-                '*cloudflare.docker.com'
-                '*registry-1.docker.io'
-              ]
-            }
-          ]
-        }
-      }
-      {
-        name: 'oss'
-        properties: {
-          priority: 200
-          action: {
-            type: 'Allow'
-          }
-          rules: [
-            {
-              name: 'allow-oss'
-              sourceAddresses: sourceAddresses
-              protocols: [
-                {
-                  protocolType: 'Http'
-                  port: 80
-                }
-                {
-                  protocolType: 'Https'
-                  port: 443
-                }
-              ]
-              targetFqdns: [
-                'download.opensuse.org'
-                '*.ubuntu.com'
-                'github.com'
-                'gcr.io'
-                '*.github.com'
-                'raw.githubusercontent.com'
-                '*.ubuntu.com'
-                'api.snapcraft.io'
-                'download.opensuse.org'
-                'storage.googleapis.com'
-                'security.ubuntu.com'
-                'azure.archive.ubuntu.com'
-                'changelogs.ubuntu.com'
+              fqdnTags: [
+                'AzureKubernetesService'
               ]
             }
           ]
@@ -145,14 +72,14 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       {
         name: 'azure'
         properties: {
-          priority: 300
+          priority: 200
           action: {
             type: 'Allow'
           }
           rules: [
             {
-              name: 'allow-sites'
-              sourceAddresses: sourceAddresses
+              name: 'allow-azure-services'
+              sourceAddresses: sourceAddressRangePrefixes
               protocols: [
                 {
                   protocolType: 'Http'
@@ -205,20 +132,129 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
           }
           rules: [
             {
-              name: 'allow-ssh-inbound-internet-ssh'
-              sourceAddresses: [
-                publicIP.properties.ipAddress
+              name: 'allow-internal'
+              sourceAddresses: sourceAddressRangePrefixes
+              destinationAddresses: sourceAddressRangePrefixes
+              destinationPorts: [
+                '*'
+              ]
+              protocols: [
+                'Any'
+              ]
+            }
+          ]
+        }
+      }
+      {
+        name: 'aca-rules'
+        properties: {
+          action: {
+            type: 'Allow'
+          }
+          priority: 200
+          rules: [
+            {
+              name: 'apiudp'
+              protocols: [
+                'UDP'
               ]
               destinationAddresses: [
-                '${vmPrivateIp}/32'
+                'AzureCloud.${location}'
+              ]
+              sourceAddresses: [
+                '*'
               ]
               destinationPorts: [
-                '22'
+                '1194'
               ]
+            }
+            {
+              name: 'apitcp'
               protocols: [
                 'TCP'
               ]
+              sourceAddresses: [
+                '*'
+              ]
+              destinationAddresses: [
+                'AzureCloud.${location}'
+              ]
+              destinationPorts: [
+                '9000'
+              ]
             }
+            {
+              name: 'ntp'
+              protocols: [
+                'UDP'
+              ]
+              sourceAddresses: [
+                '*'
+              ]
+              destinationAddresses: [
+                '*'
+              ]
+              destinationPorts: [
+                '123'
+              ]
+            }
+            {
+              name: 'control-plane'
+              protocols: [
+                'TCP'
+              ]
+              sourceAddresses: [
+                '*'
+              ]
+              destinationAddresses: [
+                '*'
+              ]
+              destinationPorts: [
+                '5671'
+                '5672'
+              ]
+            }
+            {
+              name: 'http'
+              protocols: [
+                'TCP'
+              ]
+              sourceAddresses: [
+                '*'
+              ]
+              destinationAddresses: [
+                '*'
+              ]
+              destinationPorts: [
+                '80'
+              ]
+            }
+            {
+              name: 'https'
+              protocols: [
+                'TCP'
+              ]
+              sourceAddresses: [
+                '*'
+              ]
+              destinationAddresses: [
+                '*'
+              ]
+              destinationPorts: [
+                '443'
+              ]
+            }
+          ]
+        }
+      }
+      /* {
+        name: 'netRulesCollection'
+        properties: {
+          priority: 200
+          action: {
+            type: 'Allow'
+          }
+          rules: [
             {
               name: 'allow-outbound-http-https-internet'
               sourceAddresses: sourceAddresses
@@ -240,16 +276,15 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
             }
           ]
         }
-      }
+      } */
     ]
   }
 }
 
-/* resource firewall_diagnostics 'Microsoft.Network/azureFirewalls/providers/diagnosticSettings@2021-03-01' = {
+resource firewall_diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: firewall
-  name: '${firewallName}/microsoft.insights/fwdiagnostics'
+  name: 'fwdiagnostics'
   properties: {
-    name: 'fwdiagnostics'
     workspaceId: workspaceRef
     logs: [
       {
@@ -268,6 +303,6 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-03-01' = {
       }
     ]
   }
-} */
+}
 
 output firewallPublicIpAddress string = publicIP.properties.ipAddress

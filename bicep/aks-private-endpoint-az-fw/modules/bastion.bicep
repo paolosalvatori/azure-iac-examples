@@ -1,12 +1,13 @@
 param suffix string
 param tags object
 param subnetId string
+param location string
 
 var bastionName = 'bastion-${suffix}'
 var bastionPublicIpName = 'bastion-pip-${suffix}'
 
 resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
-  location: resourceGroup().location
+  location: location
   name: bastionPublicIpName
   sku: {
     name: 'Standard'
@@ -20,7 +21,7 @@ resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 
 resource bastionHost 'Microsoft.Network/bastionHosts@2021-05-01' = {
   name: bastionName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Standard'
   }

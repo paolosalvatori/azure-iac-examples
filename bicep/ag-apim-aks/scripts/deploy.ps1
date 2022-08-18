@@ -6,9 +6,9 @@ Param (
     [string]$Prefix = 'demo',
     [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
     [string]$CertificateName = 'star.kainiindustries.net.cer',
-    [SecureString]$CertificatePassword,
+    [SecureString]$CertificatePassword = $('M1cr0soft1234567890' | ConvertTo-SecureString -AsPlainText -Force),
     [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
-    [string]$ResourceGroupName = "ag-apim-aks-$Location-8-rg"
+    [string]$ResourceGroupName = "ag-apim-aks-$Location-test-rg"
 )
 
 $tenant = (Get-AzDomain $AADTenant)

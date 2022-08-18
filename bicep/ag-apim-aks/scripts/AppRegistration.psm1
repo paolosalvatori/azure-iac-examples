@@ -87,6 +87,7 @@ function New-AppRegistrations {
     }
 
     $appRegDefinitions = @()
+    $appRegHash = @{}
 
     # create api app registrations
     foreach ($appReg in $AppRegistrations | Where-Object Type -eq 'api') {
