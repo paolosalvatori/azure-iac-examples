@@ -68,7 +68,7 @@ echo "GET https://myapp.kainiindustries.net" | ./vegeta -cpus 4 attack -duration
 # wait until at least 3 instances are in the 'Deleting (Running)' state, then add some more load
 DELETING_COUNT=$(az vmss get-instance-view -g $rgName -n vmss-76uh2ncyuah6q | jq '.virtualMachine.statusesSummary[] | select(.code == "ProvisioningState/deleting").count')
 
-while [[ $DELETING_COUNT -le 3 ]]
+while [[ $DELETING_COUNT -ge 3 ]]
 do 
     DELETING_COUNT=$(az vmss get-instance-view -g $rgName -n vmss-76uh2ncyuah6q | jq '.virtualMachine.statusesSummary[] | select(.code == "ProvisioningState/deleting").count')
     sleep 1m

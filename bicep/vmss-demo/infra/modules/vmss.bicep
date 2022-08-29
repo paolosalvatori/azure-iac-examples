@@ -67,11 +67,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
     tier: 'Standard'
     capacity: instanceCount
   }
-  zones: [
-    '1'
-    '2'
-    '3'
-  ]
   properties: {
     overprovision: false
     upgradePolicy: {
@@ -84,7 +79,6 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
       }
     }
     doNotRunExtensionsOnOverprovisionedVMs: false
-    zoneBalance: true
     scaleInPolicy: {
       rules: [
         'OldestVM'
