@@ -1,0 +1,18 @@
+$schema: https://azuremlschemas.azureedge.net/latest/kubernetesOnlineDeployment.schema.json
+name: hello-world-deployment
+endpoint_name: hello-world-endpoint
+model:
+  path: ./
+environment:
+  image: docker.io/hello-world:latest
+request_settings:
+  request_timeout_ms: 3000
+  max_queue_wait_ms: 3000
+resources:
+  requests:
+    cpu: "0.1"
+    memory: "0.1Gi"
+  limits:
+    cpu: "0.2"
+    memory: "200Mi"
+instance_count: 1

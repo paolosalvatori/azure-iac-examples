@@ -89,7 +89,6 @@ module vmssMod './modules/vmss.bicep' = {
     location: location
     sshPublicKey: sshPublicKey
     workspaceId: azMonWks.outputs.workspaceId
-    workspaceResourceId: azMonWks.outputs.id
     workspaceKey: azMonWks.outputs.workspaceKey
     storageAccountName: storageAccountName
     appGatewayResourceId: appGwyMod.outputs.appGatewayResourceId

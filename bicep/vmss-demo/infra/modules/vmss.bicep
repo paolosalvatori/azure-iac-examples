@@ -2,7 +2,6 @@ param vmSku string = 'Standard_B2ms'
 param vmssSubnetId string
 param appGatewayResourceId string
 param workspaceId string
-param workspaceResourceId string
 param workspaceKey string
 param appGatewayBePoolResourceId string
 param sshPublicKey string
@@ -29,10 +28,10 @@ param adminPassword string
 param location string = resourceGroup().location
 
 var prefix = toLower(uniqueString(resourceGroup().id))
-var vmssName = '${prefix}-vmss'
+var vmssName = 'vmss-${prefix}'
 var longprefix = toLower(vmssName)
 var publicIPAddressName = '${prefix}-pip'
-var autoscaleName = '${prefix}-apgwy-autoscale'
+var autoScaleName = '${prefix}-apgwy-autoscale'
 var nicname = '${prefix}-nic'
 var ipConfigName = '${prefix}ipconfig'
 var imageReference = osType
@@ -45,7 +44,7 @@ var osType = {
 
 var dataContributorRoleId = resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIP 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -57,7 +56,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
+resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   name: vmssName
   location: location
   identity: {
@@ -92,6 +91,12 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
       ]
     }
     virtualMachineProfile: {
+      scheduledEventsProfile: {
+        terminateNotificationProfile: {
+          enable: true
+          notBeforeTimeout: 'PT15M'
+        }
+      }
       storageProfile: {
         osDisk: {
           createOption: 'FromImage'
@@ -116,7 +121,7 @@ resource vmss 'Microsoft.Compute/virtualMachineScaleSets@2020-06-01' = {
                 managedIdentity: {}
                 fileUris: [
                   '${vmssExtensionCustomScriptUri}/install.sh'
-                  '${vmssExtensionCustomScriptUri}/main'
+                  '${vmssExtensionCustomScriptUri}/vmss-test-app'
                 ]
                 commandToExecute: 'sh ./install.sh'
               }
@@ -203,7 +208,7 @@ resource logAnalyticsAgent 'Microsoft.Compute/virtualMachineScaleSets/extensions
   }
 }
 
-resource existingStorage 'Microsoft.Storage/storageAccounts@2021-04-01' existing = {
+resource existingStorage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
   name: storageAccountName
 }
 
@@ -217,25 +222,25 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-prev
   }
 }
 
-resource appGatewayScaleSettings 'microsoft.insights/autoscalesettings@2015-04-01' = {
-  name: autoscaleName
+resource appGatewayScaleSettings 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
+  name: autoScaleName
   location: location
   properties: {
-    name: autoscaleName
+    name: autoScaleName
     targetResourceUri: vmss.id
     enabled: true
     notifications: [
       {
         operation: 'Scale'
         email: {
-          sendToSubscriptionAdministrator: true
-          sendToSubscriptionCoAdministrators: true
+          sendToSubscriptionAdministrator: false
+          sendToSubscriptionCoAdministrators: false
         }
       }
     ]
     profiles: [
       {
-        name: autoscaleName
+        name: autoScaleName
         capacity: {
           minimum: '1'
           maximum: '10'

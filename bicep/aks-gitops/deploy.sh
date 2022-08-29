@@ -1,6 +1,6 @@
 ENVIRONMENTS=(staging production)
 LOCATION='australiaeast'
-GIT_REPO_URL='https://github.com/Azure/gitops-flux2-kustomize-helm-mt'
+GIT_REPO_URL='https://github.com/cbellee/gitops-flux2-kustomize-helm-mt'
 SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 ADMIN_GROUP_OBJECT_ID="f6a900e2-df11-43e7-ba3e-22be99d3cede"
 LATEST_K8S_VERSION=$(az aks get-versions -l $LOCATION | jq -r -c '[.orchestrators[] | .orchestratorVersion][-1]')
