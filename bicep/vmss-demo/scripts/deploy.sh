@@ -65,13 +65,28 @@ az deployment group create \
 echo "increasing load to maximum capacity..."
 echo "GET https://myapp.kainiindustries.net" | ./vegeta -cpus 4 attack -duration=15m -insecure > /dev/null 2>&1
 
-# wait until half of the instances are in the 'Deleting (Running)' state and add load
+# wait until at least 3 instances are in the 'Deleting (Running)' state, then add some more load
+DELETING_COUNT=$(az vmss get-instance-view -g $rgName -n vmss-76uh2ncyuah6q | jq '.virtualMachine.statusesSummary[] | select(.code == "ProvisioningState/deleting").count')
+
+while [[ $DELETING_COUNT -le 3 ]]
+do 
+    DELETING_COUNT=$(az vmss get-instance-view -g $rgName -n vmss-76uh2ncyuah6q | jq '.virtualMachine.statusesSummary[] | select(.code == "ProvisioningState/deleting").count')
+    sleep 1m
+done
+
+echo "GET https://myapp.kainiindustries.net" | ./vegeta -cpus 4 attack -duration=15m -insecure > /dev/null 2>&1
+
+
+
+
+:'
 VMSS_NAME=$(az vmss list --resource-group $rgName --query [].name -o tsv)
 NUM_VMSS_INSTANCES=$(az vmss list-instances --resource-group $rgName --name $VMSS_NAME | jq '. | length')
 
 while [[ $NUM_VMSS_INSTANCES -ge 5 ]] 
 do 
     NUM_VMSS_INSTANCES=$(az vmss list-instances --resource-group $rgName --name $VMSS_NAME | jq '. | length')
+    "echo sleeping for 1 minute while instance number is reduced to 5"
     sleep 1m
 done
 
@@ -84,3 +99,4 @@ then
 else
     echo "VM scale set only has $NUM_VMSS_INSTANCES instance(s)"
 fi
+'
