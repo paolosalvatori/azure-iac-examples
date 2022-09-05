@@ -74,29 +74,6 @@ do
     sleep 1m
 done
 
+# note that ne new instances are created until instances in the 'Deleted (Running)' state have been removed.
 echo "GET https://myapp.kainiindustries.net" | ./vegeta -cpus 4 attack -duration=15m -insecure > /dev/null 2>&1
 
-
-
-
-:'
-VMSS_NAME=$(az vmss list --resource-group $rgName --query [].name -o tsv)
-NUM_VMSS_INSTANCES=$(az vmss list-instances --resource-group $rgName --name $VMSS_NAME | jq '. | length')
-
-while [[ $NUM_VMSS_INSTANCES -ge 5 ]] 
-do 
-    NUM_VMSS_INSTANCES=$(az vmss list-instances --resource-group $rgName --name $VMSS_NAME | jq '. | length')
-    "echo sleeping for 1 minute while instance number is reduced to 5"
-    sleep 1m
-done
-
-if [[ $NUM_VMSS_INSTANCES -le 5 ]] 
-then
-    # scale back up if half the instances are in the Deleted (Running) state
-    # notice that no new instances are created whilst previous instances are in the 'Deleting (Running)' state 
-    echo "increasing load during ..."
-    echo "GET https://myapp.kainiindustries.net" | ./vegeta -cpus 4 attack -duration=15m -insecure > /dev/null 2>&1
-else
-    echo "VM scale set only has $NUM_VMSS_INSTANCES instance(s)"
-fi
-'

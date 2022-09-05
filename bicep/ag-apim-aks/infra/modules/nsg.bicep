@@ -8,20 +8,6 @@ resource appGatewaySubnetNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01
   properties: {
     securityRules: [
       {
-        name: 'appgwy-v1'
-        properties: {
-          description: 'This rule is needed for application gateway probes to work'
-          protocol: '*'
-          destinationAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '65503-65534'
-          sourceAddressPrefix: 'Internet'
-          access: 'Allow'
-          priority: 1000
-          direction: 'Inbound'
-        }
-      }
-      {
         name: 'appgwy-v2'
         properties: {
           description: 'This rule is needed for application gateway probes to work'
@@ -29,7 +15,7 @@ resource appGatewaySubnetNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01
           destinationAddressPrefix: '*'
           sourcePortRange: '*'
           destinationPortRange: '65200-65535'
-          sourceAddressPrefix: 'Internet'
+          sourceAddressPrefix: 'GatewayManager'
           access: 'Allow'
           priority: 1010
           direction: 'Inbound'
@@ -45,6 +31,7 @@ resource appGatewaySubnetNsg 'Microsoft.Network/networkSecurityGroups@2021-02-01
           destinationPortRange: ''
           destinationPortRanges: [
             '443'
+            '80'
           ]
           sourceAddressPrefix: 'Internet'
           access: 'Allow'

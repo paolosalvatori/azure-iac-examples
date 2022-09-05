@@ -1,10 +1,8 @@
 param location string = resourceGroup().location
 param name string
 param vnetAddressPrefix string
-param gatewaySubnetPrefix string
 param integrationSubnetAddressPrefix string
 param privateLinkSubnetAddressPrefix string
-param dbSubnetAddressPrefix string
 
 var affix = substring(uniqueString(resourceGroup().id), 0, 6)
 var vnetName = '${name}-${affix}'
@@ -20,18 +18,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     }
     subnets: [
       {
-        name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: gatewaySubnetPrefix
-        }
-      }
-      {
         name: 'vnet-integration-subnet'
         properties: {
           addressPrefix: integrationSubnetAddressPrefix
           delegations: [
             {
-              name: 'app-server-delegation'
+              name: 'app-service-delegation'
               properties: {
                 serviceName: 'Microsoft.Web/serverFarms'
               }
@@ -45,20 +37,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
           addressPrefix: privateLinkSubnetAddressPrefix
           privateLinkServiceNetworkPolicies: 'Disabled'
           privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-      {
-        name: 'db-subnet'
-        properties: {
-          addressPrefix: dbSubnetAddressPrefix
-          delegations: [
-            {
-              name: 'flex-server-delegation'
-              properties: {
-                serviceName: 'Microsoft.DBforPostgreSQL/flexibleServers'
-              }
-            }
-          ]
         }
       }
     ]

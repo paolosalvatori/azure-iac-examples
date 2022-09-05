@@ -5,7 +5,8 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return jsonify({"response": "OK", "code": 200})
-
+    
+""" 
 @app.route('/info', methods=['GET'])
 def get_server_ip():
     import psycopg2
@@ -40,6 +41,7 @@ def get_server_ip():
         conn.close()
         
         return response
+ """
 
 if __name__ == '__main__':
     app.run(debug=True)

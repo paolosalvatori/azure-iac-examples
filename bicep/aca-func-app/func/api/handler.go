@@ -35,7 +35,7 @@ type CompleteTodoItem struct {
 // main entry point
 func main() {
 	var err error
-	db, err = gorm.Open(sqlite.Open("todo.db"), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open("file:memdb1?mode=memory&cache=shared"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to open db: %v", err)
 	}
