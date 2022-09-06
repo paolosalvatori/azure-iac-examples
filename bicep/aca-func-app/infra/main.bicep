@@ -5,6 +5,10 @@ param funcName string
 param funcPort string
 param isExternalIngressEnabled bool = true
 
+@secure()
+param acrTokenPassword string
+param acrTokenName string
+
 param tags object = {
   environment: 'dev'
   costcode: '1234567890'
@@ -13,19 +17,23 @@ param tags object = {
 var affix = uniqueString(resourceGroup().id)
 var containerAppEnvName = 'capp-env-${affix}'
 var acrLoginServer = '${acrName}.azurecr.io'
-var acrAdminPassword = listCredentials(acr.id, '2021-12-01-preview').passwords[0].value
+// var acrAdminPassword = listCredentials(acr.id, '2021-12-01-preview').passwords[0].value
 
 var workspaceName = 'wks-${affix}'
 var secrets = [
-  {
+  /* {
     name: 'registry-password'
     value: acrAdminPassword
+  } */
+  {
+    name: 'acr-token-password'
+    value: acrTokenPassword
   }
 ]
 
-resource acr 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' existing = {
+/* resource acr 'Microsoft.ContainerRegistry/registries@2021-12-01-preview' existing = {
   name: acrName
-}
+} */
 
 module wksModule 'modules/wks.bicep' = {
   name: 'module-wks'
@@ -60,9 +68,9 @@ resource todoFuncApi 'Microsoft.App/containerApps@2022-03-01' = {
       secrets: secrets
       registries: [
         {
-          passwordSecretRef: 'registry-password'
           server: acrLoginServer
-          username: acr.name
+          username: acrTokenName
+          passwordSecretRef: 'acr-token-password'
         }
       ]
       ingress: {
