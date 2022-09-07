@@ -5,9 +5,6 @@
         "aksAdminGroupObjectId": {
             "value": null
         },
-        "prefix": {
-            "value": "prod"
-        },
         "tlsCertSecretId": {
             "value": null
         },
