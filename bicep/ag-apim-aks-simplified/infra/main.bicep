@@ -88,6 +88,7 @@ module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
     ]
     keyVaultName: kv.name
   }
+  scope: resourceGroup(keyVaultResourceGroupName)
 }
 
 // Azure Monitor Workspace
@@ -204,6 +205,7 @@ module apimKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
     ]
     keyVaultName: kv.name
   }
+  scope: resourceGroup(keyVaultResourceGroupName)
 }
 
 // Update API Management
