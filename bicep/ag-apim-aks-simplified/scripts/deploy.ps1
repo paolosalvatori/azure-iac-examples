@@ -70,3 +70,10 @@ Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
 Write-Host -Object "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
+
+
+<# $ErrorActionPreference="Stop"
+Login-AzureRmAccount -SubscriptionId b2375b5f-8dab-4436-b87c-32bc7fdce5d0
+$spn=(Get-AzADServicePrincipal -SPN 13557c92-19a6-4b65-8b85-8733efafb445)
+$spnObjectId=$spn.Id
+Set-AzKeyVaultAccessPolicy -VaultName ag-apim-aks-kv -ObjectId $spnObjectId -PermissionsToSecrets get,list #>

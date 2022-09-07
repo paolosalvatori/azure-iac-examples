@@ -4,6 +4,7 @@ param location string
 @secure()
 param tlsCertSecretId string
 param keyVaultName string
+param keyVaultResourceGroupName string
 param vNets array
 param aksAdminGroupObjectId string
 param kubernetesSpaIpAddress string
@@ -21,6 +22,7 @@ var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authori
 
 resource kv 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
   name: keyVaultName
+  scope: resourceGroup(keyVaultResourceGroupName)
 }
 
 // Create Managed Identities

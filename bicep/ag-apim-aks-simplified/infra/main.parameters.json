@@ -14,6 +14,9 @@
         "privateDnsZoneName": {
             "value": null
         },
+        "keyVaultResourceGroupName": {
+            "value": null
+        },
         "publicDnsZoneResourceGroup": {
             "value": null
         },
