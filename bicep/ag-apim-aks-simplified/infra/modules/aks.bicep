@@ -63,7 +63,7 @@ param enablePrivateCluster bool = false
 
 var aksClusterName = 'aks-${prefix}'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-06-02-preview' = {
   name: aksClusterName
   location: location
   identity: {
