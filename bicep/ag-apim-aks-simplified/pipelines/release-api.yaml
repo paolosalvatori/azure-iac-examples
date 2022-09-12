@@ -67,4 +67,4 @@ stages:
           csmParametersFile: $(System.ArtifactsDirectory)/${{parameters.prefix}}.parameters.json
           overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "${{parameters.prefix}}.${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
           deploymentMode: Incremental
-          deploymentName: '${{parameters.prefix}}-infra-deployment'
+          deploymentName: '${{parameters.prefix}}-validate-infra-deployment'
