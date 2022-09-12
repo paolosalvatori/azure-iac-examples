@@ -51,6 +51,7 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
+      prefix: dev
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)
@@ -66,6 +67,7 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
+      prefix: test
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)
@@ -81,6 +83,7 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
+      prefix: prod
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)

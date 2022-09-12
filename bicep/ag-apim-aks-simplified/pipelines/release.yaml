@@ -8,7 +8,6 @@ parameters:
     default: 'australiaeast'
     type: string
   - name: 'prefix'
-    default: 'dev'
     type: string
   - name: 'azureConnection'
     default: 'internal_azure_subscription'
