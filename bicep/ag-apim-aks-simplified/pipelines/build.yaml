@@ -1,10 +1,10 @@
 # build.yaml
 
 parameters:
-  - name: 'vmImage'
+  - name: vmImage
     default: 'ubuntu-latest'
     type: string
-  - name: 'poolName'
+  - name: poolName
     default: 'Azure Pipelines'
     type: string
 

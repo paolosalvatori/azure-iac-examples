@@ -22,6 +22,8 @@ variables:
     value: australiaeast
   - name: azureConnection
     value: 'internal_azure_subscription'
+  - name: poolName
+    value: 'Azure Pipelines'
   - name: subscriptionId
     value: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
   - name: resourceGroupName
