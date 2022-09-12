@@ -38,7 +38,7 @@ parameters:
 stages:
 - stage: ${{parameters.prefix}}
   jobs:
-  - job: 'infrastructre_deployment'
+  - job: 'infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
     steps:
