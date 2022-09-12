@@ -22,6 +22,8 @@ variables:
     value: australiaeast
   - name: azureConnection
     value: 'internal_azure_subscription'
+  - name: vmImage
+    value: 'ubuntu-latest'
   - name: poolName
     value: 'Azure Pipelines'
   - name: subscriptionId
