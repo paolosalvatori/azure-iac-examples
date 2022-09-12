@@ -318,7 +318,7 @@ module networkSecurityGroupUpdateModule './modules/nsg.bicep' = {
 }
 
 // Azure Public DNS records
-module appGwyApiPublicDnsRecord 'modules/publicDnsRecord.bicep' = {
+module appGwyApiPublicDnsRecord 'modules/publicDnsHostRecord.bicep' = {
   scope: resourceGroup(publicDnsZoneResourceGroup)
   name: 'module-appgwy-public-dns-record'
   params: {
