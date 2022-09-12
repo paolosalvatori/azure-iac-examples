@@ -26,7 +26,7 @@ parameters:
     type: string
   - name: 'publicDnsZoneResourceGroup'
     type: string
-  - name: 'kubernetesSpaIpAddress'
+  - name: 'reactSpaSvcIp'
     type: string
   - name: 'keyVaultName'
     type: string

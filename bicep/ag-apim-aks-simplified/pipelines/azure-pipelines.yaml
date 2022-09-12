@@ -32,7 +32,7 @@ variables:
     value: 'kainiindustries.net'
   - name: publicDnsZoneResourceGroup
     value: 'external-dns-zones-rg'
-  - name: kubernetesSpaIpAddress
+  - name: reactSpaSvcIp
     value: '2.2.2.2'
   - name: keyVaultName
     value: 'ag-apim-aks-kv'
