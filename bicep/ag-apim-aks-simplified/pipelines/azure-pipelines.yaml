@@ -1,6 +1,7 @@
 resources:
   repositories:
     - repository: ag-apim-aks-simplified-repo
+      endpoint: cbellee
       trigger:
         branches:
           include:
