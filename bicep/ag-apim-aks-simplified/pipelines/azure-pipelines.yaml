@@ -1,6 +1,6 @@
 resources:
   repositories:
-    - repository: 
+    - repository: ag-apim-aks-simplified-repo
       trigger:
         branches:
           include:
