@@ -17,7 +17,7 @@ pool:
 
 variables:
   - name: location
-    value: australiaeast
+    value: 'australiaeast'
   - name: azureConnection
     value: 'internal_azure_subscription'
   - name: vmImage
