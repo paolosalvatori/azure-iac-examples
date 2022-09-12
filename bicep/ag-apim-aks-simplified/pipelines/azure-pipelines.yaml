@@ -1,14 +1,14 @@
 resources:
   repositories:
-    - repository: ag-apim-aks-simplified-repo
-      endpoint: cbellee
-      trigger:
-        branches:
-          include:
-            - main
-        paths:
-          include:
-            - ./bicep/ag-apim-aks-simplified/infra/*
+  - repository: ag-apim-aks-simplified-repo
+    endpoint: cbellee
+    trigger:
+      branches:
+        include:
+          - main
+      paths:
+        include:
+          - ./bicep/ag-apim-aks-simplified/infra/*
 
 pool:
   vmImage: 'ubuntu-latest'
