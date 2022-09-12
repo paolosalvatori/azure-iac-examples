@@ -51,8 +51,8 @@ stages:
           subscriptionId: ${{parameters.subscriptionId}}
           resourceGroupName: ${{parameters.prefix}}-${{parameters.resourceGroupName}}
           location: ${{parameters.location}}
-          csmFile: '$(System.DefaultWorkingDirectory)/main.bicep'
-          csmParametersFile: $(System.DefaultWorkingDirectory)/${{parameters.prefix}}.parameters.json
+          csmFile: '$(System.ArtifactsDirectory)/main.bicep'
+          csmParametersFile: $(System.ArtifactsDirectory)/${{parameters.prefix}}.parameters.json
           overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "${{parameters.prefix}}.${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
           deploymentMode: Validation
           deploymentName: '${{parameters.prefix}}-validate-infra-deployment'
@@ -63,8 +63,8 @@ stages:
           subscriptionId: ${{parameters.subscriptionId}}
           resourceGroupName: ${{parameters.prefix}}-${{parameters.resourceGroupName}}
           location: ${{parameters.location}}
-          csmFile: '$(System.DefaultWorkingDirectory)/main.bicep'
-          csmParametersFile: $(System.DefaultWorkingDirectory)/${{parameters.prefix}}.parameters.json
+          csmFile: '$(System.ArtifactsDirectory)/main.bicep'
+          csmParametersFile: $(System.ArtifactsDirectory)/${{parameters.prefix}}.parameters.json
           overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "${{parameters.prefix}}.${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
           deploymentMode: Incremental
           deploymentName: '${{parameters.prefix}}-validate-infra-deployment'
