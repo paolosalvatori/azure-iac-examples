@@ -4,7 +4,6 @@ resources:
     type: github
     endpoint: cbellee
     name: cbellee/azure-iac-examples
-
 trigger:
   branches:
     include:
@@ -12,9 +11,8 @@ trigger:
   paths:
     include:
       - ./bicep/ag-apim-aks-simplified/infra/*
-
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
   poolName: 'Azure Pipelines'
 
 variables:
@@ -23,7 +21,7 @@ variables:
   - name: azureConnection
     value: 'internal_azure_subscription'
   - name: vmImage
-    value: 'ubuntu-latest'
+    value: 'windows-latest'
   - name: poolName
     value: 'Azure Pipelines'
   - name: subscriptionId
