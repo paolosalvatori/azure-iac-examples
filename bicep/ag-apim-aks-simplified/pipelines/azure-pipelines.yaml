@@ -1,37 +1,40 @@
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - bicep/ag-apim-aks-simplified/infra
+resources:
+  repositories:
+    - repository: 
+      trigger:
+        branches:
+          include:
+            - main
+        paths:
+          include:
+            - ./bicep/ag-apim-aks-simplified/infra/*
 
 pool:
   vmImage: 'ubuntu-latest'
   poolName: 'Azure Pipelines'
 
 variables:
-  - name: 'location'
-    value: 'australiaeast'
-  - name: 'azureConnection'
-    value: 'internal_azure_subscription'
-  - name: subscriptionId 
+  - name: location
+    value: australiaeast
+  - name: azureConnection
+    value: internal_azure_subscription'
+  - name: subscriptionId
     value: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
-  - name: 'resourceGroupName'
+  - name: resourceGroupName
     value: 'ag-apim-aks-rg'
-  - name: 'aksAdminGroupObjectId'
+  - name: aksAdminGroupObjectId
     value: 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
-  - name: 'publicDnsZone'
+  - name: publicDnsZone
     value: 'kainiindustries.net'
-  - name: 'publicDnsZoneResourceGroup'
+  - name: publicDnsZoneResourceGroup
     value: 'external-dns-zones-rg'
-  - name: 'kubernetesSpaIpAddress'
+  - name: kubernetesSpaIpAddress
     value: '2.2.2.2'
-  - name: 'keyVaultName'
+  - name: keyVaultName
     value: 'ag-apim-aks-kv'
-  - name: 'keyVaultResourceGroupName'
+  - name: keyVaultResourceGroupName
     value: 'key-vault-rg'
-  - name: 'tlsCertSecretId'
+  - name: tlsCertSecretId
     value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
 
 stages:
