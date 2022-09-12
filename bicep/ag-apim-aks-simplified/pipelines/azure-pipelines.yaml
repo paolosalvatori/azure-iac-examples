@@ -3,7 +3,7 @@ resources:
   - repository: ag-apim-aks-simplified-repo
     type: github
     endpoint: cbellee
-    name: cbelee/azure-iac-examples
+    name: cbellee/azure-iac-examples
 
 trigger:
   branches:
