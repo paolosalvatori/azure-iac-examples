@@ -100,7 +100,7 @@
             ]
         },
         "aksVersion": {
-            "value": "1.23.3"
+            "value": null
         },
         "aksNodeVmSize": {
             "value": "Standard_D2_v2"

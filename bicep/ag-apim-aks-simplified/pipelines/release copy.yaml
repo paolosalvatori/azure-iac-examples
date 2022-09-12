@@ -1,0 +1,114 @@
+parameters:
+  - name: 'vmImage'
+    default: 'ubuntu-latest'
+    type: string
+  - name: 'poolName'
+    default: 'Azure Pipelines'
+  - name: 'location'
+    default: 'australiaeast'
+    type: string
+  - name: 'azure_cxn'
+    default: 'internal_azure_subscription'
+    type: string
+  - name: 'subscriptionId'
+    default: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
+    type: string
+  - name: 'resourceGroupName'
+    default: 'ag-apim-aks-rg'
+    type: string
+  - name:  'aksAdminGroupObjectId'
+    default: 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
+    type: string
+  - name: 'publicDnsZone'
+    type: string
+  - name: 'publicDnsZoneResourceGroup'
+    type: string
+  - name: 'privateDnsZoneName'
+    type: string
+  - name: 'kubernetesSpaIpAddress'
+    type: string
+  - name: 'keyVaultName'
+    type: string
+  - name: 'tlsCertSecretId'
+    type: string
+  - name: 'keyVaultResourceGroupName'
+    type: string
+stages:
+- stage: Dev
+  jobs:
+  - job: Dev
+    variables:
+      - name: 'prefix'
+        value: 'dev'
+    pool:
+      name: ${{parameters.poolName}}
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          buildType: 'current'
+          artifactName: 'drop'
+          targetPath: $(System.ArtifactsDirectory)
+      - task: AzureResourceManagerTemplateDeployment@3
+        displayName: 'Validate Infrastructure Templates'
+        inputs:
+          azureResourceManagerConnection: ${{parameters.azure_cxn}}
+          subscriptionId: ${{parameters.subscriptionId}}
+          resourceGroupName: "${{parameters.prefix}}-${{parameters.resourceGroupName}}"
+          location: '${{parameters.location}}'
+          csmFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/main.bicep'
+          csmParametersFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/$(prefix).parameters.json'
+          overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "$(prefix).${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
+          deploymentMode: Validation
+          deploymentName: '$(prefix)-validate-infra-deployment'
+- stage: Test
+  jobs:
+  - job: Test
+    variables:
+      - name: 'prefix'
+        value: 'test'
+    pool:
+      name: ${{parameters.poolName}}
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          buildType: 'current'
+          artifactName: 'drop'
+          targetPath: $(System.ArtifactsDirectory)
+      - task: AzureResourceManagerTemplateDeployment@3
+        displayName: 'Validate Infrastructure Templates'
+        inputs:
+          azureResourceManagerConnection: ${{parameters.azure_cxn}}
+          subscriptionId: ${{parameters.subscriptionId}}
+          resourceGroupName: "${{parameters.prefix}}-${{parameters.resourceGroupName}}"
+          location: '${{parameters.location}}'
+          csmFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/main.bicep'
+          csmParametersFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/$(prefix).parameters.json'
+          overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "$(prefix).${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
+          deploymentMode: Validation
+          deploymentName: '$(prefix)-validate-infra-deployment'
+- stage: Prod
+  jobs:
+  - job: Prod
+    variables:
+      - name: 'prefix'
+        value: 'pros'
+    pool:
+      name: ${{parameters.poolName}}
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          buildType: 'current'
+          artifactName: 'drop'
+          targetPath: $(System.ArtifactsDirectory)
+      - task: AzureResourceManagerTemplateDeployment@3
+        displayName: 'Validate Infrastructure Templates'
+        inputs:
+          azureResourceManagerConnection: ${{parameters.azure_cxn}}
+          subscriptionId: ${{parameters.subscriptionId}}
+          resourceGroupName: "${{parameters.prefix}}-${{parameters.resourceGroupName}}"
+          location: '${{parameters.location}}'
+          csmFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/main.bicep'
+          csmParametersFile: '$(System.DefaultWorkingDirectory)/_ag-apim-aks-simplified-CI/drop/$(prefix).parameters.json'
+          overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "$(prefix).${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
+          deploymentMode: Validation
+          deploymentName: '$(prefix)-validate-infra-deployment'
