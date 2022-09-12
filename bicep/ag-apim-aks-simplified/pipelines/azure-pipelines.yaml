@@ -35,26 +35,11 @@ variables:
     value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
 
 stages:
-  - template: pipelines/build.yaml
+  - template: build.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
-  - template: pipelines/release.yaml
-    parameters:
-      vmImage: $(vmImage)
-      poolName: $(poolName)
-      location: $(location)
-      azureConnection: $(azureConnection)
-      subscriptionId: $(subscriptionId)
-      resourceGroupName: $(resourceGroupName)
-      aksAdminGroupObjectId: $(aksAdminGroupObjectId)
-      publicDnsZone: $(publicDnsZone)
-      publicDnsZoneResourceGroup: $(publicDnsZoneResourceGroup)
-      kubernetesSpaIpAddress: $(kubernetesSpaIpAddress)
-      keyVaultName: $(keyVaultName)
-      tlsCertSecretId: $(tlsCertSecretId)
-      keyVaultResourceGroupName: $(keyVaultResourceGroupName)
-  - template: pipelines/release.yaml
+  - template: release.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
@@ -69,7 +54,22 @@ stages:
       keyVaultName: $(keyVaultName)
       tlsCertSecretId: $(tlsCertSecretId)
       keyVaultResourceGroupName: $(keyVaultResourceGroupName)
-  - template: pipelines/release.yaml
+  - template: release.yaml
+    parameters:
+      vmImage: $(vmImage)
+      poolName: $(poolName)
+      location: $(location)
+      azureConnection: $(azureConnection)
+      subscriptionId: $(subscriptionId)
+      resourceGroupName: $(resourceGroupName)
+      aksAdminGroupObjectId: $(aksAdminGroupObjectId)
+      publicDnsZone: $(publicDnsZone)
+      publicDnsZoneResourceGroup: $(publicDnsZoneResourceGroup)
+      kubernetesSpaIpAddress: $(kubernetesSpaIpAddress)
+      keyVaultName: $(keyVaultName)
+      tlsCertSecretId: $(tlsCertSecretId)
+      keyVaultResourceGroupName: $(keyVaultResourceGroupName)
+  - template: release.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
