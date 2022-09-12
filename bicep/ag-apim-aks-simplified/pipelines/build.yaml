@@ -16,6 +16,9 @@ stages:
         name: ${{parameters.poolName}}
         vmImage: ${{parameters.vmImage}}
       steps:
+        - checkout: self
+          clean: true
+          persistCredentials: true
         - task: Sam-Cogan.ARMTTKExtension.RunARMTTKTests.RunARMTTKTests@1
           displayName: 'Test Infrastructure Templates'
           inputs:
