@@ -27,7 +27,7 @@ variables:
   - name: subscriptionId
     value: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
   - name: resourceGroupName
-    value: 'ag-apim-aks-rg'
+    value: 'appgwy-apim-aks-rg'
   - name: aksAdminGroupObjectId
     value: 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
   - name: publicDnsZone

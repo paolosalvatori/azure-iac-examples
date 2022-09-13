@@ -1,21 +1,19 @@
 Param (
-    [string]$Location = 'australiaeast',
     [string]$AADTenant = 'kainiindustries.net',
-    [string]$PublicDnsZone = 'kainiindustries.net',
-    [string]$PublicDnsZoneResourceGroup = 'external-dns-zones-rg',
     [string]$Prefix = 'test',
-    [string]$PfxCertificateName = 'star.kainiindustries.net.pfx',
-    [string]$CertificateName = 'star.kainiindustries.net.cer',
-    [SecureString]$CertificatePassword,
-    [string]$AksAdminGroupObjectId = "f6a900e2-df11-43e7-ba3e-22be99d3cede",
-    [string]$ResourceGroupName = "ag-apim-aks-$Location-test-rg",
-    [switch]$DeleteKeyVaultInRemovedState
+    [string]$ApiName
 )
 
 $tenant = (Get-AzDomain $AADTenant)
+
+<#
 $deploymentName = 'ag-apim-aks-deploy'
 $keyVaultDeploymentName = 'kv-deploy'
+#>
+
 $redirectUris = @("http://localhost:3000", "https://api.$PublicDnsZone")
+
+<# 
 $environment = 'dev'
 $semver = '0.1.2'
 $tag = "$environment-$semver"
@@ -23,7 +21,8 @@ $spaImageName = "spa:$tag"
 $orderApiImageName = "order:$tag"
 $productApiImageName = "product:$tag"
 $orderApiPort = "8080"
-$productApiPort = "8081"
+$productApiPort = "8081" 
+#>
 
 $ErrorActionPreference = 'stop'
 
@@ -31,10 +30,10 @@ $ErrorActionPreference = 'stop'
 Import-Module ./AppRegistration.psm1
 
 # remove soft-deleted keyvault with same name
-if ($DeleteKeyVaultInRemovedState) {
+<# if ($DeleteKeyVaultInRemovedState) {
     Get-AzKeyVault -InRemovedState | Remove-AzKeyVault -InRemovedState -Force
 }
-
+ #>
 # app regiatration definitions
 $appRegistrationDefinitions = @(
     @{
@@ -83,70 +82,18 @@ $appRegistrationDefinitions = @(
                 Value              = "Order.Role.Write"
             }
         )
-    },
-    @{
-        Name          = "$Prefix-product-api"
-        Type          = 'api'
-        ApiDefinition = @{
-            RequestedAccessTokenVersion = 2
-            Oauth2PermissionScopes      = @(
-                @{
-                    Value                   = "Product.Read"
-                    AdminConsentDisplayName = "Read product API"
-                    AdminConsentDescription = "Allows the app to read products"
-                    Id                      = (New-Guid).Guid
-                    IsEnabled               = $True
-                    Type                    = "Admin"
-                    UserConsentDisplayName  = "read products"
-                    UserConsentDescription  = "allows app to read products"
-                },
-                @{
-                    Value                   = "Product.Write"
-                    AdminConsentDisplayName = "Write product API"
-                    AdminConsentDescription = "Allows the app to write products"
-                    Id                      = (New-Guid).Guid
-                    IsEnabled               = $True
-                    Type                    = "Admin"
-                    UserConsentDisplayName  = "write products"
-                    UserConsentDescription  = "allows app to write products"
-                }
-            )
-        }
-        ApiRoles      = @(
-            @{
-                AllowedMemberTypes = @("User")
-                Description        = "Product Reader Role"
-                DisplayName        = "Product Reader Role"
-                Id                 = (New-Guid).Guid
-                IsEnabled          = $True
-                Value              = "Product.Role.Read"
-            },
-            @{
-                AllowedMemberTypes = @("User")
-                Description        = "Product Writer Role"
-                DisplayName        = "Product Writer Role"
-                Id                 = (New-Guid).Guid
-                IsEnabled          = $True
-                Value              = "Product.Role.Write"
-            }
-        )
-    }
-    @{
-        Name           = "$Prefix-react-spa"
-        Type           = 'client'
-        ResourceAccess = @()
-        RedirectUris   = $redirectUris
     }
 )
 
 # calculate the first 3 IP addresses in 'AksLoadBalancerSubnet' for K8S services
-$params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
+<# $params = Get-Content ..\infra\main.parameters.json | ConvertFrom-Json
 $aksLoadBalancerSubnetIp = $($params.parameters.vNets.value[1].subnets[2].addressPrefix -split '/')[0] -split '\.'
 $first3Octets = $aksLoadBalancerSubnetIp[0], $aksLoadBalancerSubnetIp[1], $aksLoadBalancerSubnetIp[2] -join '.'
 $orderApiSvcIp = $first3Octets, '4' -join '.'
 $productApiSvcIp = $first3Octets, '5' -join '.'
 $reactSpaSvcIp = $first3Octets, '6' -join '.'
-
+ #>
+<#  
 # create resource group
 $rg = New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Force
 
@@ -170,13 +117,13 @@ $tlsCertificate = Import-AzKeyVaultCertificate -VaultName $kvDeployment.Outputs.
     -Name 'public-tls-certificate' `
     -Password $CertificatePassword `
     -FilePath ../certs/$PfxCertificateName
-
+ #>
 # create AAD application registrations
 Connect-MgGraph -TenantId $tenant.Id -Scopes "Application.ReadWrite.All"
 $appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
 
 # patch react authConfig.json file 
-Write-Host -Object "patching react 'authConfig.js' file"
+<# Write-Host -Object "patching react 'authConfig.js' file"
 $authConfig = Get-Content ../src/spa/src/authConfig_template.js
 $authConfig `
     -replace "{{CLIENT_ID}}", $appRegistrations."$Prefix-react-spa".AppId `
@@ -188,27 +135,27 @@ $authConfig `
     -replace "{{ORDER_API_ENDPOINT}}", "https://api.$PublicDnsZone/api/order/orders" `
     -replace "{{PRODUCT_API_ENDPOINT}}", "https://api.$PublicDnsZone/api/product/products" `
     -replace "{{REDIRECT_URI}}", "https://api.$PublicDnsZone" > ../src/spa/src/authConfig.js
-
+ #>
 # generate API policy XML documents
-Write-Host -Object "Generating APIM policy XML files"
+Write-Host -Object "Generating APIM policy XML file"
 $xml = Get-Content .\api-policy-template.xml     
 
 $xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-order-api".AppId `
+    -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-$ApiName-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$orderApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Order.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Order.Role.Write" `
     -replace "{{TENANT_NAME}}", $AADTenant > ./order-api-policy.xml
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
+<# $xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
     -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-product-api".AppId `
     -replace "{{SERVICE_URL}}", "http://$productApiSvcIp" `
     -replace "{{READ_ROLE_NAME}}", "Product.Role.Read" `
     -replace "{{WRITE_ROLE_NAME}}", "Product.Role.Write" `
-    -replace "{{TENANT_NAME}}", $AADTenant > ./product-api-policy.xml
+    -replace "{{TENANT_NAME}}", $AADTenant > ./product-api-policy.xml #>
 
 # deploy bicep template
-Write-Host -Object "Deploying infrastructure"
+<# Write-Host -Object "Deploying infrastructure"
 New-AzResourceGroupDeployment `
     -Name $deploymentName `
     -ResourceGroupName $rg.ResourceGroupName `
@@ -228,9 +175,10 @@ New-AzResourceGroupDeployment `
     -keyVaultName $kvDeployment.Outputs.keyVaultName.value `
     -tlsCertSecretId $($tlsCertificate.SecretId | ConvertTo-SecureString -AsPlainText -Force) `
     -Verbose
+#>
 
 # get deployment output
-$deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
+<# $deployment = Get-AzResourceGroupDeployment -Name $deploymentName -ResourceGroupName $rg.ResourceGroupName
 
 # stop & start the app gateway for it to get the updated DNS zone!!!!
 $appgwy = Get-AzApplicationGateway -Name $deployment.Outputs.appGwyName.value -ResourceGroupName $rg.ResourceGroupName
@@ -240,8 +188,9 @@ Stop-AzApplicationGateway -ApplicationGateway $appgwy
 
 Write-Host -Object "Starting App Gateway"
 Start-AzApplicationGateway -ApplicationGateway $appgwy
+#>
 
-# build container images in ACR
+<# # build container images in ACR
 Write-Host -Object "Bulding Order container image"
 az acr build -r $deployment.Outputs.acrName.value `
     -t $orderApiImageName `
@@ -273,3 +222,4 @@ $(Get-Content -Path ../manifests/spa.yaml) -replace "{{IMAGE_TAG}}", "$($deploym
 
 # add admin consent for react spa app registration
 az ad app permission admin-consent --id $appRegistrations."$Prefix-react-spa".AppId
+ #>

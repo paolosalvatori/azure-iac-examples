@@ -28,7 +28,7 @@ var hostNameConfigurations = [
   }
 ]
 
-resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
+resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
   name: apimName
   location: location
   sku: apimSku
