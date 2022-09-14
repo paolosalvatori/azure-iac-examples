@@ -13,8 +13,6 @@ parameters:
   - name: 'azureConnection'
     default: 'internal_azure_subscription'
     type: string
-  - name: kubernetesServiceConnection
-    type: string
   - name: apiImageName
     type: string
   - name: apiSvcIp
