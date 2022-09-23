@@ -44,7 +44,7 @@ stages:
     displayName: 'infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: ${{env}}
+    environment: ${{variables.env}}
     strategy:
       runOnce:
         deploy:
