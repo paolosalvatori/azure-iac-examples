@@ -14,6 +14,9 @@
         "zones": {
             "value": []
         },
+        "environment": {
+            "value": "test"
+        },
         "privateDnsZoneName": {
             "value": null
         },

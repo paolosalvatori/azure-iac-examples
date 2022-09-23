@@ -17,6 +17,9 @@
         "zones": {
             "value": []
         },
+        "environment": {
+            "value": "dev"
+        },
         "keyVaultResourceGroupName": {
             "value": null
         },

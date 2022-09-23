@@ -21,6 +21,9 @@
                 "3"
             ]
         },
+        "environment": {
+            "value": "prod"
+        },
         "keyVaultResourceGroupName": {
             "value": null
         },
