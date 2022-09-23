@@ -43,7 +43,7 @@ variables:
   - name: tlsCertSecretId
     value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
   - name: gitRepoUrl
-    value: 'https://github.com/cbellee/azure-iac-examples.git'
+    value: 'https://github.com/cbellee/appgwy-apim-aks-gitops.git'
 
 stages:
   - template: build.yaml
@@ -56,7 +56,6 @@ stages:
       poolName: $(poolName)
       location: $(location)
       environment: dev
-      gitRepoUrl: $(gitRepoUrl)
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)
@@ -67,6 +66,7 @@ stages:
       keyVaultName: $(keyVaultName)
       tlsCertSecretId: $(tlsCertSecretId)
       keyVaultResourceGroupName: $(keyVaultResourceGroupName)
+      gitRepoUrl: $(gitRepoUrl)
   - template: release.yaml
     parameters:
       vmImage: $(vmImage)
@@ -83,6 +83,7 @@ stages:
       keyVaultName: $(keyVaultName)
       tlsCertSecretId: $(tlsCertSecretId)
       keyVaultResourceGroupName: $(keyVaultResourceGroupName)
+      gitRepoUrl: $(gitRepoUrl)
   - template: release.yaml
     parameters:
       vmImage: $(vmImage)
@@ -99,6 +100,7 @@ stages:
       keyVaultName: $(keyVaultName)
       tlsCertSecretId: $(tlsCertSecretId)
       keyVaultResourceGroupName: $(keyVaultResourceGroupName)
+      gitRepoUrl: $(gitRepoUrl)
 
 
      

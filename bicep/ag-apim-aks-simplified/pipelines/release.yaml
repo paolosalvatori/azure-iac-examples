@@ -32,6 +32,9 @@ parameters:
   - name: 'tlsCertSecretId'
     type: string
   - name: 'keyVaultResourceGroupName'
+    type: string
+  - name: gitRepoUrl
+    type: string
 stages:
 - stage: ag-apim-aks-simplified-${{parameters.environment}}
   jobs:
@@ -58,7 +61,7 @@ stages:
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/${{parameters.environment}}.parameters.json
-                overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "${{parameters.environment}}.${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}}'
+                overrideParameters: '-publicDnsZoneName ${{parameters.publicDnsZone}} -publicDnsZoneResourceGroup ${{parameters.publicDnsZoneResourceGroup}} -privateDnsZoneName "${{parameters.environment}}.${{parameters.publicDnsZone}}" -aksAdminGroupObjectId ${{parameters.aksAdminGroupObjectId}} -kubernetesSpaIpAddress ${{parameters.reactSpaSvcIp}} -keyVaultName ${{parameters.keyVaultName}} -tlsCertSecretId ${{parameters.tlsCertSecretId}} -location ${{parameters.location}} -keyVaultResourceGroupName ${{parameters.keyVaultResourceGroupName}} -gitRepoUrl ${{parameters.gitRepoUrl}}'
                 deploymentMode: Validation
                 deploymentName: '${{parameters.environment}}-validate-infra-deployment'
             - task: AzureResourceManagerTemplateDeployment@3
