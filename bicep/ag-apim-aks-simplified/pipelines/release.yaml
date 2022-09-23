@@ -33,7 +33,7 @@ parameters:
     type: string
   - name: 'keyVaultResourceGroupName'
 stages:
-- stage: ${{parameters.environment}}
+- stage: ag-apim-aks-simplified-${{parameters.environment}}
   jobs:
   - deployment: 
     displayName: 'infrastructure_deployment'
