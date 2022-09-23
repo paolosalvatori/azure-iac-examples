@@ -11,6 +11,9 @@
         "publicDnsZoneName": {
             "value": null
         },
+        "zones": {
+            "value": null
+        },
         "privateDnsZoneName": {
             "value": null
         },

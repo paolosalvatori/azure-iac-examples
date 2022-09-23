@@ -42,6 +42,8 @@ variables:
     value: 'key-vault-rg'
   - name: tlsCertSecretId
     value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
+  - name: gitRepoUrl
+    value: 'https://github.com/cbellee/azure-iac-examples.git'
 
 stages:
   - template: build.yaml
@@ -53,7 +55,8 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
-      prefix: dev
+      environment: dev
+      gitRepoUrl: $(gitRepoUrl)
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)
@@ -69,7 +72,7 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
-      prefix: test
+      environment: test
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)
@@ -85,7 +88,7 @@ stages:
       vmImage: $(vmImage)
       poolName: $(poolName)
       location: $(location)
-      prefix: prod
+      environment: prod
       azureConnection: $(azureConnection)
       subscriptionId: $(subscriptionId)
       resourceGroupName: $(resourceGroupName)

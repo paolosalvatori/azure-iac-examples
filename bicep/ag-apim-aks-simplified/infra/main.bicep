@@ -1,8 +1,11 @@
 param tags object
 param location string
+param zones array
 
 @secure()
 param tlsCertSecretId string
+param environment string
+param gitRepoUrl string
 param keyVaultName string
 param keyVaultResourceGroupName string
 param vNets array
@@ -163,6 +166,7 @@ module apiManagementModule './modules/apim.bicep' = {
   name: 'module-apim'
   params: {
     tags: tags
+    zones: zones
     location: location
     retentionInDays: 30
     workspaceId: azMonitorModule.outputs.workspaceId
@@ -282,6 +286,15 @@ module aks 'modules/aks.bicep' = {
     prefix: suffix
     logAnalyticsWorkspaceId: azMonitorModule.outputs.workspaceId
     adminGroupObjectID: aksAdminGroupObjectId
+  }
+}
+
+module flux_extension 'modules/flux-extension.bicep' = {
+  name: 'fluxDeploy'
+  params: {
+    aksClusterName: aks.outputs.aksClusterName
+    gitRepoUrl: gitRepoUrl
+    environmentName: environment
   }
 }
 

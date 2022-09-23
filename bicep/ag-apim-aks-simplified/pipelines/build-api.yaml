@@ -10,10 +10,10 @@ parameters:
   - name: environment
     type: string
     default: 'dev'
-  - name: 'azureConnection'
-    default: 'internal_azure_subscription'
+  - name: resourceGroupName
     type: string
-  - name: kubernetesServiceConnection
+  - name: azureConnection
+    default: 'internal_azure_subscription'
     type: string
   - name: apiImageName
     type: string
@@ -39,38 +39,18 @@ stages:
           inputs:
             ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
             ConnectedServiceNameARM: $(azureConnection)
-            resourceGroupName: '$(environment)-appgwy-apim-aks-rg'
+            resourceGroupName: $(resourceGroupName)
             whenLastDeploymentIsFailed: 'fail'
             deploymentNameFilter: '$(environment)-infra-deployment'
         - task: AzureCLI@2
-          displayName: 'build container app'
+          displayName: 'build & push container'
           inputs:
             azureSubscription: ${{azureConnection}}
             inlineScript: |
               Write-Host -Object "Bulding container image"
               az acr build `
                 -r $(acrName) `
-                -t $(apiImageName) `
+                -t $(acrName).azurecr.io/$(apiImageName) `
                 --build-arg SERVICE_PORT=$(apiPort) `
                 -f $(System.DefaultWorkingDirectory)/bicep/ag-apim-aks-simplified/src/Dockerfile "$(System.DefaultWorkingDirectory)/bicep/ag-apim-aks-simplified/src/$(apiName)"
             ScriptType: pscore
-        - task: AzureCLI@2
-          displayName: 'patch manifest files'
-          inputs:
-            azureSubscription: $(azureConnection)
-            scriptType: pscore
-            inlineScript: |
-              $(Get-Content -Path "$(System.DefaultWorkingDirectory)/bicep/ag-apim-aks-simplified/manifests/$(apiName).yaml") -replace "{{IMAGE_TAG}}", "$(acrName).azurecr.io/$(apiImageName)" -replace "{{SVC_IP_ADDRESS}}", $(apiSvcIp)
-        - task: CopyFiles@2
-          displayName: 'Copy Kubernetes manifests to Artifact Staging Directory'
-          inputs:
-            SourceFolder: '$(System.DefaultWorkingDirectory)/bicep/ag-apim-aks-simplified/manifests'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)'
-            Contents: |
-              **\manifests\namespace.yaml
-              **\manifests\$(apiName.yaml)
-        - task: PublishBuildArtifacts@1
-          displayName: 'Publish Artifact: manifests'
-          inputs:
-            ArtifactName: manifests
-            

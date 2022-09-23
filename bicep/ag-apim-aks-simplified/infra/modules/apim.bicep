@@ -15,6 +15,7 @@ param hubVnetId string
 param spokeVnetId string
 param workspaceId string
 param retentionInDays int = 30
+param zones array
 
 var suffix = uniqueString(resourceGroup().id)
 var apimName = 'api-mgmt-${suffix}'
@@ -32,6 +33,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-12-01-preview' = {
   name: apimName
   location: location
   sku: apimSku
+  zones: zones
   identity: {
     type: 'SystemAssigned'
   }

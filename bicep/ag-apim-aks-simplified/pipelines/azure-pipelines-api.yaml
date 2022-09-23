@@ -10,92 +10,28 @@ trigger:
       - main
   paths:
     include:
-      - ./bicep/ag-apim-aks-simplified/infra/*
+      - ./bicep/ag-apim-aks-simplified/*
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
   poolName: 'Azure Pipelines'
 
 variables:
-  - name: location
-    value: 'australiaeast'
   - name: azureConnection
     value: 'internal_azure_subscription'
   - name: vmImage
-    value: 'windows-latest'
+    value: 'ubuntu-latest'
   - name: poolName
     value: 'Azure Pipelines'
-  - name: subscriptionId
-    value: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
-  - name: resourceGroupName
-    value: 'ag-apim-aks-rg'
-  - name: aksAdminGroupObjectId
-    value: 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
-  - name: publicDnsZone
-    value: 'kainiindustries.net'
-  - name: publicDnsZoneResourceGroup
-    value: 'external-dns-zones-rg'
-  - name: reactSpaSvcIp
-    value: '2.2.2.2'
-  - name: keyVaultName
-    value: 'ag-apim-aks-kv'
-  - name: keyVaultResourceGroupName
-    value: 'key-vault-rg'
-  - name: tlsCertSecretId
-    value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
 
 stages:
-  - template: build.yaml
+  - template: build-api.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
-  - template: release.yaml
-    parameters:
-      vmImage: $(vmImage)
-      poolName: $(poolName)
-      location: $(location)
-      prefix: dev
+      environment: dev
       azureConnection: $(azureConnection)
-      subscriptionId: $(subscriptionId)
-      resourceGroupName: $(resourceGroupName)
-      aksAdminGroupObjectId: $(aksAdminGroupObjectId)
-      publicDnsZone: $(publicDnsZone)
-      publicDnsZoneResourceGroup: $(publicDnsZoneResourceGroup)
-      reactSpaSvcIp: $(reactSpaSvcIp)
-      keyVaultName: $(keyVaultName)
-      tlsCertSecretId: $(tlsCertSecretId)
-      keyVaultResourceGroupName: $(keyVaultResourceGroupName)
-  - template: release.yaml
-    parameters:
-      vmImage: $(vmImage)
-      poolName: $(poolName)
-      location: $(location)
-      prefix: test
-      azureConnection: $(azureConnection)
-      subscriptionId: $(subscriptionId)
-      resourceGroupName: $(resourceGroupName)
-      aksAdminGroupObjectId: $(aksAdminGroupObjectId)
-      publicDnsZone: $(publicDnsZone)
-      publicDnsZoneResourceGroup: $(publicDnsZoneResourceGroup)
-      reactSpaSvcIp: $(reactSpaSvcIp)
-      keyVaultName: $(keyVaultName)
-      tlsCertSecretId: $(tlsCertSecretId)
-      keyVaultResourceGroupName: $(keyVaultResourceGroupName)
-  - template: release.yaml
-    parameters:
-      vmImage: $(vmImage)
-      poolName: $(poolName)
-      location: $(location)
-      prefix: prod
-      azureConnection: $(azureConnection)
-      subscriptionId: $(subscriptionId)
-      resourceGroupName: $(resourceGroupName)
-      aksAdminGroupObjectId: $(aksAdminGroupObjectId)
-      publicDnsZone: $(publicDnsZone)
-      publicDnsZoneResourceGroup: $(publicDnsZoneResourceGroup)
-      reactSpaSvcIp: $(reactSpaSvcIp)
-      keyVaultName: $(keyVaultName)
-      tlsCertSecretId: $(tlsCertSecretId)
-      keyVaultResourceGroupName: $(keyVaultResourceGroupName)
-
-
+      resourceGroupName: $(environment)-appgwy-apim-aks-rg
+      apiImageName: order-api:v0.1.0
+      apiName: order-api
+      apiPort: '8080'
      
