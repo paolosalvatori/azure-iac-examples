@@ -36,7 +36,7 @@ parameters:
   - name: gitRepoUrl
     type: string
 stages:
-- stage: ag-apim-aks-simplified-${{parameters.environment}}
+- stage: ag_apim_aks_simplified_${{parameters.environment}}
   jobs:
   - deployment: 
     displayName: 'infrastructure_deployment'
