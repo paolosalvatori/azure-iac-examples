@@ -39,10 +39,12 @@ stages:
 - stage: ${{parameters.environment}}
   jobs:
   - deployment: 
+    variables: 
+      env: ${{parameters.environment}}
     displayName: 'infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: ${{parameters.environment}}
+    environment: $(env)
     strategy:
       runOnce:
         deploy:
