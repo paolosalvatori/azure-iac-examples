@@ -221,6 +221,7 @@ module updateApiManagementModule './modules/apim.bicep' = {
   ]
   name: 'module-update-apim'
   params: {
+    zones: zones
     tags: tags
     location: location
     retentionInDays: 30
