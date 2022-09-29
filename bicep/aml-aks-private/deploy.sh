@@ -1,5 +1,5 @@
 LOCATION='australiaeast'
-PREFIX='aml-private'
+PREFIX='aml-private-01'
 DEPLOYMENT_NAME='infra-deployment'
 RG_NAME="${PREFIX}-rg"
 
