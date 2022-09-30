@@ -342,23 +342,6 @@ module appGwyApiPublicDnsRecord 'modules/publicDnsHostRecord.bicep' = {
   }
 }
 
-resource test 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
-  name: 'test-nsg'
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'test'
-        properties: {
-          access: 'Allow'
-          direction: 'Outbound'
-          protocol: 'Tcp'
-        }
-      }
-    ]
-  }
-}
-
 output appGwyName string = applicationGatewayModule.outputs.appGwyName
 output appGwyId string = applicationGatewayModule.outputs.appGwyId
 output appGwyFqdn string = applicationGatewayModule.outputs.appGwyPublicDnsName
