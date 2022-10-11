@@ -44,7 +44,7 @@ stages:
     displayName: 'dev_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: dev
+    environment: ag-apim-aks-simplified-dev
     strategy:
       runOnce:
         deploy:
@@ -84,7 +84,7 @@ stages:
     displayName: 'test_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: test
+    environment: ag-apim-aks-simplified-test
     strategy:
       runOnce:
         deploy:
@@ -124,7 +124,7 @@ stages:
     displayName: 'prod_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: prod
+    environment: ag-apim-aks-simplified-prod
     strategy:
       runOnce:
         deploy:
