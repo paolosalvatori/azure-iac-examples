@@ -44,6 +44,8 @@ variables:
     value: 'https://ag-apim-aks-kv.vault.azure.net/secrets/kainiindustries-wildcard-cert'
   - name: gitRepoUrl
     value: 'https://github.com/cbellee/appgwy-apim-aks-gitops.git'
+  - name: aksVersion
+    value: 1.23.12
 
 stages:
   - template: build.yaml
@@ -67,3 +69,4 @@ stages:
       tlsCertSecretId: $(tlsCertSecretId)
       keyVaultResourceGroupName: $(keyVaultResourceGroupName)
       gitRepoUrl: $(gitRepoUrl)
+      aksVersion: $(aksVersion)

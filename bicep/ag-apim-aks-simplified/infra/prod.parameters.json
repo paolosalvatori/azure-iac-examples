@@ -33,6 +33,9 @@
         "location": {
             "value": null
         },
+        "aksVersion": {
+            "value": null
+        },
         "vNets": {
             "value": [
                 {

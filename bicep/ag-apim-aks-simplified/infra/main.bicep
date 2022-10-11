@@ -14,6 +14,7 @@ param kubernetesSpaIpAddress string
 param publicDnsZoneName string
 param privateDnsZoneName string
 param publicDnsZoneResourceGroup string
+param aksVersion string
 
 var suffix = uniqueString(resourceGroup().id)
 var appGwySeparatedAddressprefix = split(vNets[0].subnets[0].addressPrefix, '.')
@@ -279,6 +280,7 @@ module aks 'modules/aks.bicep' = {
   name: 'module-aks'
   params: {
     location: location
+    aksVersion: aksVersion
     tags: tags
     addOns: {}
     enablePrivateCluster: false
