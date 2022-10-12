@@ -2,6 +2,8 @@ param location string
 @description('Optional DNS prefix to use with hosted Kubernetes API server FQDN.')
 param aksDnsPrefix string = 'aks'
 
+param zones array = []
+
 @description('Disk size (in GB) to provision for each of the agent pool nodes. This value ranges from 30 to 1023.')
 @minValue(30)
 @maxValue(1023)
@@ -82,11 +84,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-06-02-previ
       {
         name: 'system'
         mode: 'System'
-        availabilityZones: [
-          '1'
-          '2'
-          '3'
-        ]
+        availabilityZones: zones
         count: 1
         enableAutoScaling: true
         minCount: aksMinNodeCount
@@ -103,11 +101,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-06-02-previ
       {
         name: 'linux'
         mode: 'User'
-        availabilityZones: [
-          '1'
-          '2'
-          '3'
-        ]
+        availabilityZones: zones
         osDiskSizeGB: aksAgentOsDiskSizeGB
         count: aksNodeCount
         minCount: aksMinNodeCount
