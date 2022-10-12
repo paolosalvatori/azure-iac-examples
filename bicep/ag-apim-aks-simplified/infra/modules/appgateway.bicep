@@ -9,6 +9,7 @@ param gatewaySku object = {
   capacity: '1'
 }
 
+param zones array = []
 param privateDnsZoneName string
 param workspaceId string
 param retentionInDays int = 30
@@ -47,6 +48,7 @@ resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
   name: appGwyName
   location: location
+  zones: zones
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {

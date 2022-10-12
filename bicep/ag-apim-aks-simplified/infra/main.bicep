@@ -1,6 +1,6 @@
 param tags object
 param location string
-param zones array
+param zones array = []
 
 @secure()
 param tlsCertSecretId string
@@ -253,6 +253,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
   params: {
     suffix: suffix
     location: location
+    zones: zones
     umidResourceId: appGatewayManagedIdentity.outputs.id
     kubernetesSpaIpAddress: kubernetesSpaIpAddress
     privateDnsZoneName: privateDnsZoneName
@@ -281,6 +282,7 @@ module aks 'modules/aks.bicep' = {
   params: {
     location: location
     aksVersion: aksVersion
+    zones: []
     tags: tags
     addOns: {}
     enablePrivateCluster: false
