@@ -2,8 +2,9 @@ param aksClusterName string
 param gitRepoUrl string
 
 @allowed([
-  'staging'
-  'production'
+  'dev'
+  'test'
+  'prod'
 ])
 param environmentName string
 
