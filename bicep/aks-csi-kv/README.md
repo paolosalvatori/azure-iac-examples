@@ -1,4 +1,4 @@
-# AKS CSI driver for Keyvault  with multiple User Managed Identites & Keyvaults
+# AKS CSI driver for Keyvault  with multiple User Managed Identities & Keyvaults
 This example demonstrates how to use the AKS CSI driver for KeyVault to allow pods in two different namespaces to read secrets from two key vaults using two different managed identities.
 
 ## Pre-requisites
