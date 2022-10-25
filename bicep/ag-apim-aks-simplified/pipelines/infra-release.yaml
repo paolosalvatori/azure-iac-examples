@@ -37,6 +37,7 @@ parameters:
     type: string
   - name: gitRepoUrl
     type: string
+
 stages:
 - stage: dev
   jobs:
@@ -44,7 +45,7 @@ stages:
     displayName: 'dev_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: ag-apim-aks-simplified-dev
+    environment: ag-apim-aks-dev
     strategy:
       runOnce:
         deploy:
@@ -59,7 +60,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: dev-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-dev-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/dev.parameters.json
@@ -71,7 +72,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: dev-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-dev-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/dev.parameters.json
@@ -84,7 +85,7 @@ stages:
     displayName: 'test_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: ag-apim-aks-simplified-test
+    environment: ag-apim-aks-test
     strategy:
       runOnce:
         deploy:
@@ -99,7 +100,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: test-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-test-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/test.parameters.json
@@ -111,7 +112,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: test-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-test-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/test.parameters.json
@@ -124,7 +125,7 @@ stages:
     displayName: 'prod_infrastructure_deployment'
     pool:
       name: ${{parameters.poolName}}
-    environment: ag-apim-aks-simplified-prod
+    environment: ag-apim-aks-prod
     strategy:
       runOnce:
         deploy:
@@ -139,7 +140,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: prod-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-prod-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/prod.parameters.json
@@ -151,7 +152,7 @@ stages:
               inputs:
                 azureResourceManagerConnection: ${{parameters.azureConnection}}
                 subscriptionId: ${{parameters.subscriptionId}}
-                resourceGroupName: prod-${{parameters.resourceGroupName}}
+                resourceGroupName: ${{parameters.resourceGroupName}}-prod-${{parameters.location}}-rg
                 location: ${{parameters.location}}
                 csmFile: '$(System.ArtifactsDirectory)/main.bicep'
                 csmParametersFile: $(System.ArtifactsDirectory)/prod.parameters.json

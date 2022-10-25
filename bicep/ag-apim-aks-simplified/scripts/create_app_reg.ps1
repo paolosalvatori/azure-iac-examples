@@ -1,15 +1,9 @@
 Param (
     [CmdletBinding()]
-    [string]$AADTenant = 'kainiindustries.net',
-    [string]$PublicDnsZone = 'kainiindustries.net',
-    [string]$Prefix = 'test',
-
-    [string]$ApiSvcIp = '1.1.1.1',
-    [string]$Environment = 'dev',
-    [string]$Semver = '0.1.2',
-    [string]$ApiPort = "8081",
-    [string]$ResourceGroupName = "$Environment-ag-apim-aks-rg",
-    [string]$DeploymentName = "$Environment-infra-deployment"
+    [string]$AADTenant,
+    [string]$PublicDnsZone,
+    [string]$Prefix,
+    [string]$ApiName
 )
 
 $ErrorActionPreference = 'Stop'
@@ -72,32 +66,13 @@ $appRegistrationDefinitions = @(
 
 # create AAD application registrations
 Connect-MgGraph -TenantId $tenant.Id -Scopes "Application.ReadWrite.All"
-$appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id
+$appRegistrations = New-AppRegistrations -AppRegistrations $appRegistrationDefinitions -TenantId $tenant.Id 
 
-# generate API policy XML documents
-Write-Host -Object "Generating APIM policy XML file"
-$xml = Get-Content .\api-policy-template.xml     
+$appRegistrationId = $appRegistrations."$Prefix-$ApiName-api".AppId
+$appReadRoleName = "$ApiName.Role.Read"
+$appWriteRoleName = "$ApiName.Role.Write"
 
-$xml -replace "{{APP_GWY_FQDN}}", "api.$PublicDnsZone" `
-    -replace "{{AUDIENCE_API}}", $appRegistrations."$Prefix-$ApiName-api".AppId `
-    -replace "{{SERVICE_URL}}", "http://$ApiSvcIp" `
-    -replace "{{READ_ROLE_NAME}}", "$ApiName.Role.Read" `
-    -replace "{{WRITE_ROLE_NAME}}", "$ApiName.Role.Write" `
-    -replace "{{TENANT_NAME}}", $AADTenant > ./product-api-policy.xml
-
-<# Write-Host -Object "Bulding container image"
-az acr build -r $deployment.Outputs.acrName.value `
-    -t $apiImageName `
-    --build-arg SERVICE_PORT=$ApiPort `
-    -f ../src/Dockerfile "../src/$ApiName" #>
-
-<# # apply kubernetes manifests
-Write-Host -Object "Applying Kubernetes manifests"
-Import-AzAksCredential -ResourceGroupName $ResourceGroupName -Name $deployment.Outputs.aksClusterName.Value -Admin -Force
-
-# create k8s namespace
-kubectl apply -f ../manifests/namespace.yaml
-
-# apply k8s manifest
-$(Get-Content -Path "../manifests/$apiName.yaml") -replace "{{IMAGE_TAG}}", "$($deployment.Outputs.acrName.Value).azurecr.io/$apiImageName" -replace "{{SVC_IP_ADDRESS}}", $ApiSvcIp | kubectl apply -f -
- #>
+# set variables for next pipeline step
+Write-Host "##vso[task.setvariable variable=appRegistrationId;]$appRegistrationId"
+Write-Host "##vso[task.setvariable variable=appReadRoleName;]$appReadRoleName"
+Write-Host "##vso[task.setvariable variable=appWriteRoleName;]$appWriteRoleName"

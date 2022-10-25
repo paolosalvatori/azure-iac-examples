@@ -8,16 +8,16 @@ trigger:
   branches:
     include:
       - main
-#  paths:
-#    include:
-#      - ./bicep/ag-apim-aks-simplified/infra/*
+  paths:
+    include:
+      - ./bicep/ag-apim-aks-simplified/infra/*
 pool:
   vmImage: 'windows-latest'
   poolName: 'Azure Pipelines'
 
 variables:
   - name: location
-    value: 'westcentralus'
+    value: 'australiaeast'
   - name: azureConnection
     value: 'internal_azure_subscription'
   - name: vmImage
@@ -27,7 +27,7 @@ variables:
   - name: subscriptionId
     value: 'b2375b5f-8dab-4436-b87c-32bc7fdce5d0'
   - name: resourceGroupName
-    value: 'appgwy-apim-aks-$(location)-rg'
+    value: 'ag-apim-aks'
   - name: aksAdminGroupObjectId
     value: 'f6a900e2-df11-43e7-ba3e-22be99d3cede'
   - name: publicDnsZone
@@ -48,11 +48,11 @@ variables:
     value: 1.23.12
 
 stages:
-  - template: build.yaml
+  - template: infra-build.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
-  - template: release.yaml
+  - template: infra-release.yaml
     parameters:
       vmImage: $(vmImage)
       poolName: $(poolName)
