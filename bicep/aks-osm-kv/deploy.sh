@@ -46,14 +46,20 @@ echo "UAMI_CLIENT_ID: ${UAMI_CLIENT_ID}"
 echo "UAMI_TENANT: ${UAMI_TENANT}"
 echo "KUBELET_IDENTITY_CLIENT_ID: ${KUBELET_IDENTITY_CLIENT_ID}"
 
-# create Root CA private key and use it to sign the Root CA certificate
-openssl genrsa -out ./certs/keypair.pem 2048
-openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./certs/keypair.pem -out ./certs/private.key
-openssl req -x509 -new -nodes -key ./certs/private.key -sha256 -days 1825 -out ./certs/ca.crt
+# create Root CA private key
+openssl genrsa -out ./certs/ca.pem 2048
 
-# upload .crt & .key files to Azure KeyVault as secret objects
-az keyvault secret set --name kainiindustries-net-crt --vault-name $KV_NAME --file ./certs/ca.crt
-az keyvault secret set --name kainiindustries-net-key --vault-name $KV_NAME --file ./certs/private.key
+# convert the root CA private key to pkcs8 format
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./certs/ca.pem -out ./certs/ca.key
+
+# create a certificate signing request
+openssl req -x509 -new -nodes -key ./certs/ca.key -sha256 -days 1825 -out ./certs/ca.crt -subj "/C=AU/ST=NSW/L=Sydney/O=IT/CN=osm.kainiindustries.net"
+
+# concatenate certificate and private key to a single .PEM file
+cat ./certs/ca.crt ./certs/ca.key >> ./certs/bundle.pem
+
+# upload .PEM certificate to Azure Key Vault
+az keyvault certificate import --vault-name $KV_NAME -n kainiindustries-net-bundle -f ./certs/bundle.pem
 
 # get aks cluster credentials
 az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
@@ -109,12 +115,12 @@ spec:
     objects: |
         array:
         - |
-            objectName: kainiindustries-net-crt
-            objectType: secret
+            objectName: kainiindustries-net-bundle
+            objectType: cert
             objectAlias: root-certificate
         - |
-            objectName: kainiindustries-net-key
-            objectType: secret
+            objectName: kainiindustries-net-bundle
+            objectType: key
             objectAlias: root-certificate-private-key
   secretObjects:
     - secretName: osm-ca-bundle
@@ -198,7 +204,8 @@ kubectl patch meshconfig osm-mesh-config -n $OSM_SYSTEM_NAMESPACE --patch '{"spe
 kubectl apply -f ./manifests/allow-bookbuyer-smi.yaml
 
 ':
-# restart osm control plane if certificte has been updated
+# restart osm control plane when root certificate is updated in key vault 
+# and synced to the cluster as a Kubernetes Secret
 kubectl rollout restart deploy osm-controller -n $OSM_SYSTEM_NAMESPACE
 kubectl rollout restart deploy osm-injector -n $OSM_SYSTEM_NAMESPACE
 kubectl rollout restart deploy osm-bootstrap -n $OSM_SYSTEM_NAMESPACE

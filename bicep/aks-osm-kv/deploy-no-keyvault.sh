@@ -18,30 +18,24 @@ az deployment group create \
     --parameters aksVersion=$LATEST_K8S_VERSION \
     --parameters dnsPrefix=$DNS_PREFIX
 
-# az aks enable-addons -g $RG_NAME -n $CLUSTER_NAME --addons azure-keyvault-secrets-provider,open-service-mesh,web_application_routing --enable-secret-rotation
-
 CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name aks-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
 az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
 
 az aks update -g $RG_NAME -n $CLUSTER_NAME --enable-secret-rotation
 KUBELET_IDENTITY_CLIENT_ID=$(az aks show -n $CLUSTER_NAME -g $RG_NAME --query addonProfiles.azureKeyvaultSecretsProvider.identity.clientId -o tsv)
 
-# patch root-cert-secret-temaplte.yaml with base64 encoded private.key & certificate.crt
-p=$(echo $(cat ./certs/private.key | base64 -w 0))
-c=$(echo $(cat ./certs/certificate.crt | base64 -w 0))
+openssl genrsa -out ./certs/ca.pem 2048
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./certs/ca.pem -out ./certs/ca.key
+openssl req -x509 -new -nodes -key ./certs/ca.key -sha256 -days 1825 -out ./certs/ca.crt -subj "/C=AU/ST=NSW/L=Sydney/O=IT/CN=osm.kainiindustries.net"
+
+# patch root-cert-secret-template.yaml with base64 encoded private key & certificate
+p=$(echo $(cat ./certs/ca.key | base64 -w 0))
+c=$(echo $(cat ./certs/ca.crt | base64 -w 0))
 sed "s/<<BASE_64_CERTIFICATE>>/${c}/g; s/<<BASE_64_PRIVATE_KEY>>/${p}/g" ./manifests/root-cert-secret-template.yaml > ./manifests/root-cert-secret.yaml
 
-# create root-certificate secret object in kubernetes
+# create root certificate secret object in kubernetes
 k apply -f ./manifests/root-cert-secret.yaml -n osm-system
 
 helm repo add osm https://openservicemesh.github.io/osm
 helm repo update
-
 helm install my-osm osm/osm --namespace osm-system
-
-# install azure-vote example app using helm chart
-# helm repo add azure-samples https://azure-samples.github.io/helm-charts/
-# helm install azure-vote azure-samples/azure-vote
-
-# uninstall helm chart
-# helm uninstall azure-vote
