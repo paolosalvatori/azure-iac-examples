@@ -7,7 +7,7 @@ UAMI='akv-csi-user-assigned-identity'
 SERVICE_ACCOUNT_NAME="workload-identity-sa" 
 OSM_SYSTEM_NAMESPACE="osm-system"
 FEDERATED_IDENTITY_NAME="aksfederatedidentity"
-CERTIFICATE_OBJECT_NAME="osm-self-signed-root-certificate"
+CERTIFICATE_OBJECT_NAME="kainiindustries-net-bundle"
 DNS_PREFIX='aks-csi-workload-identity'
 
 # add preview Az CLI extension
