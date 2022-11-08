@@ -11,10 +11,10 @@ CERTIFICATE_OBJECT_NAME="osm-self-signed-root-certificate"
 DNS_PREFIX='aks-csi-workload-identity'
 
 # add preview Az CLI extension
-# az feature register --namespace "Microsoft.ContainerService" --name "EnableWorkloadIdentityPreview"
-# az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/EnableWorkloadIdentityPreview')].{Name:name,State:properties.state}"
-# az provider register -n Microsoft.ContainerService
-# az extension add --name aks-preview
+az feature register --namespace "Microsoft.ContainerService" --name "EnableWorkloadIdentityPreview"
+az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/EnableWorkloadIdentityPreview')].{Name:name,State:properties.state}"
+az provider register -n Microsoft.ContainerService
+az extension add --name aks-preview
 
 # create resource group
 az group create --location $LOCATION --name $RG_NAME
