@@ -9,8 +9,8 @@ param sshPublicKey string
 param userName string = 'localadmin'
 param dnsPrefix string
 param appGwyUamiName string = 'appgateway-uami'
-param privateDnsZoneName string = 'internal.kainiindustries.net'
-param publicDnsZoneName string = 'kainiindustries.net'
+param privateDnsZoneName string
+param publicDnsZoneName string
 param nginxBackendIpAddress string
 param internalHostName string
 param keyVaultName string
