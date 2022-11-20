@@ -1,4 +1,4 @@
-# Application Gateway, NGINX Ingress & OSM Service Mesh TLS/mTLS configuration
+# Application Gateway, NGINX Ingress with a private IP & OSM Service Mesh TLS/mTLS configuration
 
 A demonstration of how to configure a secure ingress path from Azure Application Gateway to a pod running in AKS as part of an OSM service mesh.
 
