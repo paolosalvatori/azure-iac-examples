@@ -34,7 +34,7 @@ c=$(echo $(cat ./certs/ca.crt | base64 -w 0))
 sed "s/<<BASE_64_CERTIFICATE>>/${c}/g; s/<<BASE_64_PRIVATE_KEY>>/${p}/g" ./manifests/root-cert-secret-template.yaml > ./manifests/root-cert-secret.yaml
 
 # create root certificate secret object in kubernetes
-k apply -f ./manifests/root-cert-secret.yaml -n osm-system
+kubectl apply -f ./manifests/root-cert-secret.yaml -n osm-system
 
 helm repo add osm https://openservicemesh.github.io/osm
 helm repo update

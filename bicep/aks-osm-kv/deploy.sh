@@ -56,10 +56,12 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./certs/ca.pem -out .
 openssl req -x509 -new -nodes -key ./certs/ca.key -sha256 -days 1825 -out ./certs/ca.crt -subj "/C=AU/ST=NSW/L=Sydney/O=IT/CN=osm.kainiindustries.net"
 
 # concatenate certificate and private key to a single .PEM file
-cat ./certs/ca.crt ./certs/ca.key >> ./certs/bundle.pem
+cat ./certs/ca.crt ./certs/ca.key > ./certs/bundle.pem
 
 # upload .PEM certificate to Azure Key Vault
 az keyvault certificate import --vault-name $KV_NAME -n kainiindustries-net-bundle -f ./certs/bundle.pem
+
+az keyvault certificate show --vault-name $KV_NAME --name kainiindustries-net-bundle
 
 # get aks cluster credentials
 az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
@@ -120,7 +122,7 @@ spec:
             objectAlias: root-certificate
         - |
             objectName: kainiindustries-net-bundle
-            objectType: key
+            objectType: secret
             objectAlias: root-certificate-private-key
   secretObjects:
     - secretName: osm-ca-bundle
@@ -184,7 +186,7 @@ kubectl create namespace bookwarehouse
 # add namespaces to osm mesh
 osm namespace add bookstore bookbuyer bookthief bookwarehouse
 
-kubectl patch meshconfig osm-mesh-config -n $OSM_SYSTEM_NAMESPACE --patch '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":true}}}'  --type=merge
+kubectl patch meshconfig osm-mesh-config -n $OSM_SYSTEM_NAMESPACE --patch '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":true}}}' --type=merge
 
 kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.0/manifests/apps/bookbuyer.yaml
 kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.0/manifests/apps/bookthief.yaml
@@ -198,14 +200,38 @@ kubectl get pods,deployments,serviceaccounts,services,endpoints -n bookstore
 kubectl get pods,deployments,serviceaccounts,services,endpoints -n bookwarehouse
 
 # disable permissive mode (the default), which allows all pods in onboarded namspaces to communicate
-kubectl patch meshconfig osm-mesh-config -n $OSM_SYSTEM_NAMESPACE --patch '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":false}}}'  --type=merge
+kubectl patch meshconfig osm-mesh-config -n $OSM_SYSTEM_NAMESPACE --patch '{"spec":{"traffic":{"enablePermissiveTrafficPolicyMode":false}}}' --type=merge
 
 # apply SMI policy to allow bookbuyer to buy books & prevent book thief
 kubectl apply -f ./manifests/allow-bookbuyer-smi.yaml
 
-':
+#############################
+# secret update
+#############################
+
+# remove secret
+k delete secret osm-ca-bundle -n osm-system
+# remove CSI pod
+k delete po  busybox-secrets-store-inline-user-msi -n osm-system
+
+# create newe root CA cert & key
+# create Root CA private key
+openssl genrsa -out ./certs/ca.pem 2048
+
+# convert the root CA private key to pkcs8 format
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./certs/ca.pem -out ./certs/ca.key
+
+# create a certificate signing request
+openssl req -x509 -new -nodes -key ./certs/ca.key -sha256 -days 1825 -out ./certs/ca.crt -subj "/C=AU/ST=NSW/L=Sydney/O=IT/CN=osm.kainiindustries.net"
+
+# concatenate certificate and private key to a single .PEM file
+cat ./certs/ca.crt ./certs/ca.key > ./certs/bundle.pem
+
+# upload .PEM certificate to Azure Key Vault
+az keyvault certificate import --vault-name $KV_NAME -n kainiindustries-net-bundle -f ./certs/bundle.pem
+
 # restart osm control plane when root certificate is updated in key vault 
-# and synced to the cluster as a Kubernetes Secret
+# and sync to the cluster as a Kubernetes Secret
 kubectl rollout restart deploy osm-controller -n $OSM_SYSTEM_NAMESPACE
 kubectl rollout restart deploy osm-injector -n $OSM_SYSTEM_NAMESPACE
 kubectl rollout restart deploy osm-bootstrap -n $OSM_SYSTEM_NAMESPACE
@@ -216,5 +242,4 @@ kubectl delete namespace bookthief
 kubectl delete namespace bookwarehouse
 
 # uninstall OSM
-helm uninstall my-osm osm/osm --namespace $OSM_SYSTEM_NAMESPACE
-'
+# helm uninstall my-osm osm/osm --namespace $OSM_SYSTEM_NAMESPACE
