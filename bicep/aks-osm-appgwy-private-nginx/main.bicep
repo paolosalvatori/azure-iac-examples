@@ -1,7 +1,7 @@
 param location string
 param adminGroupObjectID string
 param tags object
-param k8sVersion string = '1.25.2'
+param k8sVersion string
 param vmSku string
 param addressPrefix string
 param subnets array

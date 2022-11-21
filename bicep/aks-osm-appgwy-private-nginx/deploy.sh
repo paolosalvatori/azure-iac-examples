@@ -13,7 +13,7 @@ PUBLIC_PFX_CERT_NAME='public-certificate-pfx'
 PRIVATE_KEY_FILE='./certs/key.pem'
 PRIVATE_CERT_FILE='./certs/cert.crt'
 PRIVATE_CERT_KEY_FILE='./certs/key.pem'
-PRIVATE_CERT_NAME="internal-nginx-${DOMAIN_NAME}"
+PRIVATE_CERT_NAME=$(echo "internal-nginx-${DOMAIN_NAME}" | sed 's/\./-/') # replace any '.' chars with '-'
 PRIVATE_PFX_CERT_FILE="./certs/internal-nginx-${DOMAIN_NAME}.pfx"
 
 INTERNAL_HOST_NAME="internal.nginx.${DOMAIN_NAME}"
