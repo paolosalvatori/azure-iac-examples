@@ -8,7 +8,7 @@ PUBLIC_DNS_ZONE_RG_NAME='external-dns-zones-rg'
 
 DOMAIN_NAME='kainiindustries.net'
 INTERNAL_DOMAIN_NAME="internal.${DOMAIN_NAME}"
-PUBLIC_PFX_CERT_FILE='./certs/star.kainiindustries.net.bundle.pfx'
+PUBLIC_PFX_CERT_FILE="./certs/star.${DOMAIN_NAME}.bundle.pfx"
 PUBLIC_PFX_CERT_NAME='public-certificate-pfx'
 PRIVATE_KEY_FILE='./certs/key.pem'
 PRIVATE_CERT_FILE='./certs/cert.crt'
@@ -98,6 +98,10 @@ helm install $NGINX_INGRESS_SERVICE ingress-nginx/ingress-nginx \
 nginx_ingress_host="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 nginx_ingress_port="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].port}')"
 
+####################
+# Configure OSM
+####################
+
 # disable sidecar injection for the NGINX controller pods
 osm namespace add $NGINX_INGRESS_NAMESPACE --mesh-name $osm_mesh_name --disable-sidecar-injection
 
@@ -128,6 +132,9 @@ certificate:
     - ingress-nginx.ingress-nginx.cluster.local # corresponds to the NGINX <service account>.<namespace>.cluster.local 
     validityDuration: 24h
 '
+#####################
+# Configure Ingress
+#####################
 
 # apply Ingress & IngressBackend configuration
 kubectl apply -f - <<EOF
