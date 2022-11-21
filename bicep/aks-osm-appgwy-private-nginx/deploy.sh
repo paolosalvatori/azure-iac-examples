@@ -64,7 +64,6 @@ az deployment group create \
     --parameters tlsCertSecretId=$PFX_CERT_SID \
     --parameters keyVaultName=$KV_NAME \
     --parameters publicDnsZoneName=$DOMAIN_NAME \
-    --parameters privateDnsZoneName=$INTERNAL_DOMAIN_NAME \
     --parameters internalHostName=$INTERNAL_HOST_NAME \
     --parameters publicDnsZoneResourceGroup=$PUBLIC_DNS_ZONE_RG_NAME
 

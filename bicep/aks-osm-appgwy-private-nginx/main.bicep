@@ -9,7 +9,6 @@ param sshPublicKey string
 param userName string = 'localadmin'
 param dnsPrefix string
 param appGwyUamiName string = 'appgateway-uami'
-param privateDnsZoneName string
 param publicDnsZoneName string
 param nginxBackendIpAddress string
 param internalHostName string
@@ -81,12 +80,6 @@ module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
     ]
     keyVaultName: kv.name
   }
-}
-
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  location: 'global'
-  tags: tags
-  name: privateDnsZoneName
 }
 
 module vnet './modules/vnet.bicep' = {
@@ -222,7 +215,6 @@ resource assign_NetworkContributor_to_kubelet 'Microsoft.Authorization/roleAssig
 module applicationGatewayModule './modules/appgateway.bicep' = {
   dependsOn: [
     vnet
-    privateDnsZone
     appgatewayKeyVaultPolicies
   ]
   name: 'module-applicationGateway'
