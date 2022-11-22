@@ -1,22 +1,23 @@
 LOCATION='australiaeast'
 SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 LATEST_K8S_VERSION=$(az aks get-versions -l $LOCATION | jq -r -c '[.orchestrators[] | .orchestratorVersion][-1]')
-PREFIX='aks-osm-appgwy-nginx'
+PREFIX='aks-osm-appgwy-nginx-3'
 RG_NAME="$PREFIX-rg"
 SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
-PUBLIC_DNS_ZONE_RG_NAME='external-dns-zones-rg'
 
+PUBLIC_DNS_ZONE_RG_NAME='external-dns-zones-rg'
 DOMAIN_NAME='kainiindustries.net'
-INTERNAL_DOMAIN_NAME="internal.${DOMAIN_NAME}"
+INTERNAL_HOST_NAME="internal.nginx.${DOMAIN_NAME}"
+
 PUBLIC_PFX_CERT_FILE="./certs/star.${DOMAIN_NAME}.bundle.pfx"
 PUBLIC_PFX_CERT_NAME='public-certificate-pfx'
+
 PRIVATE_KEY_FILE='./certs/key.pem'
 PRIVATE_CERT_FILE='./certs/cert.crt'
-PRIVATE_CERT_KEY_FILE='./certs/key.pem'
 PRIVATE_CERT_NAME=$(echo "internal-nginx-${DOMAIN_NAME}" | sed 's/\./-/') # replace any '.' chars with '-'
 PRIVATE_PFX_CERT_FILE="./certs/internal-nginx-${DOMAIN_NAME}.pfx"
 
-INTERNAL_HOST_NAME="internal.nginx.${DOMAIN_NAME}"
+# grep IP from internal-ingress.yaml
 INGRESS_PRIVATE_IP=$(cat ./manifests/internal-ingress.yaml | grep -oE "\b[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}")
 
 NGINX_INGRESS_NAMESPACE='ingress-nginx-osm'
@@ -29,50 +30,54 @@ APP_NAMESPACE='httpbin'
 source ./.env
 
 # create self-signed TLS certificate for NGINX 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${PRIVATE_KEY_FILE} -out ${PRIVATE_CERT_FILE} -subj "/CN=${INTERNAL_HOST_NAME}/O=${INTERNAL_HOST_NAME}" -addext "subjectAltName = DNS:${INTERNAL_HOST_NAME}"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout ${PRIVATE_KEY_FILE} \
+  -out ${PRIVATE_CERT_FILE} \
+  -subj "/CN=${INTERNAL_HOST_NAME}/O=${INTERNAL_HOST_NAME}" \
+  -addext "subjectAltName = DNS:${INTERNAL_HOST_NAME}"
 
 # convert self-signed TLS certificate to PFX format
-openssl pkcs12 -export -inkey $PRIVATE_KEY_FILE -in $PRIVATE_CERT_FILE -out $PRIVATE_PFX_CERT_FILE 
+openssl pkcs12 -export -inkey $PRIVATE_KEY_FILE -in $PRIVATE_CERT_FILE -out $PRIVATE_PFX_CERT_FILE -password pass:$PRIVATE_CERT_PASSWORD
 
 # create resource group
 az group create --location $LOCATION --name $RG_NAME
 
 # deploy key vault
 az deployment group create \
-    --resource-group $RG_NAME \
-    --name kv-deployment \
-    --template-file ./modules/keyvault.bicep \
-    --parameters keyVaultAdminObjectId=$ADMIN_GROUP_OBJECT_ID \
-    --parameters location=$LOCATION
+  --resource-group $RG_NAME \
+  --name kv-deployment \
+  --template-file ./modules/keyvault.bicep \
+  --parameters keyVaultAdminObjectId=$ADMIN_GROUP_OBJECT_ID \
+  --parameters location=$LOCATION
 
 KV_NAME=$(az deployment group show --resource-group $RG_NAME --name kv-deployment --query 'properties.outputs.keyVaultName.value' -o tsv)
 
 # upload public tls certificate to Key Vault
-PFX_CERT_PROPS=$(az keyvault certificate import --vault-name $KV_NAME -n $PUBLIC_PFX_CERT_NAME -f $PUBLIC_PFX_CERT_FILE --password $PFX_CERT_PASSWORD)
-PFX_CERT_SID=$(echo $PFX_CERT_PROPS | jq .sid -r)
+PUBLIC_CERT_PROPS=$(az keyvault certificate import --vault-name $KV_NAME -n $PUBLIC_PFX_CERT_NAME -f $PUBLIC_PFX_CERT_FILE --password $PUBLIC_CERT_PASSWORD)
+PUBLIC_CERT_SID=$(echo $PUBLIC_CERT_PROPS | jq .sid -r)
 
 # upload backend trusted root tls certificate to Key Vault
-CERT_PROPS=$(az keyvault certificate import --vault-name $KV_NAME -n $PRIVATE_CERT_NAME -f $PRIVATE_PFX_CERT_FILE)
-CERT_SID=$(echo $CERT_PROPS | jq .sid -r)
+PRIVATE_CERT_PROPS=$(az keyvault certificate import --vault-name $KV_NAME -n $PRIVATE_CERT_NAME -f $PRIVATE_PFX_CERT_FILE --password $PRIVATE_CERT_PASSWORD)
+PRIVATE_CERT_SID=$(echo $PRIVATE_CERT_PROPS | jq .sid -r)
 
 # deploy infrastructure
 az deployment group create \
-    --resource-group $RG_NAME \
-    --name infra-deployment \
-    --template-file ./main.bicep \
-    --parameters @main.parameters.json \
-    --parameters location=$LOCATION \
-    --parameters sshPublicKey="$SSH_KEY" \
-    --parameters adminGroupObjectID=$ADMIN_GROUP_OBJECT_ID \
-    --parameters k8sVersion=$LATEST_K8S_VERSION \
-    --parameters dnsPrefix=$PREFIX \
-    --parameters nginxBackendIpAddress=$INGRESS_PRIVATE_IP \
-    --parameters nginxTlsCertSecretId=$CERT_SID \
-    --parameters tlsCertSecretId=$PFX_CERT_SID \
-    --parameters keyVaultName=$KV_NAME \
-    --parameters publicDnsZoneName=$DOMAIN_NAME \
-    --parameters internalHostName=$INTERNAL_HOST_NAME \
-    --parameters publicDnsZoneResourceGroup=$PUBLIC_DNS_ZONE_RG_NAME
+  --resource-group $RG_NAME \
+  --name infra-deployment \
+  --template-file ./main.bicep \
+  --parameters @main.parameters.json \
+  --parameters location=$LOCATION \
+  --parameters sshPublicKey="$SSH_KEY" \
+  --parameters adminGroupObjectID=$ADMIN_GROUP_OBJECT_ID \
+  --parameters k8sVersion=$LATEST_K8S_VERSION \
+  --parameters dnsPrefix=$PREFIX \
+  --parameters nginxBackendIpAddress=$INGRESS_PRIVATE_IP \
+  --parameters nginxTlsCertSecretId=$PRIVATE_CERT_SID \
+  --parameters tlsCertSecretId=$PUBLIC_CERT_SID \
+  --parameters keyVaultName=$KV_NAME \
+  --parameters publicDnsZoneName=$DOMAIN_NAME \
+  --parameters internalHostName=$INTERNAL_HOST_NAME \
+  --parameters publicDnsZoneResourceGroup=$PUBLIC_DNS_ZONE_RG_NAME
 
 CLUSTER_NAME=$(az deployment group show --resource-group $RG_NAME --name infra-deployment --query 'properties.outputs.aksClusterName.value' -o tsv)
 az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
@@ -86,18 +91,15 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
 # Use Helm to deploy an NGINX ingress controller
 helm install $NGINX_INGRESS_SERVICE ingress-nginx/ingress-nginx \
-    --version 4.3.0 \
-    --namespace $NGINX_INGRESS_NAMESPACE \
-    --create-namespace \
-    --set controller.replicaCount=2 \
-    --set controller.nodeSelector."kubernetes\.io/os"=linux \
-    --set controller.admissionWebhooks.patch.nodeSelector."kubernetes\.io/os"=linux \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
-    --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
-    -f ./manifests/internal-ingress.yaml
-
-# nginx_ingress_host="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-# nginx_ingress_port="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].port}')"
+  --version 4.3.0 \
+  --namespace $NGINX_INGRESS_NAMESPACE \
+  --create-namespace \
+  --set controller.replicaCount=2 \
+  --set controller.nodeSelector."kubernetes\.io/os"=linux \
+  --set controller.admissionWebhooks.patch.nodeSelector."kubernetes\.io/os"=linux \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+  --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
+  -f ./manifests/internal-ingress.yaml
 
 ####################
 # Configure OSM
@@ -123,9 +125,9 @@ kubectl get meshconfig osm-mesh-config -n $OSM_NAMESPACE -o json |
 jq --arg clientCertName "${NGINX_CLIENT_CERT_NAME}" --arg osmNamespace "${OSM_NAMESPACE}" --arg nginxName "${NGINX_INGRESS_SERVICE}.${NGINX_INGRESS_NAMESPACE}.cluster.local" '.spec.certificate += {"ingressGateway": {"secret": {"name": $clientCertName,"namespace": $osmNamespace},"subjectAltNames": [$nginxName],"validityDuration": "24h"}}' |
 kubectl apply -f -
 
-#####################
-# Configure Ingress
-#####################
+######################################
+# Configure Ingress & IngressBackend
+######################################
 
 # apply Ingress & IngressBackend configuration
 kubectl apply -f - <<EOF
@@ -180,9 +182,5 @@ spec:
     name: ${NGINX_INGRESS_SERVICE}.${NGINX_INGRESS_NAMESPACE}.cluster.local
 EOF
 
-# dump TLS cert & private key
-kubectl get secret $PRIVATE_CERT_NAME -n httpbin -o jsonpath="{.data.tls\.crt}" | base64 -d
-kubectl get secret $PRIVATE_CERT_NAME -n httpbin -o jsonpath="{.data.tls\.key}" | base64 -d
-
-# test the connection from Internet-facing App Gateway -> Private IP NGINX -> OSM IngressBackend -> Httpbin Service -> Httpbin Pod
-curl https://httpbin.kainiindustries.net 
+# test the connection from Application Gateway
+curl "https://httpbin.$DOMAIN_NAME"

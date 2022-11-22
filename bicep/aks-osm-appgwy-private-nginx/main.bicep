@@ -93,43 +93,6 @@ module vnet './modules/vnet.bicep' = {
   }
 }
 
-resource bastionPip 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
-  name: 'bastion-pip-${suffix}'
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-  }
-}
-
-resource bastion 'Microsoft.Network/bastionHosts@2022-05-01' = {
-  name: 'bastion-${suffix}'
-  location: location
-  sku: {
-    name: 'Basic'
-  }
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'ip-config'
-        properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: bastionPip.id
-          }
-          subnet: {
-            id: vnet.outputs.subnets[4].id
-          }
-        }
-      }
-    ]
-  }
-}
-
 module acr './modules/acr.bicep' = {
   name: 'acr-module'
   params: {
