@@ -15,7 +15,7 @@ A demonstration of how to configure a secure ingress path from Azure Application
 
 ## Install
 
-- Place the public TLS certificate in new directory named 'certs'
+- Place your public TLS PFX certificate in new directory named 'certs'
 - Create a local .env file with the following variables
   
     ```bash
