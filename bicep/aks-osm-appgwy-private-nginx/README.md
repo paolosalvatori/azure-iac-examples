@@ -11,7 +11,7 @@ A demonstration of how to configure a secure ingress path from Azure Application
 - A valid Public TLS certificate in .PFX format
 - A local SSH public key (~/.ssh/id_rsa.pub)
 - [Kubectl CLI](https://kubernetes.io/docs/tasks/tools/)
-- [Helm](https://helm.sh/docs/intro/install/)
+- [Helm CLI](https://helm.sh/docs/intro/install/)
 
 ## Install
 
