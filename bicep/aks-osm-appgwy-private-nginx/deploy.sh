@@ -19,6 +19,13 @@ PRIVATE_PFX_CERT_FILE="./certs/internal-nginx-${DOMAIN_NAME}.pfx"
 INTERNAL_HOST_NAME="internal.nginx.${DOMAIN_NAME}"
 INGRESS_PRIVATE_IP=$(cat ./manifests/internal-ingress.yaml | grep -oE "\b[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}")
 
+NGINX_INGRESS_NAMESPACE='ingress-nginx-osm'
+NGINX_INGRESS_SERVICE='ingress-nginx'
+OSM_NAMESPACE='kube-system'
+OSM_MESH_NAME='osm'
+NGINX_CLIENT_CERT_NAME='osm-nginx-client-cert'
+APP_NAMESPACE='httpbin'
+
 source ./.env
 
 # create self-signed TLS certificate for NGINX 
@@ -78,11 +85,6 @@ az aks get-credentials -g $RG_NAME -n $CLUSTER_NAME --admin
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
 # Use Helm to deploy an NGINX ingress controller
-NGINX_INGRESS_NAMESPACE='ingress-nginx-osm'
-NGINX_INGRESS_SERVICE='ingress-nginx'
-OSM_NAMESPACE='kube-system'
-osm_mesh_name='osm'
-
 helm install $NGINX_INGRESS_SERVICE ingress-nginx/ingress-nginx \
     --version 4.3.0 \
     --namespace $NGINX_INGRESS_NAMESPACE \
@@ -102,35 +104,25 @@ nginx_ingress_port="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-
 ####################
 
 # disable sidecar injection for the NGINX controller pods
-osm namespace add $NGINX_INGRESS_NAMESPACE --mesh-name $osm_mesh_name --disable-sidecar-injection
+osm namespace add $NGINX_INGRESS_NAMESPACE --mesh-name $OSM_MESH_NAME --disable-sidecar-injection
 
 # Create a namespace
-kubectl create ns httpbin
+kubectl create ns $APP_NAMESPACE
 
 # Add the namespace to the mesh
-osm namespace add httpbin
+osm namespace add $APP_NAMESPACE
 
 # Deploy the application
-kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.2/manifests/samples/httpbin/httpbin.yaml -n httpbin
+kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.2/manifests/samples/httpbin/httpbin.yaml -n $APP_NAMESPACE
 
 # create k8s secret for Tls cert
-kubectl create secret tls ${PRIVATE_CERT_NAME} --key ${PRIVATE_KEY_FILE} --cert ${PRIVATE_CERT_FILE} -n httpbin
+kubectl create secret tls ${PRIVATE_CERT_NAME} --key ${PRIVATE_KEY_FILE} --cert ${PRIVATE_CERT_FILE} -n $APP_NAMESPACE
 
-# edit the mesh config
 # configure OSM to generate a client certificate for NGINX to use when connecting to the mesh
-kubectl edit meshconfig osm-mesh-config -n $OSM_NAMESPACE
+kubectl get meshconfig osm-mesh-config -n $OSM_NAMESPACE -o json | 
+jq --arg clientCertName "${NGINX_CLIENT_CERT_NAME}" --arg osmNamespace "${OSM_NAMESPACE}" --arg nginxName "${NGINX_INGRESS_SERVICE}.${NGINX_INGRESS_NAMESPACE}.cluster.local" '.spec.certificate += {"ingressGateway": {"secret": {"name": $clientCertName,"namespace": $osmNamespace},"subjectAltNames": [$nginxName],"validityDuration": "24h"}}' |
+kubectl apply -f -
 
-# patch the osm mesh config with the settings below
-:' 
-certificate:
-  ingressGateway:
-    secret:
-      name: osm-nginx-client-cert
-      namespace: kube-system
-    subjectAltNames:
-    - ingress-nginx.ingress-nginx.cluster.local # corresponds to the NGINX <service account>.<namespace>.cluster.local 
-    validityDuration: 24h
-'
 #####################
 # Configure Ingress
 #####################
@@ -140,23 +132,23 @@ kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: httpbin
-  namespace: httpbin
+  name: $APP_NAMESPACE
+  namespace: $APP_NAMESPACE
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     # proxy_ssl_name for a service is of the form <service-account>.<namespace>.cluster.local
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_ssl_name "httpbin.httpbin.cluster.local";
-    nginx.ingress.kubernetes.io/proxy-ssl-secret: "kube-system/osm-nginx-client-cert"
+      proxy_ssl_name "$APP_NAMESPACE.$APP_NAMESPACE.cluster.local";
+    nginx.ingress.kubernetes.io/proxy-ssl-secret: "${OSM_NAMESPACE}/${NGINX_CLIENT_CERT_NAME}"
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "on"
 spec:
   tls:
   - hosts:
-    - internal.nginx.kainiindustries.net
+    - internal.nginx.${DOMAIN_NAME}
     secretName: $PRIVATE_CERT_NAME
   ingressClassName: nginx
   rules:
-  - host: internal.nginx.kainiindustries.net
+  - host: internal.nginx.${DOMAIN_NAME}
     http:
       paths:
         - path: /
@@ -171,7 +163,7 @@ apiVersion: policy.openservicemesh.io/v1alpha1
 kind: IngressBackend
 metadata:
   name: httpbin
-  namespace: httpbin
+  namespace: $APP_NAMESPACE
 spec:
   backends:
   - name: httpbin
@@ -185,7 +177,7 @@ spec:
     name: "$NGINX_INGRESS_SERVICE-controller"
     namespace: $NGINX_INGRESS_NAMESPACE
   - kind: AuthenticatedPrincipal
-    name: ingress-nginx.ingress-nginx-osm.cluster.local
+    name: ${NGINX_INGRESS_SERVICE}.${NGINX_INGRESS_NAMESPACE}.cluster.local
 EOF
 
 # dump TLS cert & private key
