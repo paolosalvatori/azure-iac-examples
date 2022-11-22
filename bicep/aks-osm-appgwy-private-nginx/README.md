@@ -1,4 +1,4 @@
-# Eend to end encryption in transit for Azure Kubernetes Service
+# End to end encryption in transit for Azure Kubernetes Service
 ## Application Gateway <-TLS-> NGINX Ingress (private IP) <-mTLS-> Open Service Mesh 
 
 A demonstration of how to configure a secure ingress path from Azure Application Gateway to a pod running in AKS as part of an OSM service mesh.
