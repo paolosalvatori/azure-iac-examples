@@ -10,6 +10,7 @@ A demonstration of how to configure a secure ingress path from Azure Application
 - Install [Openssl](https://www.openssl.org/)
 - A valid Public TLS certificate in .PFX format
 - A local SSH public key (~/.ssh/id_rsa.pub)
+- [Kubectl CLI]()
 
 ## Install
 
@@ -17,15 +18,20 @@ A demonstration of how to configure a secure ingress path from Azure Application
 - Create a local .env file with the following variables
   
     ```bash
-      PFX_CERT_PASSWORD='your PFX certificate password' # password required to import PFX certificate into Azure Key Vault
-      ADMIN_GROUP_OBJECT_ID='your AAD admin group ObjectId' # AAD group for AKS Cluster Admin role permissions (add your account to this group)
+      PUBLIC_CERT_PASSWORD='your_password' # password required to import public PFX certificate into Azure Key Vault
+      PRIVATE_CERT_PASSWORD='your_password' # password required to import private PFX certificate into Azure Key Vault
+      ADMIN_GROUP_OBJECT_ID='your_AAD_admin_group_objectId' # AAD group for AKS Cluster Admin role permissions (add your account to this group)
     ```
 
-- Modify the script to point to the TLS certificate
+- Modify the following varialbes in the ./deploy.sh script
+  - Public TLS certificate name/path
+  - Domain name
+  - Resource group name where your public Azure DNS zone resides
 
     ```bash
       DOMAIN_NAME='your_public_domain_name'
       PUBLIC_PFX_CERT_FILE='./certs/your_public_domain_tls_pfx_certificate.pfx'
+      PUBLIC_DNS_ZONE_RG_NAME='your_Azure_public_dns_zone_resource_group_name'
     ```
 
 - Run the install script

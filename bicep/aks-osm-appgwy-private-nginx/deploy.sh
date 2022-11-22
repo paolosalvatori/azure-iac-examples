@@ -1,7 +1,7 @@
 LOCATION='australiaeast'
 SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 LATEST_K8S_VERSION=$(az aks get-versions -l $LOCATION | jq -r -c '[.orchestrators[] | .orchestratorVersion][-1]')
-PREFIX='aks-osm-appgwy-nginx-3'
+PREFIX='aks-osm-appgwy-nginx'
 RG_NAME="$PREFIX-rg"
 SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 
@@ -128,6 +128,9 @@ kubectl apply -f -
 ######################################
 # Configure Ingress & IngressBackend
 ######################################
+
+# wait for the nginx controller to come up
+sleep -s 60
 
 # apply Ingress & IngressBackend configuration
 kubectl apply -f - <<EOF
