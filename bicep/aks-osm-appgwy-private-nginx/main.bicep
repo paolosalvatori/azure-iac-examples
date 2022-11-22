@@ -22,9 +22,13 @@ param nginxTlsCertSecretId string
 param tlsCertSecretId string
 
 var suffix = uniqueString(resourceGroup().id)
-var NetworkContributor = '4d97b98b-1d4f-4787-a291-c67834d212e7'
+var azureMonitorWorkspaceName = 'azmon-${suffix}'
+var virtualNetworkName = 'vnet-${suffix}'
+var azureContainerRegistryName = 'acr${suffix}'
+var applicationGatewayName = 'appgwy-${suffix}'
+var networkContributor = '4d97b98b-1d4f-4787-a291-c67834d212e7'
 
-module appGwyUami './modules/user_assigned_mid.bicep' = {
+module appGwyUami './modules/userAssignedManagedIdentity.bicep' = {
   name: 'appGwyUami-module'
   params: {
     location: location
@@ -32,30 +36,20 @@ module appGwyUami './modules/user_assigned_mid.bicep' = {
   }
 }
 
-module azMonitor 'modules/azmon.bicep' = {
+module azMonitorWorkspace 'modules/azureMonitor.bicep' = {
   name: 'azmon-module'
   params: {
     location: location
-    suffix: suffix
+    name: azureMonitorWorkspaceName
   }
 }
 
-module wks './modules/wks.bicep' = {
-  name: 'wks-module'
-  params: {
-    suffix: suffix
-    tags: tags
-    location: location
-    retentionInDays: 30
-  }
-}
-
-resource kv 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
 }
 
 // grant application gateway user managed identity keyvault access policy
-module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
+module appgatewayKeyVaultPolicies 'modules/keyVaultAccessPolicy.bicep' = {
   name: 'module-keyvault-access-policy'
   params: {
     accessPolicies: [
@@ -78,14 +72,14 @@ module appgatewayKeyVaultPolicies 'modules/keyvaultAccessPolicy.bicep' = {
         objectId: appGwyUami.outputs.principalId
       }
     ]
-    keyVaultName: kv.name
+    keyVaultName: keyVault.name
   }
 }
 
-module vnet './modules/vnet.bicep' = {
+module vnet './modules/virtualNetwork.bicep' = {
   name: 'vnet-module'
   params: {
-    suffix: suffix
+    name: virtualNetworkName
     tags: tags
     addressPrefix: addressPrefix
     location: location
@@ -93,25 +87,25 @@ module vnet './modules/vnet.bicep' = {
   }
 }
 
-module acr './modules/acr.bicep' = {
+module azureContainerRegistry './modules/azureContainerRegistry.bicep' = {
   name: 'acr-module'
   params: {
     location: location
-    suffix: suffix
+    name: azureContainerRegistryName
     tags: tags
   }
 }
 
-module aks './modules/aks.bicep' = {
+module aks './modules/azureKubernetesService.bicep' = {
   name: 'aks-module'
   dependsOn: [
     vnet
-    wks
+    azMonitorWorkspace
   ]
   params: {
     location: location
     suffix: suffix
-    logAnalyticsWorkspaceId: wks.outputs.workspaceId
+    logAnalyticsWorkspaceId: azMonitorWorkspace.outputs.workspaceId
     aksAgentOsDiskSizeGB: 60
     aksDnsServiceIP: '10.100.0.10'
     aksDockerBridgeCIDR: '172.17.0.1/16'
@@ -155,7 +149,7 @@ module aks './modules/aks.bicep' = {
       omsagent: {
         enabled: true
         config: {
-          logAnalyticsWorkspaceResourceID: wks.outputs.workspaceId
+          logAnalyticsWorkspaceResourceID: azMonitorWorkspace.outputs.workspaceId
         }
       }
     }
@@ -163,32 +157,32 @@ module aks './modules/aks.bicep' = {
 }
 
 resource assign_NetworkContributor_to_kubelet 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: guid(resourceGroup().id, aks.name, NetworkContributor)
+  name: guid(resourceGroup().id, aks.name, networkContributor)
   scope: resourceGroup()
   dependsOn: [
     aks
   ]
   properties: {
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', NetworkContributor)
+    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', networkContributor)
     principalType: 'ServicePrincipal'
     principalId: aks.outputs.aksClusterManagedIdentityObjectId
   }
 }
 
-module applicationGatewayModule './modules/appgateway.bicep' = {
+module applicationGatewayModule './modules/applicationGateway.bicep' = {
   dependsOn: [
     vnet
     appgatewayKeyVaultPolicies
   ]
-  name: 'module-applicationGateway'
+  name: 'applicationGateway-module'
   params: {
-    suffix: suffix
+    name: applicationGatewayName
     location: location
     umidResourceId: appGwyUami.outputs.id
     nginxBackendIpAddress: nginxBackendIpAddress
     nginxTlsCertSecretId: nginxTlsCertSecretId
     tlsCertSecretId: tlsCertSecretId
-    workspaceId: azMonitor.outputs.workspaceId
+    workspaceId: azMonitorWorkspace.outputs.workspaceId
     frontEndPort: 443
     retentionInDays: 7
     externalHostName: 'httpbin.${publicDnsZoneName}'
@@ -206,7 +200,7 @@ module applicationGatewayModule './modules/appgateway.bicep' = {
 
 module appGwyApiPublicDnsRecord 'modules/publicDnsRecord.bicep' = {
   scope: resourceGroup(publicDnsZoneResourceGroup)
-  name: 'module-appgwy-public-dns-record'
+  name: 'appgwy-public-dns-record-module'
   params: {
     zoneName: publicDnsZoneName
     ipAddress: applicationGatewayModule.outputs.appGwyPublicIpAddress

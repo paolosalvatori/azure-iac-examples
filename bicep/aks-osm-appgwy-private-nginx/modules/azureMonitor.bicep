@@ -1,13 +1,17 @@
-param suffix string
 param location string
-var workspaceName = 'ws-${suffix}'
+param name string
+
+@allowed([
+  'PerGB2018'
+])
+param sku string = 'PerGB2018'
 
 resource azureMonitorWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: workspaceName
+  name: name
   location: location
   properties: {
     sku: {
-      name: 'PerGB2018'
+      name: sku
     }
     retentionInDays: 30
   }

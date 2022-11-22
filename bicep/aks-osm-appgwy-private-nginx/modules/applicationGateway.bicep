@@ -1,6 +1,6 @@
-param suffix string
 param skuName string = 'Standard'
 param umidResourceId string
+param name string
 param location string
 param gatewaySku object = {
   name: 'WAF_v2'
@@ -24,10 +24,9 @@ param externalHostName string
 param internalHostName string
 param nginxBackendIpAddress string
 
-var appGwyPipName = 'appgwy-pip-${suffix}'
-var appGwyName = 'appgwy-${suffix}'
+var appGwyPipName = 'vip-${name}'
 
-resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource appGwyVip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: appGwyPipName
   location: location
   sku: {
@@ -35,7 +34,7 @@ resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
   properties: {
     dnsSettings: {
-      domainNameLabel: appGwyName
+      domainNameLabel: name
     }
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
@@ -45,7 +44,7 @@ resource appGwyPip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 }
 
 resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
-  name: appGwyName
+  name: name
   location: location
   identity: {
     type: 'UserAssigned'
@@ -89,7 +88,7 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: appGwyPip.id
+            id: appGwyVip.id
           }
         }
       }
@@ -132,11 +131,11 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
           requestTimeout: requestTimeOut
           trustedRootCertificates: [
             {
-              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', appGwyName, 'nginx-backend-root-certificate')
+              id: resourceId('Microsoft.Network/applicationGateways/trustedRootCertificates', name, 'nginx-backend-root-certificate')
             }
           ]
           probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGwyName, 'nginx-probe')
+            id: resourceId('Microsoft.Network/applicationGateways/probes', name, 'nginx-probe')
           }
         }
       }
@@ -146,14 +145,14 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'frontend-listener'
         properties: {
           frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGwyName, 'frontend')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', name, 'frontend')
           }
           frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGwyName, 'frontend-port')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', name, 'frontend-port')
           }
           protocol: 'Https'
           sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGwyName, 'tls-certificate')
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', name, 'tls-certificate')
           }
           hostName: externalHostName
           requireServerNameIndication: true
@@ -166,10 +165,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         name: 'nginx-urlpathmapconfig'
         properties: {
           defaultBackendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'nginx-backend')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name, 'nginx-backend')
           }
           defaultBackendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'nginx-http-settings')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', name, 'nginx-http-settings')
           }
           pathRules: [
             {
@@ -179,10 +178,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
                   '/*'
                 ]
                 backendAddressPool: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGwyName, 'nginx-backend')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name, 'nginx-backend')
                 }
                 backendHttpSettings: {
-                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGwyName, 'nginx-http-settings')
+                  id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', name, 'nginx-http-settings')
                 }
               }
             }
@@ -196,10 +195,10 @@ resource appGwy 'Microsoft.Network/applicationGateways@2021-02-01' = {
         properties: {
           ruleType: 'PathBasedRouting'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGwyName, 'frontend-listener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', name, 'frontend-listener')
           }
           urlPathMap: {
-            id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', appGwyName, 'nginx-urlpathmapconfig')
+            id: resourceId('Microsoft.Network/applicationGateways/urlPathMaps', name, 'nginx-urlpathmapconfig')
           }
         }
       }
@@ -279,7 +278,7 @@ resource appGwyDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
   }
 }
 
-output appGwyName string = appGwy.name
+output name string = appGwy.name
 output appGwyId string = appGwy.id
-output appGwyPublicDnsName string = appGwyPip.properties.dnsSettings.fqdn
-output appGwyPublicIpAddress string = appGwyPip.properties.ipAddress
+output appGwyPublicDnsName string = appGwyVip.properties.dnsSettings.fqdn
+output appGwyPublicIpAddress string = appGwyVip.properties.ipAddress
