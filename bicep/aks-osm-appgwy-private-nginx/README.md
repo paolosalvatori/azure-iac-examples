@@ -1,5 +1,5 @@
 # Demonstration of end to end encryption in transit
-## Application Gateway <-TLS-> NGINX Ingress (private IP) <-mTLS-> OSM Service Mesh 
+## Application Gateway <-TLS-> NGINX Ingress (private IP) <-mTLS-> Open Service Mesh 
 
 A demonstration of how to configure a secure ingress path from Azure Application Gateway to a pod running in AKS as part of an OSM service mesh.
 
