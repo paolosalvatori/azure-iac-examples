@@ -96,8 +96,8 @@ helm install $NGINX_INGRESS_SERVICE ingress-nginx/ingress-nginx \
     --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
     -f ./manifests/internal-ingress.yaml
 
-nginx_ingress_host="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-nginx_ingress_port="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].port}')"
+# nginx_ingress_host="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+# nginx_ingress_port="$(kubectl -n "$NGINX_INGRESS_NAMESPACE" get service ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].port}')"
 
 ####################
 # Configure OSM
@@ -116,7 +116,7 @@ osm namespace add $APP_NAMESPACE
 kubectl apply -f https://raw.githubusercontent.com/openservicemesh/osm-docs/release-v1.2/manifests/samples/httpbin/httpbin.yaml -n $APP_NAMESPACE
 
 # create k8s secret for Tls cert
-kubectl create secret tls ${PRIVATE_CERT_NAME} --key ${PRIVATE_KEY_FILE} --cert ${PRIVATE_CERT_FILE} -n $APP_NAMESPACE
+kubectl create secret tls $PRIVATE_CERT_NAME --key $PRIVATE_KEY_FILE --cert $PRIVATE_CERT_FILE -n $APP_NAMESPACE
 
 # configure OSM to generate a client certificate for NGINX to use when connecting to the mesh
 kubectl get meshconfig osm-mesh-config -n $OSM_NAMESPACE -o json | 
@@ -184,5 +184,5 @@ EOF
 kubectl get secret $PRIVATE_CERT_NAME -n httpbin -o jsonpath="{.data.tls\.crt}" | base64 -d
 kubectl get secret $PRIVATE_CERT_NAME -n httpbin -o jsonpath="{.data.tls\.key}" | base64 -d
 
-# test the connection from Internet-facing App Gateway -> Private IP NGINX -> OSM INgressBackend -> Httpbin Service -> Httpbin Pod
+# test the connection from Internet-facing App Gateway -> Private IP NGINX -> OSM IngressBackend -> Httpbin Service -> Httpbin Pod
 curl https://httpbin.kainiindustries.net 
