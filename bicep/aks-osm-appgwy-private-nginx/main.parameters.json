@@ -42,8 +42,7 @@
                 {
                     "name": "vm-subnet",
                     "addressPrefix": "10.0.17.0/24"
-                }
-                ,
+                },
                 {
                     "name": "ApplicationGatewaySubnet",
                     "addressPrefix": "10.0.19.0/24"
