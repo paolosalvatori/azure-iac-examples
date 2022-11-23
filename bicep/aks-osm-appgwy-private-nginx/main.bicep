@@ -194,7 +194,7 @@ module applicationGatewayModule './modules/applicationGateway.bicep' = {
     }
     requestTimeOut: 180
     skuName: 'Standard'
-    subnetId: vnet.outputs.subnets[5].id
+    subnetId: vnet.outputs.subnets[4].id
   }
 }
 
