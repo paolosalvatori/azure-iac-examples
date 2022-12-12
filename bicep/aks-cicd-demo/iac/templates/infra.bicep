@@ -1,7 +1,3 @@
-param tags object
-param location string
-param vNets array
-
 @allowed([
   'dev'
   'test'
@@ -9,11 +5,21 @@ param vNets array
 ])
 param environment string
 
-param networkResourceGroupName string = '${environment}-network-rg'
-param monitorResourceGroupName string = '${environment}-monitor-rg'
-param workloadResourceGroupName string = '${environment}-workload-rg'
+param tags object
+param location string
+param vNets array
+param aksAdminGroupObjectId string
+param aksVersion string = '1.23.12'
+param networkResourceGroupName string = 'demo-network-${environment}-rg'
+param monitorResourceGroupName string = 'demo-monitor-${environment}-rg'
+param workloadResourceGroupName string = 'demo-workload-${environment}-rg'
 
 targetScope = 'subscription'
+
+var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
+var networkContributorRoleDefinitionName = '4d97b98b-1d4f-4787-a291-c67834d212e7'
+var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${networkContributorRoleDefinitionName}'
 
 resource networkResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
@@ -73,10 +79,52 @@ module acr '../modules/acr.bicep' = {
   }
 }
 
+// Azure Kubernetes Service
+module aks '../modules/aks.bicep' = {
+  name: 'module-aks'
+  scope: resourceGroup(workloadResourceGroup.name)
+  params: {
+    location: location
+    aksVersion: aksVersion
+    zones: []
+    tags: tags
+    addOns: {}
+    enablePrivateCluster: false
+    aksSystemSubnetId: vNetsModule[0].outputs.subnetRefs[0].id
+    aksUserSubnetId: vNetsModule[0].outputs.subnetRefs[1].id
+    logAnalyticsWorkspaceId: azMonitorModule.outputs.workspaceId
+    adminGroupObjectID: aksAdminGroupObjectId
+  }
+}
+
+// Assign 'AcrPull' role to AKS cluster kubelet identity
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid(workloadResourceGroupName, aks.name, 'acrPullRoleAssignment')
+  properties: {
+    principalId: aks.outputs.aksKubeletIdentityObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: acrPullRoleId
+    description: 'Assign AcrPull role to AKS cluster'
+  }
+}
+
+// Assign 'Network Contributor' role to AKS cluster system managed identity
+resource aksNetworkContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+  name: guid(workloadResourceGroupName, aks.name, 'aksNetworkContributorRoleAssignment')
+  properties: {
+    principalId: aks.outputs.aksClusterManagedIdentity
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: networkContributorRoleId
+    description: 'Assign Netowrk Contributor role to AKS cluster Managed Identity'
+  }
+}
+
 output acrName string = acr.outputs.registryName
-output hubVnetRef string = vNetsModule[0].outputs.vnetRef
-output hubVnetName string = vNetsModule[0].outputs.vnetName
-output spokeVnetRef string = vNetsModule[1].outputs.vnetRef
-output spokeVnetName string = vNetsModule[1].outputs.vnetName
-output hubVnetSubnets array = vNetsModule[0].outputs.subnetRefs
-output spokeVnetSubnets array = vNetsModule[1].outputs.subnetRefs
+output aksClusterName string = aks.outputs.aksClusterName
+
+//output hubVnetRef string = vNetsModule[0].outputs.vnetRef
+//output hubVnetName string = vNetsModule[0].outputs.vnetName
+//output spokeVnetRef string = vNetsModule[1].outputs.vnetRef
+//output spokeVnetName string = vNetsModule[1].outputs.vnetName
+//output hubVnetSubnets array = vNetsModule[0].outputs.subnetRefs
+//output spokeVnetSubnets array = vNetsModule[1].outputs.subnetRefs

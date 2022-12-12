@@ -1,13 +1,11 @@
 param tags object
 param location string
-param resourceGroupName string
 param aksSystemSubnetId string
 param aksUserSubnetId string
 param aksAdminGroupObjectId string
 param aksVersion string
 param azMonitorMworkspaceId string
 
-var suffix = uniqueString(resourceGroup().id)
 var acrPullRoleDefinitionName = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var acrPullRoleId = '${subscription().id}/providers/Microsoft.Authorization/roleDefinitions/${acrPullRoleDefinitionName}'
 var networkContributorRoleDefinitionName = '4d97b98b-1d4f-4787-a291-c67834d212e7'
@@ -15,7 +13,6 @@ var networkContributorRoleId = '${subscription().id}/providers/Microsoft.Authori
 
 // Azure Kubernetes Service
 module aks '../modules/aks.bicep' = {
-  scope: resourceGroup(resourceGroupName)
   name: 'module-aks'
   params: {
     location: location
@@ -26,7 +23,6 @@ module aks '../modules/aks.bicep' = {
     enablePrivateCluster: false
     aksSystemSubnetId: aksSystemSubnetId
     aksUserSubnetId: aksUserSubnetId
-    prefix: suffix
     logAnalyticsWorkspaceId: azMonitorMworkspaceId
     adminGroupObjectID: aksAdminGroupObjectId
   }

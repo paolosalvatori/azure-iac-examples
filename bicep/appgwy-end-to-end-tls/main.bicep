@@ -1,16 +1,30 @@
 param domainName string
-param frontendPort int
+param location string
+param storageAccountName string
+param storageContainerUri string
+param windowsScriptName string
+param linuxScriptName string
+param windowsBackendHostName string
+param linuxBackendHostName string
 param backendPort int
+param frontendPort int
 param dnsZoneResourceGroup string
 param keyVaultName string
 param frontEndHostName string
-param storageContainerUri string
-param scriptName string
-param location string
-param pfxCertSecretId string
-param pfxCertThumbprint string
+param publicPfxCertId string
+param backendPemCertId string
+param backendPfxThumbprint string
+param trustedRootCertName string = 'trusted-root-cert'
+param trustedRootCertId string 
+param backendPfxCertId string
+param windowsFrontendHostName string = 'iis.kainiindustries.net'
+param linuxFrontendHostName string = 'apache.kainiindustries.net'
+param sshKey string
+param customData string
+
+@secure()
 param winVmPassword string
-param storageAccountName string
+var base64CustomData = base64(customData)
 
 resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   location: location
@@ -57,9 +71,9 @@ module winVmModule './modules/winvm.bicep' = {
     computerName: 'win-vm-1'
     userAssignedManagedIdentityResourceId: userAssignedManagedIdentity.id
     userAssignedManagedIdentityPrincipalId: userAssignedManagedIdentity.properties.principalId
-    pfxCertThumbprint: pfxCertThumbprint
-    scriptUri: '${storageContainerUri}/${scriptName}'
-    pfxCertSecretId: pfxCertSecretId
+    pfxCertThumbprint: backendPfxThumbprint
+    scriptUri: '${storageContainerUri}/${windowsScriptName}'
+    pfxCertSecretId: backendPfxCertId
     domainName: frontEndHostName
     windowsOSVersion: '2016-Datacenter'
     adminPassword: winVmPassword
@@ -70,16 +84,42 @@ module winVmModule './modules/winvm.bicep' = {
   }
 }
 
+module linuxVmModule 'modules/linuxvms.bicep' = {
+  name: 'linuxDeployment'
+  params: {
+    vms: [
+      'linux-vm-01'
+      'linux-vm-02'
+    ]
+    pemCertId: backendPemCertId
+    keyVaultId: resourceId('Microsoft.KeyVault/vaults', keyVaultName)
+    scriptUri: '${storageContainerUri}/${linuxScriptName}'
+    userAssignedManagedIdentityResourceId: userAssignedManagedIdentity.id
+    userAssignedManagedIdentityPrincipalId: userAssignedManagedIdentity.properties.principalId
+    location: location
+    adminUserName: 'localadmin'
+    sshKey: sshKey
+    subnetId: vnetModule.outputs.subnetRefs[1].id
+    vmSize: 'Standard_D2_v3'
+    customData: base64CustomData
+  }
+}
+
 module applicationGatewayModule './modules/appgateway.bicep' = {
   name: 'applicationGatewayDeployment'
   params: {
     userAssignedManagedIdentityResourceId: userAssignedManagedIdentity.id
-    backendHostName: frontEndHostName
+    windowsBackendHostName: windowsBackendHostName
+    linuxBackendHostName: linuxBackendHostName
     backendPort: backendPort
-    backendIpAddress: winVmModule.outputs.ipAddress
-    frontEndHostName: frontEndHostName
+    linuxBackendIpAddresses: linuxVmModule.outputs.vms
+    trustedRootCertName: trustedRootCertName
+    trustedRootCertId: trustedRootCertId
+    windowsBackendIpAddress: winVmModule.outputs.ipAddress
+    linuxFrontEndHostName: linuxFrontendHostName
+    windowsFrontendHostName: windowsFrontendHostName
     location: location
-    pfxCertSecretId: pfxCertSecretId
+    publicPfxCertSecretId: publicPfxCertId
     frontendPort: frontendPort
     subnetId: vnetModule.outputs.subnetRefs[0].id
     maxCapacity: 10

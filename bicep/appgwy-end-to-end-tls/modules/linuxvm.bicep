@@ -1,34 +1,42 @@
 param location string
 param subnetId string
+param name string
 param vmSize string = 'Standard_D2_v3'
-param computerName string
-param dateTimeStamp string = utcNow()
-param storageAccountName string
-param domainName string
-param userAssignedManagedIdentityResourceId string
-param userAssignedManagedIdentityPrincipalId string
-param pfxCertThumbprint string
-param pfxCertSecretId string
-param scriptUri string
-param adminPassword string
+param sshKey string
 param adminUserName string
-@allowed([
-  '2008-R2-SP1'
-  '2012-Datacenter'
-  '2012-R2-Datacenter'
-  '2016-Nano-Server'
-  '2016-Datacenter-with-Containers'
-  '2016-Datacenter'
-  '2019-Datacenter'
-])
+param scriptUri string
+param storageAccountName string
 
-@description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
-param windowsOSVersion string = '2019-Datacenter'
+@secure()
+param pfxCertSecretId string
 
-var roleId = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // 'Storage Blob Data Reader' RoleId
+param dateTimeStamp string = utcNow()
+param userAssignedManagedIdentityPrincipalId string
+param userAssignedManagedIdentityResourceId string
+param imageRef object = {
+  offer: '0001-com-ubuntu-server-focal'
+  publisher: 'Canonical'
+  sku: '20_04-lts'
+  version: 'latest'
+}
+
+var vmName = name
 var suffix = uniqueString(resourceGroup().id)
-var vmName = '${computerName}-${suffix}'
-var nicName = 'web-vm-nic-1-${suffix}'
+var nicName = 'linux-vm-nic-1-${suffix}'
+var roleId = '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1' // 'Storage Blob Data Reader' RoleId
+
+resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
+  name: storageAccountName
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
+  name: guid(resourceGroup().id, 'storageblobreader')
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${roleId}'
+    principalId: userAssignedManagedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
 
 resource vmNic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   location: location
@@ -48,32 +56,12 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
 }
 
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
-  name: guid(resourceGroup().id, 'storageblobreader')
-  properties: {
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/${roleId}'
-    principalId: userAssignedManagedIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource windowsVm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
   location: location
   name: vmName
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${userAssignedManagedIdentityResourceId}': {}
-    }
-  }
   properties: {
     storageProfile: {
-      imageReference: {
-        publisher: 'MicrosoftWindowsServer'
-        offer: 'WindowsServer'
-        sku: windowsOSVersion
-        version: 'latest'
-      }
+      imageReference: imageRef
       osDisk: {
         createOption: 'FromImage'
       }
@@ -89,32 +77,41 @@ resource windowsVm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
       ]
     }
     osProfile: {
-      adminPassword: adminPassword
       adminUsername: adminUserName
-      computerName: computerName
-      windowsConfiguration: {
-        enableAutomaticUpdates: true
-        provisionVMAgent: true
+      computerName: vmName
+      linuxConfiguration: {
+        disablePasswordAuthentication: true
+        ssh: {
+          publicKeys: [
+            {
+              path: '/home/${adminUserName}/.ssh/authorized_keys'
+              keyData: sshKey
+            }
+          ]
+        }
+        patchSettings: {
+          patchMode: 'AutomaticByPlatform'
+        }
       }
     }
   }
 }
 
 resource vmKeyVaultExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07-01' = {
-  name: 'KeyVaultForWindows'
-  parent: windowsVm
+  name: 'KVVMExtensionForLinux'
+  parent: vm
   location: location
   properties: {
     forceUpdateTag: dateTimeStamp
     autoUpgradeMinorVersion: true
     publisher: 'Microsoft.Azure.KeyVault'
-    type: 'KeyVaultForWindows'
-    typeHandlerVersion: '1.0'
+    type: 'KVVMExtensionForLinux'
+    typeHandlerVersion: '2.0'
     settings: {
       secretsManagementSettings: {
         pollingIntervalInS: '3600'
-        certificateStoreName: 'My'
-        certificateStoreLocation: 'LocalMachine'
+        certificateStoreLocation: '/var/lib/waagent/Microsoft.Azure.KeyVault'
+        requireInitialSync: true
         observedCertificates: [
           pfxCertSecretId
         ]
@@ -133,7 +130,7 @@ resource vmScriptExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07
     vmKeyVaultExtension
   ]
   name: 'scriptext'
-  parent: windowsVm
+  parent: vm
   properties: {
     forceUpdateTag: dateTimeStamp
     autoUpgradeMinorVersion: true
@@ -144,7 +141,7 @@ resource vmScriptExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07
       fileUris: [
         scriptUri
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -File iis.ps1 -PfxThumbprint ${pfxCertThumbprint} -WebSiteName "Default Web Site" -DomainName ${domainName}'
+      commandToExecute: 'apache.sh'
     }
     protectedSettings: {
       managedIdentity: {
@@ -154,5 +151,5 @@ resource vmScriptExtension 'Microsoft.Compute/virtualMachines/extensions@2021-07
   }
 }
 
+output hostName string = vm.properties.osProfile.computerName
 output ipAddress string = vmNic.properties.ipConfigurations[0].properties.privateIPAddress
-output hostName string = windowsVm.properties.osProfile.computerName

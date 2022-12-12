@@ -56,14 +56,14 @@ param logAnalyticsWorkspaceId string
 param enableAutoScaling bool = true
 param aksSystemSubnetId string
 param aksUserSubnetId string
-param prefix string
 param adminGroupObjectID string
 param addOns object
 param tags object
 param enablePodSecurityPolicy bool = false
 param enablePrivateCluster bool = false
 
-var aksClusterName = 'aks-${prefix}'
+var suffix = uniqueString(resourceGroup().id)
+var aksClusterName = 'aks-${suffix}'
 
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-06-02-preview' = {
   name: aksClusterName

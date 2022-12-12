@@ -1,14 +1,21 @@
 param location string
-param backendHostName string
-param frontEndHostName string
-param backendIpAddress string
+param windowsBackendHostName string
+param linuxBackendHostName string
+param linuxFrontEndHostName string
+param windowsFrontendHostName string
+param linuxBackendIpAddresses array
+param windowsBackendIpAddress string
+param trustedRootCertName string = 'trusted-root-cert'
+param trustedRootCertId string 
 param minCapacity int = 2
 param maxCapacity int = 10
 param frontendPort int = 443
 param backendPort int
-param pfxCertSecretId string
 param userAssignedManagedIdentityResourceId string
 param subnetId string
+
+@secure()
+param publicPfxCertSecretId string
 
 @allowed([
   'Standard_v2'
@@ -82,11 +89,18 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
       {
         name: certName
         properties: {
-          keyVaultSecretId: pfxCertSecretId
+          keyVaultSecretId: publicPfxCertSecretId
         }
       }
     ]
-    trustedRootCertificates: []
+    trustedRootCertificates: [
+      {
+        name: trustedRootCertName
+        properties: {
+          keyVaultSecretId: trustedRootCertId
+        }
+      }
+    ]
     gatewayIPConfigurations: [
       {
         name: 'ipConfig'
@@ -117,11 +131,24 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
     ]
     backendAddressPools: [
       {
-        name: 'backendPool'
+        name: 'windowsBackendPool'
         properties: {
           backendAddresses: [
             {
-              ipAddress: backendIpAddress
+              ipAddress: windowsBackendIpAddress
+            }
+          ]
+        }
+      }
+      {
+        name: 'linuxBackendPool'
+        properties: {
+          backendAddresses: [
+            {
+              ipAddress: linuxBackendIpAddresses[0]
+            }
+            {
+              ipAddress: linuxBackendIpAddresses[1]
             }
           ]
         }
@@ -130,20 +157,46 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
     probes: []
     backendHttpSettingsCollection: [
       {
-        name: 'backendHttpsSettings'
+        name: 'windowsBackendHttpsSettings'
         properties: {
           port: backendPort
           protocol: 'Https'
           pickHostNameFromBackendAddress: false
-          hostName: backendHostName
+          hostName: windowsBackendHostName
+        }
+      }
+      {
+        name: 'linuxBackendHttpsSettings'
+        properties: {
+          port: backendPort
+          protocol: 'Https'
+          pickHostNameFromBackendAddress: false
+          hostName: linuxBackendHostName
         }
       }
     ]
     httpListeners: [
       {
-        name: 'multiSiteListener'
+        name: 'apacheListener'
         properties: {
-          hostName: frontEndHostName
+          hostName: linuxFrontEndHostName
+          requireServerNameIndication: true
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'frontendIp')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', applicationGatewayName, 'frontendPort')
+          }
+          protocol: 'Https'
+          sslCertificate: {
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', applicationGatewayName, certName)
+          }
+        }
+      }
+      {
+        name: 'iisListener'
+        properties: {
+          hostName: windowsFrontendHostName
           requireServerNameIndication: true
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', applicationGatewayName, 'frontendIp')
@@ -160,17 +213,32 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-06-01' =
     ]
     requestRoutingRules: [
       {
-        name: 'https_rule'
+        name: 'windows_https_rule'
         properties: {
           ruleType: 'Basic'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'multiSiteListener')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'iisListener')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'backendPool')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'windowsBackendPool')
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'backendHttpsSettings')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'windowsBackendHttpsSettings')
+          }
+        }
+      }
+      {
+        name: 'linux_https_rule'
+        properties: {
+          ruleType: 'Basic'
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', applicationGatewayName, 'apacheListener')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', applicationGatewayName, 'linuxBackendPool')
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', applicationGatewayName, 'linuxBackendHttpsSettings')
           }
         }
       }
