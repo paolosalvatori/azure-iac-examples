@@ -4,9 +4,6 @@ LOCATION='australiaeast'
 PREFIX='afd'
 RG_NAME="${PREFIX}-aca-rg"
 
-# install ssh AZ CLI extension
-az extension add --name ssh
-
 # create resource group
 az group create --location $LOCATION --name $RG_NAME
 
